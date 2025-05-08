@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>S&P500 Price & Total Return CAGR 추세</title>
+  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet" />
+  <style>
+    body {
+      background-color: #f0f2f5;
+      font-family: 'Noto Sans KR', sans-serif;
+      margin: 0;
+      padding: 20px;
+      color: #333;
+    }
+    .card {
+      max-width: 900px;
+      margin: 40px auto 40px auto;  /* 위, 좌우, 아래 margin */
+      background: #fff;
+      padding: 2rem;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    .card h1 {
+      text-align: center;
+      font-size: 1.8rem;
+      margin-bottom: 1.5rem;
+      font-weight: 700;
+      color: #444;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 1rem;
+      font-size: 0.95rem;
+    }
+    th, td {
+      border: 1px solid #ddd;
+      padding: 0.5rem;
+      text-align: center;
+    }
+    th {
+      background: #f7f7f7;
+      font-weight: 600;
+    }
+    #chart {
+      width: 100%;
+      height: 100%;
+      min-height: 400px;
+    }
+    @media (max-width: 600px) {
+      .card {
+        padding: 1rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div style="text-align: right; margin-bottom: 10px;">
+    <a href="index.html" style="font-size: 0.9rem; color: #007bff;">🏠 메인으로</a>
+  </div>
+
+  <div class="card">
+    <h1>S&P500 Price & Total Return CAGR 추세</h1>
+    <table>
+      <tr>
+          <th>데이터 선택</th>
+          <td>
+            <label><input type="radio" name="dataType" value="price" checked onchange="updateDateOptions()"> Price</label>
+            <label><input type="radio" name="dataType" value="totalReturn" onchange="updateDateOptions()"> Total Return</label>
+          </td>
+        </tr>
+      <tr>
+        <th>Y축 스케일</th>
+        <td>
+          <label><input type="radio" name="yScale" value="linear" checked> 선형</label>
+          <label><input type="radio" name="yScale" value="log"> 로그</label>
+        </td>
+      </tr>
+      <tr>
+        <th>시작 월</th>
+        <td><select id="startMonth"></select></td>
+      </tr>
+      <tr>
+        <th>종료 월</th>
+        <td><select id="endMonth"></select></td>
+      </tr>
+    </table>
+    <div style="text-align: center; margin-bottom: 1rem;">
+      <button onclick="drawChart()">차트 그리기</button>
+    </div>
+    <div id="chart"></div>
+  </div>
+
+  <script src="price_totalreturn_monthly.js"></script>
+
+  <script>
+    function fitCAGR(data, startIndex, endIndex) {
+      const keys = Object.keys(data);
+      const period = keys.slice(startIndex, endIndex + 1);
+      const values = period.map(k => data[k]);
+
+      const t = period.map((k, i) => i);
+      const startValue = values[0];
+      const endValue = values[values.length - 1];
+      const years = (t[t.length - 1] + 1) / 12;
+      const cagr = Math.pow(endValue / startValue, 1 / years) - 1;
+      const fitted = t.map(i => startValue * Math.pow(1 + cagr, i / 12));
+
+      return { period, values, fitted, cagr };
+    }
+
+    function updateDateOptions() {
+      const dataType = document.querySelector('input[name="dataType"]:checked').value;
+      const data = dataType === 'price' ? priceData : totalReturnData;
+      const keys = Object.keys(data);
+
+      const startSelect = document.getElementById('startMonth');
+      const endSelect = document.getElementById('endMonth');
+
+      startSelect.innerHTML = '';
+      endSelect.innerHTML = '';
+
+      keys.forEach((key, index) => {
+        const optionStart = document.createElement('option');
+        optionStart.value = index;
+        optionStart.text = key;
+        startSelect.appendChild(optionStart);
+
+        const optionEnd = document.createElement('option');
+        optionEnd.value = index;
+        optionEnd.text = key;
+        endSelect.appendChild(optionEnd);
+      });
+
+      startSelect.selectedIndex = 0;
+      endSelect.selectedIndex = keys.length - 1;
+    }
+
+    function drawChart() {
+      const yScale = document.querySelector('input[name="yScale"]:checked').value;
+      const dataType = document.querySelector('input[name="dataType"]:checked').value;
+
+      const data = dataType === 'price' ? priceData : totalReturnData;
+      const keys = Object.keys(data);
+
+      const startIndex = parseInt(document.getElementById('startMonth').value);
+      const endIndex = parseInt(document.getElementById('endMonth').value);
+
+      if (startIndex >= endIndex) {
+        alert('시작 월은 종료 월보다 앞서야 합니다.');
+        return;
+      }
+
+      const fit = fitCAGR(data, startIndex, endIndex);
+
+      const traceData = {
+        x: fit.period,
+        y: fit.values,
+        mode: 'markers',
+        name: dataType === 'price' ? 'Price 데이터' : 'Total Return 데이터'
+      };
+
+      const traceFit = {
+        x: fit.period,
+        y: fit.fitted,
+        mode: 'lines',
+        name: `CAGR: ${(fit.cagr * 100).toFixed(2)}%`
+      };
+
+      const layout = {
+        title: 'S&P500 CAGR 추세',
+        yaxis: {
+          type: yScale,
+          title: '지수 값'
+        },
+        xaxis: {
+          title: '기간'
+        },
+        autosize: true
+      };
+
+      Plotly.newPlot('chart', [traceData, traceFit], layout, {responsive: true});
+    }
+
+    updateDateOptions();
+    drawChart();
+  </script>
+  <div style="text-align: center; margin-top: 20px;">
+    <button onclick="location.href='index.html'" style="padding: 10px 20px; font-size: 1rem; border-radius: 5px; border: none; background-color: #007bff; color: white; cursor: pointer;">
+      🔙 메인으로 돌아가기
+    </button>
+  </div>
+</body>
+</html>

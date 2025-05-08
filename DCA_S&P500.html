@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>S&P500 적립식 투자 시뮬레이션 (실제 월간 수익률)</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+  body {
+    font-family: 'Noto Sans KR', sans-serif;
+    background-color: #f0f2f5;
+    padding: 20px;
+    color: #333;
+  }
+  .card {
+      max-width: 900px;
+      margin: 40px auto 40px auto;  /* 위, 좌우, 아래 margin */
+      background: #fff;
+      padding: 2rem;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+  h1 {
+    text-align: center;
+  }
+  label {
+    font-weight: 600;
+  }
+  input {
+    padding: 5px;
+    font-size: 1rem;
+    width: 150px;
+    margin-right: 10px;
+  }
+  canvas {
+    margin-top: 30px;
+  }
+
+  table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 1rem;
+  font-size: 0.95rem;
+  text-align: center;  /* 추가 */
+}
+th, td {
+  border: 1px solid #ddd;
+  padding: 0.5rem;
+  text-align: center;  /* 이미 있으면 OK */
+  vertical-align: middle;  /* 세로 중앙 정렬 */
+}
+
+</style>
+</head>
+<body>
+  <div style="text-align: right; margin-bottom: 10px;">
+    <a href="index.html" style="font-size: 0.9rem; color: #007bff;">🏠 메인으로</a>
+  </div>
+  
+<div class="card">
+  <h1>S&P500 적립식 투자 시뮬레이션</h1>
+  <label>투자 기간 (년):
+    <input type="number" id="investmentPeriod" value="20">
+  </label>
+  <button onclick="runSimulation()">시뮬레이션 실행</button>
+
+  <canvas id="rollingReturnChart" height="350"></canvas>
+  <canvas id="histogramChart" height="350"></canvas>
+</div>
+
+<script src="monthly_returns.js"></script>
+
+<script>
+let rollingReturnChartInstance = null;
+let histogramChartInstance = null;
+
+function runSimulation() {
+  const monthlyInvestment = 1;
+  const periodYears = parseInt(document.getElementById('investmentPeriod').value);
+
+  const startMonths = Object.keys(monthlyReturns).filter(start => {
+    const [year, month] = start.split('-').map(Number);
+    const endYear = year + Math.floor((month - 1 + periodYears * 12) / 12);
+    return endYear <= 2024;
+  });
+
+  const rollingReturns = [];
+
+  startMonths.forEach(start => {
+    let principal = 0, value = 0;
+    let currentYear = Number(start.split('-')[0]);
+    let currentMonth = Number(start.split('-')[1]);
+
+    for (let i = 0; i < periodYears * 12; i++) {
+      const key = `${currentYear.toString().padStart(4, '0')}-${currentMonth.toString().padStart(2, '0')}`;
+      const monthlyReturn = monthlyReturns[key] !== undefined ? monthlyReturns[key] : 0;
+
+      principal += monthlyInvestment;
+      value = value * (1 + monthlyReturn) + monthlyInvestment;
+
+      currentMonth++;
+      if (currentMonth > 12) {
+        currentMonth = 1;
+        currentYear++;
+      }
+    }
+
+    const cagr = value > 0 && principal > 0 ? Math.pow(value / principal, 1 / periodYears) - 1 : 0;
+    rollingReturns.push({ start, cagr });
+  });
+
+  const labels = rollingReturns.map(e => e.start);
+  const cagrData = rollingReturns.map(e => (e.cagr * 100));
+
+  if (rollingReturnChartInstance) rollingReturnChartInstance.destroy();
+  rollingReturnChartInstance = new Chart(document.getElementById('rollingReturnChart'), {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{
+        label: '연평균 수익률 (%)',
+        data: cagrData,
+        borderColor: '#ff7f50',
+        tension: 0.3
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        title: { display: true, text: 'Rolling Returns (시작 월별)' }
+      },
+      scales: {
+        y: {
+          ticks: {
+            callback: function(value) { return value.toFixed(2) + '%'; }
+          }
+        }
+      }
+    }
+  });
+
+  const minCAGR = Math.min(...rollingReturns.map(e => e.cagr));
+  const maxCAGR = Math.max(...rollingReturns.map(e => e.cagr));
+  const avgCAGR = rollingReturns.reduce((a, b) => a + b.cagr, 0) / rollingReturns.length;
+
+  const bins = {};
+  rollingReturns.forEach(e => {
+    const rounded = Math.floor(e.cagr * 400) / 4;
+    const label = rounded.toFixed(2);
+    bins[label] = (bins[label] || 0) + 1;
+  });
+
+  const sortedLabels = Object.keys(bins).sort((a, b) => parseFloat(a) - parseFloat(b));
+
+  if (histogramChartInstance) histogramChartInstance.destroy();
+  histogramChartInstance = new Chart(document.getElementById('histogramChart'), {
+    type: 'bar',
+    data: {
+      labels: sortedLabels.map(b => b + '%'),
+      datasets: [{
+        label: '횟수',
+        data: sortedLabels.map(b => bins[b]),
+        backgroundColor: '#6ca0dc'
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        title: {
+          display: true,
+          text: `Rolling Returns 분포 (평균 ${(avgCAGR * 100).toFixed(2)}%, 최소 ${(minCAGR * 100).toFixed(2)}%, 최대 ${(maxCAGR * 100).toFixed(2)}%)`
+        }
+      },
+      scales: {
+        x: {
+          ticks: {
+            callback: function(value) {
+              const label = this.getLabelForValue(value);
+              return label;
+            }
+          }
+        }
+      }
+    }
+  });
+}
+</script>
+<div style="text-align: center; margin-top: 20px;">
+  <button onclick="location.href='index.html'" style="padding: 10px 20px; font-size: 1rem; border-radius: 5px; border: none; background-color: #007bff; color: white; cursor: pointer;">
+    🔙 메인으로 돌아가기
+  </button>
+</div>
+
+</body>
+</html>

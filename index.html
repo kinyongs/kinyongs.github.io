@@ -1,36 +1,66 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ko">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CV of IN YONG KIM</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            line-height: 1.6;
-            margin: 20px;
-            padding: 20px;
-            border: 1px solid #ccc;
-            background-color: #f9f9f9;
-        }
-        h1 {
-            text-align: center;
-        }
-        hr {
-            border: 1px solid #ccc;
-        }
-        .section-title {
-            font-weight: bold;
-            margin-top: 20px;
-            text-decoration: underline;
-        }
-        .list {
-            margin-left: 20px;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <title>투자 분석 대시보드</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      background-color: #f0f2f5;
+      font-family: 'Noto Sans KR', sans-serif;
+      text-align: center;
+      padding: 50px;
+    }
+    h1 {
+      font-size: 2rem;
+      margin-bottom: 40px;
+      color: #333;
+    }
+    .cards {
+      display: flex;
+      justify-content: center;
+      gap: 30px;
+      flex-wrap: wrap;
+    }
+    .card {
+      background-color: white;
+      padding: 20px 30px;
+      border-radius: 10px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      width: 280px;
+      text-align: center;
+      text-decoration: none;
+      color: #333;
+      transition: transform 0.2s;
+    }
+    .card:hover {
+      transform: translateY(-5px);
+    }
+    .card h2 {
+      font-size: 1.4rem;
+      margin-bottom: 10px;
+    }
+    .card p {
+      font-size: 0.95rem;
+      color: #555;
+    }
+  </style>
 </head>
 <body>
-    <h1>CV of IN YONG KIM</h1>
-  
+  <h1>📊 투자 분석 대시보드</h1>
+  <div class="cards">
+    <a class="card" href="DCA_general.html">
+      <h2>적립식 투자 시뮬레이션</h2>
+      <p>사용자 지정 수익률로 적립식 투자 목표와 성장 분석</p>
+    </a>
+    <a class="card" href="DCA_S&P500.html">
+      <h2>S&P500 Rolling Returns</h2>
+      <p>실제 월간 수익률 기반 Rolling Returns 분석</p>
+    </a>
+    <a class="card" href="S&P500_trend.html">
+      <h2>S&P500 CAGR 추세</h2>
+      <p>Price & Total Return의 연복리 성장 추세 시각화</p>
+    </a>
+  </div>
 </body>
 </html>
