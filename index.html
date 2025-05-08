@@ -4,57 +4,59 @@
   <meta charset="UTF-8">
   <title>투자 분석 대시보드</title>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
-  body {
-    background-color: #f0f2f5;
-    font-family: 'Noto Sans KR', sans-serif;
-    text-align: center;
-    padding: 50px;
-  }
-  h1 {
-    font-size: 2rem;
-    margin-bottom: 40px;
-    color: #333;
-  }
+  <style>
+body {
+  background-color: #f0f2f5;
+  font-family: 'Noto Sans KR', sans-serif;
+  text-align: center;
+  padding: 50px;
+}
+h1 {
+  font-size: 2rem;
+  margin-bottom: 40px;
+  color: #333;
+}
+.cards {
+  display: flex;
+  justify-content: center;
+  gap: 30px;
+  flex-wrap: wrap;
+}
+.card {
+  background-color: white;
+  padding: 20px 30px;
+  border-radius: 10px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  width: 280px;
+  text-align: center;
+  text-decoration: none;
+  color: #333;
+  transition: transform 0.2s;
+}
+.card:hover {
+  transform: translateY(-5px);
+}
+.card h2 {
+  font-size: 1.4rem;
+  margin-bottom: 10px;
+}
+.card p {
+  font-size: 0.95rem;
+  color: #555;
+}
+
+/* 모바일 최적화 */
+@media (max-width: 600px) {
   .cards {
-    display: flex;
-    justify-content: center;
-    gap: 30px;
-    flex-wrap: wrap;
+    flex-direction: column;
+    align-items: center;
   }
   .card {
-    background-color: white;
-    padding: 20px 30px;
-    border-radius: 10px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-    width: 280px;
-    text-align: center;
-    text-decoration: none;
-    color: #333;
-    transition: transform 0.2s;
+    width: 90%;
   }
-  .card:hover {
-    transform: translateY(-5px);
-  }
-  .card h2 {
-    font-size: 1.4rem;
-    margin-bottom: 10px;
-  }
-  .card p {
-    font-size: 0.95rem;
-    color: #555;
-  }
-  
-  /* 모바일 최적화 */
-  @media (max-width: 600px) {
-    .cards {
-      flex-direction: column;
-      align-items: center;
-    }
-    .card {
-      width: 90%;
-    }
-  }
-  
+}
+
+  </style>
 </head>
 <body>
   <h1>📊 투자 분석 대시보드</h1>
