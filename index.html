@@ -10,57 +10,52 @@
       font-family: 'Noto Sans KR', sans-serif;
       text-align: center;
       padding: 50px;
+      margin: 0;
     }
+  
     h1 {
       font-size: 2rem;
       margin-bottom: 40px;
       color: #333;
     }
+  
     .cards {
       display: flex;
-      justify-content: center;
-      gap: 30px;
       flex-wrap: wrap;
+      justify-content: center;
+      gap: 20px;
     }
+
     .card {
       background-color: white;
       padding: 20px 30px;
       border-radius: 10px;
       box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-      width: 280px;
+      width: 90%;
+      max-width: 300px;  /* 약간 줄여서 모바일에서도 보기 좋게 */
       text-align: center;
       text-decoration: none;
       color: #333;
       transition: transform 0.2s;
     }
+
+
+  
     .card:hover {
       transform: translateY(-5px);
     }
+  
     .card h2 {
       font-size: 1.4rem;
       margin-bottom: 10px;
     }
+  
     .card p {
       font-size: 0.95rem;
       color: #555;
     }
-  
-    /* 모바일 최적화: display block으로 변경 */
-    @media (max-width: 600px) {
-  .cards {
-    display: flex;
-    flex-direction: column;  /* 무조건 세로 */
-    align-items: center;
-  }
-  .card {
-    width: 100%;  /* 화면 가득 */
-    max-width: 95%; /* 약간의 좌우 여백 */
-    margin: 10px 0;
-    box-sizing: border-box;  /* 패딩 포함해서 width 계산 */
-  }
-}
-
   </style>
+  
   
 </head>
 <body>
