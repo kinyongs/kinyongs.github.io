@@ -47,14 +47,19 @@
   
     /* 모바일 최적화: display block으로 변경 */
     @media (max-width: 600px) {
-      .cards {
-        display: block;
-      }
-      .card {
-        width: 90%;
-        margin: 10px auto;
-      }
-    }
+  .cards {
+    display: flex;
+    flex-direction: column;  /* 무조건 세로 */
+    align-items: center;
+  }
+  .card {
+    width: 100%;  /* 화면 가득 */
+    max-width: 95%; /* 약간의 좌우 여백 */
+    margin: 10px 0;
+    box-sizing: border-box;  /* 패딩 포함해서 width 계산 */
+  }
+}
+
   </style>
   
 </head>
