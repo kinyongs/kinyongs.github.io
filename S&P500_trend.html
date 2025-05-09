@@ -3,99 +3,65 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>S&P500 Price & Total Return CAGR 추세</title>
+  <title>S&P500 투자 수익률 추세 분석</title>
   <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet" />
-  <style>
-    body {
-      background-color: #f0f2f5;
-      font-family: 'Noto Sans KR', sans-serif;
-      margin: 0;
-      padding: 20px;
-      color: #333;
-    }
-    .card {
-      max-width: 900px;
-      margin: 40px auto 40px auto;  /* 위, 좌우, 아래 margin */
-      background: #fff;
-      padding: 2rem;
-      border-radius: 8px;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-    }
-
-    .card h1 {
-      text-align: center;
-      font-size: 1.8rem;
-      margin-bottom: 1.5rem;
-      font-weight: 700;
-      color: #444;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-bottom: 1rem;
-      font-size: 0.95rem;
-    }
-    th, td {
-      border: 1px solid #ddd;
-      padding: 0.5rem;
-      text-align: center;
-    }
-    th {
-      background: #f7f7f7;
-      font-weight: 600;
-    }
-    #chart {
-      width: 100%;
-      height: 100%;
-      min-height: 400px;
-    }
-    @media (max-width: 600px) {
-      .card {
-        padding: 1rem;
-      }
-    }
-  </style>
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+
   <div style="text-align: right; margin-bottom: 10px;">
-    <a href="index.html" style="font-size: 0.9rem; color: #007bff;">🏠 메인으로</a>
+    <a href="index.html">🏠 메인으로</a>
   </div>
 
   <div class="card">
-    <h1>S&P500 Price & Total Return CAGR 추세</h1>
-    <table>
-      <tr>
-          <th>데이터 선택</th>
+    <h1>📈 S&P500 투자 수익률 추세 분석</h1>
+    <p style="text-align: center; color: #555; margin-top: -1rem; margin-bottom: 2rem;">
+      선택한 기간 동안의 S&P500 Price 또는 Total Return 데이터를 바탕으로 연복리 수익률(CAGR)을 시각적으로 분석합니다.
+    </p>
+
+    <section>
+      <table>
+        <tr>
+          <th>📊 데이터 선택</th>
           <td>
             <label><input type="radio" name="dataType" value="price" checked onchange="updateDateOptions()"> Price</label>
             <label><input type="radio" name="dataType" value="totalReturn" onchange="updateDateOptions()"> Total Return</label>
           </td>
         </tr>
-      <tr>
-        <th>Y축 스케일</th>
-        <td>
-          <label><input type="radio" name="yScale" value="linear" checked> 선형</label>
-          <label><input type="radio" name="yScale" value="log"> 로그</label>
-        </td>
-      </tr>
-      <tr>
-        <th>시작 월</th>
-        <td><select id="startMonth"></select></td>
-      </tr>
-      <tr>
-        <th>종료 월</th>
-        <td><select id="endMonth"></select></td>
-      </tr>
-    </table>
-    <div style="text-align: center; margin-bottom: 1rem;">
-      <button onclick="drawChart()">차트 그리기</button>
-    </div>
-    <div id="chart"></div>
+        <tr>
+          <th>📐 Y축 스케일</th>
+          <td>
+            <label><input type="radio" name="yScale" value="linear" checked> 선형</label>
+            <label><input type="radio" name="yScale" value="log"> 로그</label>
+          </td>
+        </tr>
+        <tr>
+          <th>⏳ 시작 월</th>
+          <td><select id="startMonth"></select></td>
+        </tr>
+        <tr>
+          <th>⏱️ 종료 월</th>
+          <td><select id="endMonth"></select></td>
+        </tr>
+      </table>
+
+      <div style="text-align: center; margin-top: 1rem;">
+        <button onclick="drawChart()">📊 차트 그리기</button>
+      </div>
+    </section>
+
+    <section>
+      <div id="chart" style="margin-top: 2rem;"></div>
+      <div id="cagrText" style="text-align: center; font-size: 1.05rem; margin-top: 1.2rem; color: #495057;"></div>
+    </section>
+  </div>
+
+  <div style="text-align: center; margin-top: 20px;">
+    <button onclick="location.href='index.html'">🔙 메인으로 돌아가기</button>
   </div>
 
   <script src="price_totalreturn_monthly.js"></script>
-
   <script>
     function fitCAGR(data, startIndex, endIndex) {
       const keys = Object.keys(data);
@@ -109,7 +75,7 @@
       const cagr = Math.pow(endValue / startValue, 1 / years) - 1;
       const fitted = t.map(i => startValue * Math.pow(1 + cagr, i / 12));
 
-      return { period, values, fitted, cagr };
+      return { period, values, fitted, cagr, startDate: period[0], endDate: period[period.length - 1] };
     }
 
     function updateDateOptions() {
@@ -142,9 +108,7 @@
     function drawChart() {
       const yScale = document.querySelector('input[name="yScale"]:checked').value;
       const dataType = document.querySelector('input[name="dataType"]:checked').value;
-
       const data = dataType === 'price' ? priceData : totalReturnData;
-      const keys = Object.keys(data);
 
       const startIndex = parseInt(document.getElementById('startMonth').value);
       const endIndex = parseInt(document.getElementById('endMonth').value);
@@ -155,31 +119,32 @@
       }
 
       const fit = fitCAGR(data, startIndex, endIndex);
+      const cagrPercent = (fit.cagr * 100).toFixed(2);
+
+      // 텍스트 코멘트 형식으로 출력
+      const comment = `📈 ${fit.startDate}부터 ${fit.endDate}까지의 CAGR(연복리 수익률)은 약 <strong style="color:#d9534f;">${cagrPercent}%</strong>입니다.`;
+      document.getElementById('cagrText').innerHTML = comment;
 
       const traceData = {
         x: fit.period,
         y: fit.values,
         mode: 'markers',
-        name: dataType === 'price' ? 'Price 데이터' : 'Total Return 데이터'
+        name: '실제 데이터'
       };
 
       const traceFit = {
         x: fit.period,
         y: fit.fitted,
         mode: 'lines',
-        name: `CAGR: ${(fit.cagr * 100).toFixed(2)}%`
+        name: '적합 곡선'
       };
 
       const layout = {
         title: 'S&P500 CAGR 추세',
-        yaxis: {
-          type: yScale,
-          title: '지수 값'
-        },
-        xaxis: {
-          title: '기간'
-        },
-        autosize: true
+        yaxis: { type: yScale, title: '지수 값' },
+        xaxis: { title: '기간' },
+        autosize: true,
+        showlegend: false
       };
 
       Plotly.newPlot('chart', [traceData, traceFit], layout, {responsive: true});
@@ -188,10 +153,5 @@
     updateDateOptions();
     drawChart();
   </script>
-  <div style="text-align: center; margin-top: 20px;">
-    <button onclick="location.href='index.html'" style="padding: 10px 20px; font-size: 1rem; border-radius: 5px; border: none; background-color: #007bff; color: white; cursor: pointer;">
-      🔙 메인으로 돌아가기
-    </button>
-  </div>
 </body>
 </html>

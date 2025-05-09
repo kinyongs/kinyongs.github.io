@@ -1,0 +1,123 @@
+/* 기본 설정 */
+body {
+  background-color: #f8f9fa;
+  font-family: 'Noto Sans KR', sans-serif;
+  margin: 0;
+  padding: 20px;
+  color: #212529;
+  line-height: 1.6;
+}
+
+/* 카드 레이아웃 */
+.card, .container {
+  background: #ffffff;
+  max-width: 960px;
+  margin: 2rem auto;
+  padding: 2rem;
+  border-radius: 10px;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1);
+}
+
+/* 제목 */
+h1 {
+  font-size: 1.75rem;
+  text-align: center;
+  color: #343a40;
+  margin-bottom: 1.5rem;
+}
+
+/* 표 스타일 */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1.5rem;
+  font-size: 0.95rem;
+}
+
+th, td {
+  padding: 0.75rem;
+  text-align: center;
+  border: 1px solid #dee2e6;
+}
+
+th {
+  background-color: #e9ecef;
+  color: #495057;
+  font-weight: 600;
+}
+
+/* 입력 및 버튼 */
+.inputs label {
+  display: block;
+  margin-bottom: 1rem;
+  font-weight: 500;
+  color: #495057;
+}
+
+input[type="text"], input[type="number"] {
+  padding: 0.5rem;
+  font-size: 1rem;
+  border: 1px solid #ced4da;
+  border-radius: 5px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+button {
+  padding: 10px 20px;
+  font-size: 1rem;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+button:hover {
+  background-color: #0056b3;
+}
+
+/* 링크 */
+a {
+  text-decoration: none;
+  color: #007bff;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+/* 차트 영역 */
+#chart, #chartCanvas, #rollingReturnChart, #histogramChart {
+  width: 100%;
+  max-width: 100%;
+  margin-top: 2rem;
+}
+
+/* 메모/설명 텍스트 */
+.note {
+  font-size: 0.9rem;
+  color: #868e96;
+  margin-top: 1rem;
+}
+
+/* 반응형 처리 */
+@media (max-width: 768px) {
+  .card, .container {
+    padding: 1rem;
+  }
+
+  h1 {
+    font-size: 1.4rem;
+  }
+
+  table {
+    font-size: 0.85rem;
+  }
+
+  button {
+    width: 100%;
+    margin-top: 1rem;
+  }
+}

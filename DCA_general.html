@@ -5,113 +5,68 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>적립식 투자 시뮬레이션</title>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet" />
-  <style>
-    body {
-      background-color: #f0f2f5;
-      font-family: 'Noto Sans KR', sans-serif;
-      margin: 0;
-      padding: 20px;
-      color: #333;
-    }
-    .card {
-      max-width: 900px;
-      margin: 0 auto;
-      background: #fff;
-      padding: 2rem;
-      border-radius: 8px;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-    }
-    .card h1 {
-      text-align: center;
-      font-size: 1.8rem;
-      margin-bottom: 1.5rem;
-      font-weight: 700;
-      color: #444;
-    }
-    .inputs {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 1rem;
-      margin-bottom: 1.5rem;
-    }
-    .inputs label {
-      font-size: 1rem;
-      font-weight: 600;
-      display: flex;
-      flex-direction: column;
-    }
-    .inputs input {
-      margin-top: 0.5rem;
-      padding: 0.5rem;
-      font-size: 1rem;
-      font-family: 'Noto Sans KR', sans-serif;
-      border: 1px solid #ccc;
-      border-radius: 4px;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-bottom: 1rem;
-      font-size: 0.95rem;
-    }
-    th, td {
-      border: 1px solid #ddd;
-      padding: 0.5rem;
-      text-align: center;
-    }
-    th {
-      background: #f7f7f7;
-      font-weight: 600;
-    }
-    .note {
-      text-align: right;
-      font-size: 0.8rem;
-      color: #666;
-    }
-  </style>
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+
   <div style="text-align: right; margin-bottom: 10px;">
-    <a href="index.html" style="font-size: 0.9rem; color: #007bff;">🏠 메인으로</a>
+    <a href="index.html">🏠 메인으로</a>
   </div>
-  
+
   <div class="card">
-    <h1>적립식 투자 시뮬레이션</h1>
-    <div class="inputs">
-      <label>월 적립 금액 (₩):
+    <h1>📈 적립식 투자 시뮬레이션</h1>
+    <p style="text-align: center; color: #666; margin-top: -1rem; margin-bottom: 2rem;">
+      매월 일정 금액을 투자했을 때의 미래 가치를 예측하고, 다양한 자산 기준과 비교해보세요.
+    </p>
+
+    <section class="inputs">
+      <label>💰 월 적립 금액 (₩)
         <input type="text" id="monthlyInvestment" value="1,000,000" />
       </label>
-      <label>투자 기간 (년):
+      <label>📅 투자 기간 (년)
         <input type="number" id="investmentPeriod" value="30" />
       </label>
-      <label>예상 연 수익률 (%):
+      <label>📈 예상 연 수익률 (%)
         <input type="number" id="annualReturn" value="8" />
       </label>
-    </div>
-    <table>
-      <thead>
-        <tr>
-          <th>목표</th>
-          <th>금액 (억 원)</th>
-          <th>달성 예상 기간 (년)</th>
-          <th>달성 시점 원금 (억 원)</th>
-          <th>달성 시점 평가금액 (억 원)</th>
-        </tr>
-      </thead>
-      <tbody id="goalTableBody">
-        <!-- 목표 행은 스크립트에서 채워집니다 -->
-      </tbody>
-      <tfoot>
-        <tr>
-          <td colspan="2"><b>최종 투자 결과 (전체 기간 기준)</b></td>
-          <td id="finalYear">-</td>
-          <td id="finalPrincipal">-</td>
-          <td id="finalValue">-</td>
-        </tr>
-      </tfoot>
-    </table>
-    <div class="note">※ 상위 O% 기준은 2024년 통계 기반입니다.</div>
+    </section>
+
+    <section>
+      <table>
+        <thead>
+          <tr>
+            <th>목표</th>
+            <th>금액 (억 원)</th>
+            <th>달성 예상 기간 (년)</th>
+            <th>달성 시점 원금 (억 원)</th>
+            <th>달성 시점 평가금액 (억 원)</th>
+          </tr>
+        </thead>
+        <tbody id="goalTableBody">
+          <!-- 목표 행은 JS에서 채워짐 -->
+        </tbody>
+        <tfoot>
+          <tr>
+            <td colspan="2"><b>📌 최종 투자 결과 (전체 기간 기준)</b></td>
+            <td id="finalYear">-</td>
+            <td id="finalPrincipal">-</td>
+            <td id="finalValue">-</td>
+          </tr>
+        </tfoot>
+      </table>
+    </section>
+
+    <p class="note">※ 상위 O% 기준은 2024년 통계 기반입니다.</p>
+
     <canvas id="chartCanvas" height="400"></canvas>
+
+    <div id="resultComment" class="note" style="text-align: center; font-size: 1rem; margin-top: 1.5rem; color: #495057;">
+      <!-- 분석 결과 코멘트가 여기에 삽입됩니다 -->
+    </div>
+  </div>
+
+  <div style="text-align: center; margin-top: 20px;">
+    <button onclick="location.href='index.html'">🔙 메인으로 돌아가기</button>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -120,7 +75,9 @@
     const periodInput = document.getElementById('investmentPeriod');
     const returnInput = document.getElementById('annualReturn');
 
-    // 목표 (단위: 억 원)
+    const goalTableBody = document.getElementById('goalTableBody');
+    const resultComment = document.getElementById('resultComment');
+
     const targets = [
       { label: '상위 10%', amount: 10.5 * 100000000 },
       { label: '상위 5%', amount: 15.2 * 100000000 },
@@ -129,8 +86,6 @@
       { label: '상위 0.1%', amount: 86.7 * 100000000 }
     ];
 
-    // 테이블에 목표 행 추가
-    const goalTableBody = document.getElementById('goalTableBody');
     goalTableBody.innerHTML = targets.map((t, i) => `
       <tr>
         <td>${t.label}</td>
@@ -179,19 +134,18 @@
 
       let totalPrincipal = 0, totalValue = 0;
       const points = [];
+
       for (let month = 1; month <= years * 12; month++) {
         totalPrincipal += monthlyInvestment;
         totalValue = totalValue * (1 + monthlyRate) + monthlyInvestment;
         points.push({ year: (month / 12).toFixed(1), principal: totalPrincipal, value: totalValue });
       }
 
-      // 그래프 데이터 업데이트
       chart.data.labels = points.map(p => p.year);
       chart.data.datasets[0].data = points.map(p => p.principal);
       chart.data.datasets[1].data = points.map(p => p.value);
       chart.update();
 
-      // 목표별 결과 갱신
       targets.forEach((t, i) => {
         const found = points.find(p => p.value >= t.amount);
         if (found) {
@@ -205,11 +159,14 @@
         }
       });
 
-      // 최종 결과 업데이트
       const last = points[points.length - 1] || { year: '-', principal: 0, value: 0 };
       document.getElementById('finalYear').textContent = last.year || '-';
       document.getElementById('finalPrincipal').textContent = formatCurrency(last.principal);
       document.getElementById('finalValue').textContent = formatCurrency(last.value);
+
+      // 분석 코멘트 출력
+      resultComment.textContent =
+        `📌 총 ${last.year}년간 투자한 원금은 약 ${formatCurrency(last.principal)}억 원이며, 평가금액은 약 ${formatCurrency(last.value)}억 원입니다.`;
     }
 
     monthlyInput.addEventListener('input', () => {
@@ -220,14 +177,7 @@
     periodInput.addEventListener('input', recalcAndUpdate);
     returnInput.addEventListener('input', recalcAndUpdate);
 
-    // 초기 실행
     recalcAndUpdate();
   </script>
-  <div style="text-align: center; margin-top: 20px;">
-    <button onclick="location.href='index.html'" style="padding: 10px 20px; font-size: 1rem; border-radius: 5px; border: none; background-color: #007bff; color: white; cursor: pointer;">
-      🔙 메인으로 돌아가기
-    </button>
-  </div>
-  
 </body>
 </html>

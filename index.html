@@ -2,77 +2,118 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
-  <title>투자 분석 대시보드</title>
+  <title> S&P 500 적립식 투자 분석 대시보드</title>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
   <style>
     body {
-      background-color: #f0f2f5;
+      background: linear-gradient(to bottom right, #e9f0fc, #f8fbff);
       font-family: 'Noto Sans KR', sans-serif;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+
+    header {
       text-align: center;
-      padding: 50px;
+      padding: 60px 20px 10px;
+    }
+
+    header h1 {
+      font-size: 2.5rem;
+      color: #2c3e50;
+      margin-bottom: 10px;
+    }
+
+    header p {
+      font-size: 1.05rem;
+      color: #555;
       margin: 0;
     }
-  
-    h1 {
-      font-size: 2rem;
-      margin-bottom: 40px;
-      color: #333;
-    }
-  
+
     .cards {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-      gap: 20px;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 40px;
+      max-width: 1000px;
+      margin: 40px auto;
+      padding: 0 20px;
+      flex-grow: 1;
     }
 
     .card {
       background-color: white;
-      padding: 20px 30px;
+      padding: 24px 32px;
       border-radius: 10px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-      width: 90%;
-      max-width: 300px;  /* 약간 줄여서 모바일에서도 보기 좋게 */
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
       text-align: center;
       text-decoration: none;
       color: #333;
-      transition: transform 0.2s;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
     }
 
-
-  
     .card:hover {
-      transform: translateY(-5px);
+      transform: translateY(-6px);
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
     }
-  
+
+    .card .icon {
+      font-size: 2rem;
+      margin-bottom: 10px;
+    }
+
     .card h2 {
       font-size: 1.4rem;
       margin-bottom: 10px;
     }
-  
+
     .card p {
       font-size: 0.95rem;
       color: #555;
     }
+
+    footer {
+      text-align: center;
+      padding: 20px;
+      font-size: 0.9rem;
+      background-color: #f0f2f5;
+      color: #666;
+    }
+
+    footer a {
+      color: #3366cc;
+      text-decoration: none;
+    }
   </style>
-  
-  
 </head>
 <body>
-  <h1>📊 투자 분석 대시보드</h1>
-  <div class="cards">
+
+  <header>
+    <h1>📊 S&P 500 적립식 투자 분석 대시보드</h1>
+    <p>투자 전략을 시각적으로 분석하고 성장 가능성을 확인하세요.</p>
+  </header>
+
+  <main class="cards">
     <a class="card" href="DCA_general.html">
+      <div class="icon">🎯</div>
       <h2>적립식 투자 시뮬레이션</h2>
       <p>사용자 지정 수익률로 적립식 투자 목표와 성장 분석</p>
     </a>
     <a class="card" href="DCA_S&P500.html">
+      <div class="icon">📈</div>
       <h2>S&P500 Rolling Returns</h2>
       <p>실제 월간 수익률 기반 Rolling Returns 분석</p>
     </a>
     <a class="card" href="S&P500_trend.html">
+      <div class="icon">📊</div>
       <h2>S&P500 CAGR 추세</h2>
       <p>Price & Total Return의 연복리 성장 추세 시각화</p>
     </a>
-  </div>
+  </main>
+
+  <footer>
+    👤 작성자: kinyongs &nbsp;|&nbsp; 📧 Contact: <a href="mailto:kinyongs@naver.com">kinyongs@naver.com</a>
+  </footer>
+
 </body>
 </html>
