@@ -144,8 +144,15 @@
         yaxis: { type: yScale, title: '지수 값' },
         xaxis: { title: '기간' },
         autosize: true,
-        showlegend: false
+        showlegend: false,
+        margin: {
+          l: 50,  // 좌측
+          r: 30,  // 우측
+          t: 50,  // 상단
+          b: 40   // 하단
+        }
       };
+
 
       Plotly.newPlot('chart', [traceData, traceFit], layout, {responsive: true});
     }
