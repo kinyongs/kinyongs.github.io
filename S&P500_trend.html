@@ -4,9 +4,9 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>S&P500 투자 수익률 추세 분석</title>
-  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
 
@@ -17,7 +17,7 @@
   <div class="card">
     <h1>📈 S&P500 투자 수익률 추세 분석</h1>
     <p style="text-align: center; color: #555; margin-top: -1rem; margin-bottom: 2rem;">
-      선택한 기간 동안의 S&P500 Price 또는 Total Return 데이터를 바탕으로 연복리 수익률(CAGR)을 시각적으로 분석합니다.
+      시작 월과 종료 월을 선택하고, 해당 구간의 실적 및 CAGR(연복리 수익률)을 확인해보세요.
     </p>
 
     <section>
@@ -52,7 +52,7 @@
     </section>
 
     <section>
-      <div id="chart" style="margin-top: 2rem;"></div>
+      <canvas id="cagrChart" height="360" style="margin-top: 2rem;"></canvas>
       <div id="cagrText" style="text-align: center; font-size: 1.05rem; margin-top: 1.2rem; color: #495057;"></div>
     </section>
   </div>
@@ -63,20 +63,10 @@
 
   <script src="price_totalreturn_monthly.js"></script>
   <script>
-    function fitCAGR(data, startIndex, endIndex) {
-      const keys = Object.keys(data);
-      const period = keys.slice(startIndex, endIndex + 1);
-      const values = period.map(k => data[k]);
+    // 로그 스케일 등록
+    Chart.register(Chart.registry.getScale('logarithmic'));
 
-      const t = period.map((k, i) => i);
-      const startValue = values[0];
-      const endValue = values[values.length - 1];
-      const years = (t[t.length - 1] + 1) / 12;
-      const cagr = Math.pow(endValue / startValue, 1 / years) - 1;
-      const fitted = t.map(i => startValue * Math.pow(1 + cagr, i / 12));
-
-      return { period, values, fitted, cagr, startDate: period[0], endDate: period[period.length - 1] };
-    }
+    let cagrChartInstance = null;
 
     function updateDateOptions() {
       const dataType = document.querySelector('input[name="dataType"]:checked').value;
@@ -106,8 +96,8 @@
     }
 
     function drawChart() {
-      const yScale = document.querySelector('input[name="yScale"]:checked').value;
       const dataType = document.querySelector('input[name="dataType"]:checked').value;
+      const yScaleType = document.querySelector('input[name="yScale"]:checked').value;
       const data = dataType === 'price' ? priceData : totalReturnData;
 
       const startIndex = parseInt(document.getElementById('startMonth').value);
@@ -118,43 +108,81 @@
         return;
       }
 
-      const fit = fitCAGR(data, startIndex, endIndex);
-      const cagrPercent = (fit.cagr * 100).toFixed(2);
+      const keys = Object.keys(data);
+      const period = keys.slice(startIndex, endIndex + 1);
+      const values = period.map(k => data[k]);
 
-      // 텍스트 코멘트 형식으로 출력
-      const comment = `📈 ${fit.startDate}부터 ${fit.endDate}까지의 CAGR(연복리 수익률)은 약 <strong style="color:#d9534f;">${cagrPercent}%</strong>입니다.`;
-      document.getElementById('cagrText').innerHTML = comment;
+      const startValue = values[0];
+      const endValue = values[values.length - 1];
+      const years = (values.length - 1) / 12;
+      const cagr = Math.pow(endValue / startValue, 1 / years) - 1;
+      const fitted = values.map((_, i) => startValue * Math.pow(1 + cagr, i / 12));
 
-      const traceData = {
-        x: fit.period,
-        y: fit.values,
-        mode: 'markers',
-        name: '실제 데이터'
-      };
+      // 로그 스케일: 0 이하 값을 null 처리
+      let adjustedValues = values.map(v => (yScaleType === 'log' && v <= 0 ? null : v));
+      let adjustedFitted = fitted.map(v => (yScaleType === 'log' && v <= 0 ? null : v));
 
-      const traceFit = {
-        x: fit.period,
-        y: fit.fitted,
-        mode: 'lines',
-        name: '적합 곡선'
-      };
+      const ctx = document.getElementById('cagrChart').getContext('2d');
+      if (cagrChartInstance && typeof cagrChartInstance.destroy === 'function') {
+        cagrChartInstance.destroy();
+      }
 
-      const layout = {
-        title: 'S&P500 CAGR 추세',
-        yaxis: { type: yScale, title: '지수 값' },
-        xaxis: { title: '기간' },
-        autosize: true,
-        showlegend: false,
-        margin: {
-          l: 50,  // 좌측
-          r: 30,  // 우측
-          t: 50,  // 상단
-          b: 40   // 하단
+      cagrChartInstance = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: period,
+          datasets: [
+            {
+              label: '실제 지수',
+              data: adjustedValues,
+              borderColor: '#4e79a7',
+              fill: false,
+              tension: 0.3
+            },
+            {
+              label: `CAGR 적합선 (${(cagr * 100).toFixed(2)}%)`,
+              data: adjustedFitted,
+              borderColor: '#f28e2b',
+              borderDash: [6, 3],
+              fill: false,
+              tension: 0.3
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            title: {
+              display: true,
+              text: 'S&P500 CAGR 추세'
+            },
+            legend: {
+              position: 'bottom'
+            }
+          },
+          scales: {
+            y: {
+              type: yScaleType === 'log' ? 'logarithmic' : 'linear',
+              title: {
+                display: true,
+                text: '지수 값'
+              },
+              ticks: yScaleType === 'log' ? {
+                callback: value => value.toLocaleString()
+              } : undefined
+            },
+            x: {
+              title: {
+                display: true,
+                text: '기간'
+              }
+            }
+          }
         }
-      };
+      });
 
-
-      Plotly.newPlot('chart', [traceData, traceFit], layout, {responsive: true});
+      document.getElementById('cagrText').innerHTML =
+        `📈 <strong>${period[0]}</strong>부터 <strong>${period[period.length - 1]}</strong>까지의 CAGR(연복리 수익률)은 약 <strong style="color:#d9534f;">${(cagr * 100).toFixed(2)}%</strong>입니다.`;
     }
 
     updateDateOptions();
