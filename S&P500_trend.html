@@ -20,29 +20,29 @@
       시작 월과 종료 월을 선택하고, 해당 구간의 실적 및 CAGR(연복리 수익률)을 확인해보세요.
     </p>
 
-    <section>
-      <table>
+    <section style="margin-bottom: 20px; text-align: center;">
+      <table style="margin: 0 auto;">
         <tr>
-          <th>📊 데이터 선택</th>
-          <td>
+          <th style="text-align: right; padding: 6px 10px;">📊 데이터 선택</th>
+          <td style="text-align: left; padding: 6px 10px;">
             <label><input type="radio" name="dataType" value="price" checked onchange="updateDateOptions()"> Price</label>
             <label><input type="radio" name="dataType" value="totalReturn" onchange="updateDateOptions()"> Total Return</label>
           </td>
         </tr>
         <tr>
-          <th>📐 Y축 스케일</th>
-          <td>
+          <th style="text-align: right; padding: 6px 10px;">📐 Y축 스케일</th>
+          <td style="text-align: left; padding: 6px 10px;">
             <label><input type="radio" name="yScale" value="linear" checked> 선형</label>
             <label><input type="radio" name="yScale" value="log"> 로그</label>
           </td>
         </tr>
         <tr>
-          <th>⏳ 시작 월</th>
-          <td><select id="startMonth"></select></td>
+          <th style="text-align: right; padding: 6px 10px;">⏳ 시작 월</th>
+          <td style="text-align: left; padding: 6px 10px;"><select id="startMonth"></select></td>
         </tr>
         <tr>
-          <th>⏱️ 종료 월</th>
-          <td><select id="endMonth"></select></td>
+          <th style="text-align: right; padding: 6px 10px;">⏱️ 종료 월</th>
+          <td style="text-align: left; padding: 6px 10px;"><select id="endMonth"></select></td>
         </tr>
       </table>
 
@@ -52,7 +52,7 @@
     </section>
 
     <section>
-      <canvas id="cagrChart" height="360" style="margin-top: 2rem;"></canvas>
+      <canvas id="cagrChart" height="200"></canvas>
       <div id="cagrText" style="text-align: center; font-size: 1.05rem; margin-top: 1.2rem; color: #495057;"></div>
     </section>
   </div>

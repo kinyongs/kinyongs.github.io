@@ -9,175 +9,193 @@
 </head>
 <body>
 
-  <div style="text-align: right; margin-bottom: 10px;">
-    <a href="index.html">🏠 메인으로</a>
-  </div>
+<div style="text-align: right; margin-bottom: 10px;">
+  <a href="index.html">🏠 메인으로</a>
+</div>
 
-  <div class="card">
-    <h1>📈 적립식 투자 시뮬레이션</h1>
-    <p style="text-align: center; color: #666; margin-top: -1rem; margin-bottom: 2rem;">
-      매월 일정 금액을 투자했을 때의 미래 가치를 예측하고, 다양한 자산 기준과 비교해보세요.
-    </p>
+<div class="card">
+  <h1>📈 적립식 투자 시뮬레이션</h1>
+  <p style="text-align: center; color: #666; margin-top: -1rem; margin-bottom: 2rem;">
+    매월 일정 금액을 투자했을 때의 미래 가치를 예측하고, 다양한 자산 기준과 비교해보세요.
+  </p>
 
-    <section class="inputs">
-      <label>💰 월 적립 금액 (₩)
-        <input type="text" id="monthlyInvestment" value="1,000,000" />
-      </label>
-      <label>📅 투자 기간 (년)
-        <input type="number" id="investmentPeriod" value="30" />
-      </label>
-      <label>📈 예상 연 수익률 (%)
-        <input type="number" id="annualReturn" value="8" />
-      </label>
-    </section>
-
-    <section>
-      <table>
-        <thead>
-          <tr>
-            <th>목표</th>
-            <th>금액 (억 원)</th>
-            <th>달성 예상 기간 (년)</th>
-            <th>달성 시점 원금 (억 원)</th>
-            <th>달성 시점 평가금액 (억 원)</th>
-          </tr>
-        </thead>
-        <tbody id="goalTableBody">
-          <!-- 목표 행은 JS에서 채워짐 -->
-        </tbody>
-        <tfoot>
-          <tr>
-            <td colspan="2"><b>📌 최종 투자 결과 (전체 기간 기준)</b></td>
-            <td id="finalYear">-</td>
-            <td id="finalPrincipal">-</td>
-            <td id="finalValue">-</td>
-          </tr>
-        </tfoot>
-      </table>
-    </section>
-
-    <p class="note">※ 상위 O% 기준은 2024년 통계 기반입니다.</p>
-
-    <canvas id="chartCanvas" height="400"></canvas>
-
-    <div id="resultComment" class="note" style="text-align: center; font-size: 1rem; margin-top: 1.5rem; color: #495057;">
-      <!-- 분석 결과 코멘트가 여기에 삽입됩니다 -->
-    </div>
-  </div>
-
-  <div style="text-align: center; margin-top: 20px;">
-    <button onclick="location.href='index.html'">🔙 메인으로 돌아가기</button>
-  </div>
-
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script>
-    const monthlyInput = document.getElementById('monthlyInvestment');
-    const periodInput = document.getElementById('investmentPeriod');
-    const returnInput = document.getElementById('annualReturn');
-
-    const goalTableBody = document.getElementById('goalTableBody');
-    const resultComment = document.getElementById('resultComment');
-
-    const targets = [
-      { label: '상위 10%', amount: 10.5 * 100000000 },
-      { label: '상위 5%', amount: 15.2 * 100000000 },
-      { label: '상위 1%', amount: 33 * 100000000 },
-      { label: '상위 0.5%', amount: 44.2 * 100000000 },
-      { label: '상위 0.1%', amount: 86.7 * 100000000 }
-    ];
-
-    goalTableBody.innerHTML = targets.map((t, i) => `
+  <section class="inputs">
+    <table style="margin: 0 auto;">
       <tr>
-        <td>${t.label}</td>
-        <td id="targetAmount${i}">${(t.amount / 100000000).toFixed(1)}</td>
-        <td id="targetYear${i}">-</td>
-        <td id="targetPrincipal${i}">-</td>
-        <td id="targetValue${i}">-</td>
+        <th style="text-align: right; padding: 6px 10px;">🏦 초기 투자금 (₩)</th>
+        <td style="padding: 6px 10px; text-align: left;"><input type="text" id="initialInvestment" value="0" style="width: 120px;" /></td>
       </tr>
-    `).join('');
+      <tr>
+        <th style="text-align: right; padding: 6px 10px;">💰 월 적립 금액 (₩)</th>
+        <td style="padding: 6px 10px; text-align: left;"><input type="text" id="monthlyInvestment" value="1,000,000" style="width: 120px;" /></td>
+      </tr>
+      <tr>
+        <th style="text-align: right; padding: 6px 10px;">🔄 매년 적립금 증가율 (%)</th>
+        <td style="padding: 6px 10px; text-align: left;"><input type="number" id="monthlyIncreaseRate" value="0" style="width: 80px;" /></td>
+      </tr>
+      <tr>
+        <th style="text-align: right; padding: 6px 10px;">📅 투자 기간 (년)</th>
+        <td style="padding: 6px 10px; text-align: left;"><input type="number" id="investmentPeriod" value="30" style="width: 80px;" /></td>
+      </tr>
+      <tr>
+        <th style="text-align: right; padding: 6px 10px;">📈 예상 연 수익률 (%)</th>
+        <td style="padding: 6px 10px; text-align: left;""><input type="number" id="annualReturn" value="8" style="width: 80px;" /></td>
+      </tr>
+    </table>
+  </section>
 
-    function formatWithComma(value) {
-      return value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-    }
+  <section>
+    <table>
+      <thead>
+        <tr>
+          <th>목표</th>
+          <th>금액 (억 원)</th>
+          <th>달성 예상 기간 (년)</th>
+          <th>달성 시점 원금 (억 원)</th>
+          <th>달성 시점 평가금액 (억 원)</th>
+        </tr>
+      </thead>
+      <tbody id="goalTableBody"></tbody>
+      <tfoot>
+        <tr>
+          <td colspan="2"><b>📌 최종 투자 결과 (전체 기간 기준)</b></td>
+          <td id="finalYear">-</td>
+          <td id="finalPrincipal">-</td>
+          <td id="finalValue">-</td>
+        </tr>
+      </tfoot>
+    </table>
+  </section>
 
-    function formatCurrency(value) {
-      return (value / 100000000).toFixed(2);
-    }
+  <p class="note">※ 상위 O% 기준은 2024년 통계 기반입니다.</p>
 
-    const ctx = document.getElementById('chartCanvas').getContext('2d');
-    const chart = new Chart(ctx, {
-      type: 'line',
-      data: {
-        datasets: [
-          { label: '총 원금', data: [], borderColor: '#8884d8', borderWidth: 2, tension: 0.4 },
-          { label: '총 평가금액', data: [], borderColor: '#82ca9d', borderWidth: 2, tension: 0.4 }
-        ]
-      },
-      options: {
-        responsive: true,
-        interaction: { mode: 'index', intersect: false },
-        scales: {
-          x: { title: { display: true, text: '투자 연도' } },
-          y: {
-            title: { display: true, text: '(억 원)' },
-            ticks: { callback: v => formatCurrency(v) }
-          }
+  <canvas id="chartCanvas" height="200"></canvas>
+
+  <div id="resultComment" class="note" style="text-align: center; font-size: 1rem; margin-top: 1.5rem; color: #495057;"></div>
+</div>
+
+<div style="text-align: center; margin-top: 20px;">
+  <button onclick="location.href='index.html'">🔙 메인으로 돌아가기</button>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  const initialInput = document.getElementById('initialInvestment');
+  const monthlyInput = document.getElementById('monthlyInvestment');
+  const increaseInput = document.getElementById('monthlyIncreaseRate');
+  const periodInput = document.getElementById('investmentPeriod');
+  const returnInput = document.getElementById('annualReturn');
+
+  const goalTableBody = document.getElementById('goalTableBody');
+  const resultComment = document.getElementById('resultComment');
+
+  const targets = [
+    { label: '상위 10%', amount: 10.5 * 1e8 },
+    { label: '상위 5%', amount: 15.2 * 1e8 },
+    { label: '상위 1%', amount: 33 * 1e8 },
+    { label: '상위 0.5%', amount: 44.2 * 1e8 },
+    { label: '상위 0.1%', amount: 86.7 * 1e8 }
+  ];
+
+  goalTableBody.innerHTML = targets.map((t, i) => `
+    <tr>
+      <td>${t.label}</td>
+      <td id="targetAmount${i}">${(t.amount / 1e8).toFixed(1)}</td>
+      <td id="targetYear${i}">-</td>
+      <td id="targetPrincipal${i}">-</td>
+      <td id="targetValue${i}">-</td>
+    </tr>
+  `).join('');
+
+  function formatWithComma(value) {
+    return value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  }
+
+  function formatCurrency(value) {
+    return (value / 1e8).toFixed(2);
+  }
+
+  const ctx = document.getElementById('chartCanvas').getContext('2d');
+  const chart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      datasets: [
+        { label: '총 원금', data: [], borderColor: '#8884d8', borderWidth: 2, tension: 0.4 },
+        { label: '총 평가금액', data: [], borderColor: '#82ca9d', borderWidth: 2, tension: 0.4 }
+      ]
+    },
+    options: {
+      responsive: true,
+      interaction: { mode: 'index', intersect: false },
+      scales: {
+        x: { title: { display: true, text: '투자 연도' } },
+        y: {
+          title: { display: true, text: '(억 원)' },
+          ticks: { callback: v => formatCurrency(v) }
         }
+      }
+    }
+  });
+
+  function recalcAndUpdate() {
+    const initialInvestment = parseInt(initialInput.value.replace(/,/g, '')) || 0;
+    let monthlyInvestment = parseInt(monthlyInput.value.replace(/,/g, '')) || 0;
+    const increaseRate = parseFloat(increaseInput.value) / 100 || 0;
+    const years = parseInt(periodInput.value) || 0;
+    const annualReturn = parseFloat(returnInput.value) / 100 || 0;
+    const monthlyRate = Math.pow(1 + annualReturn, 1 / 12) - 1;
+
+    let totalPrincipal = initialInvestment;
+    let totalValue = initialInvestment;
+    const points = [];
+
+    for (let month = 1; month <= years * 12; month++) {
+      if (month % 12 === 1 && month !== 1) {
+        monthlyInvestment *= (1 + increaseRate); // 매년 증액
+      }
+
+      totalPrincipal += monthlyInvestment;
+      totalValue = totalValue * (1 + monthlyRate) + monthlyInvestment;
+      points.push({ year: (month / 12).toFixed(1), principal: totalPrincipal, value: totalValue });
+    }
+
+    chart.data.labels = points.map(p => p.year);
+    chart.data.datasets[0].data = points.map(p => p.principal);
+    chart.data.datasets[1].data = points.map(p => p.value);
+    chart.update();
+
+    targets.forEach((t, i) => {
+      const found = points.find(p => p.value >= t.amount);
+      if (found) {
+        document.getElementById(`targetYear${i}`).textContent = found.year;
+        document.getElementById(`targetPrincipal${i}`).textContent = formatCurrency(found.principal);
+        document.getElementById(`targetValue${i}`).textContent = formatCurrency(found.value);
+      } else {
+        document.getElementById(`targetYear${i}`).textContent = '미달성';
+        document.getElementById(`targetPrincipal${i}`).textContent = '-';
+        document.getElementById(`targetValue${i}`).textContent = '-';
       }
     });
 
-    function recalcAndUpdate() {
-      const monthlyInvestment = parseInt(monthlyInput.value.replace(/,/g, '')) || 0;
-      const years = parseInt(periodInput.value) || 0;
-      const annualReturn = parseFloat(returnInput.value) / 100 || 0;
-      const monthlyRate = Math.pow(1 + annualReturn, 1 / 12) - 1;
+    const last = points[points.length - 1] || { year: '-', principal: 0, value: 0 };
+    document.getElementById('finalYear').textContent = last.year || '-';
+    document.getElementById('finalPrincipal').textContent = formatCurrency(last.principal);
+    document.getElementById('finalValue').textContent = formatCurrency(last.value);
 
-      let totalPrincipal = 0, totalValue = 0;
-      const points = [];
+    resultComment.textContent =
+      `📌 총 ${last.year}년간 투자한 원금은 약 ${formatCurrency(last.principal)}억 원이며, 평가금액은 약 ${formatCurrency(last.value)}억 원입니다.`;
+  }
 
-      for (let month = 1; month <= years * 12; month++) {
-        totalPrincipal += monthlyInvestment;
-        totalValue = totalValue * (1 + monthlyRate) + monthlyInvestment;
-        points.push({ year: (month / 12).toFixed(1), principal: totalPrincipal, value: totalValue });
-      }
-
-      chart.data.labels = points.map(p => p.year);
-      chart.data.datasets[0].data = points.map(p => p.principal);
-      chart.data.datasets[1].data = points.map(p => p.value);
-      chart.update();
-
-      targets.forEach((t, i) => {
-        const found = points.find(p => p.value >= t.amount);
-        if (found) {
-          document.getElementById(`targetYear${i}`).textContent = found.year;
-          document.getElementById(`targetPrincipal${i}`).textContent = formatCurrency(found.principal);
-          document.getElementById(`targetValue${i}`).textContent = formatCurrency(found.value);
-        } else {
-          document.getElementById(`targetYear${i}`).textContent = '미달성';
-          document.getElementById(`targetPrincipal${i}`).textContent = '-';
-          document.getElementById(`targetValue${i}`).textContent = '-';
-        }
-      });
-
-      const last = points[points.length - 1] || { year: '-', principal: 0, value: 0 };
-      document.getElementById('finalYear').textContent = last.year || '-';
-      document.getElementById('finalPrincipal').textContent = formatCurrency(last.principal);
-      document.getElementById('finalValue').textContent = formatCurrency(last.value);
-
-      // 분석 코멘트 출력
-      resultComment.textContent =
-        `📌 총 ${last.year}년간 투자한 원금은 약 ${formatCurrency(last.principal)}억 원이며, 평가금액은 약 ${formatCurrency(last.value)}억 원입니다.`;
-    }
-
-    monthlyInput.addEventListener('input', () => {
-      const numeric = monthlyInput.value.replace(/[^0-9]/g, '');
-      monthlyInput.value = formatWithComma(numeric);
+  [initialInput, monthlyInput].forEach(input => {
+    input.addEventListener('input', () => {
+      const numeric = input.value.replace(/[^0-9]/g, '');
+      input.value = formatWithComma(numeric);
       recalcAndUpdate();
     });
-    periodInput.addEventListener('input', recalcAndUpdate);
-    returnInput.addEventListener('input', recalcAndUpdate);
+  });
+  [increaseInput, periodInput, returnInput].forEach(i => i.addEventListener('input', recalcAndUpdate));
 
-    recalcAndUpdate();
-  </script>
+  recalcAndUpdate();
+</script>
 </body>
 </html>

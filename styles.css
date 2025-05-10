@@ -88,12 +88,12 @@ a:hover {
   text-decoration: underline;
 }
 
-/* 차트 영역 */
+/* 차트 영역 
 #chart, #chartCanvas, #rollingReturnChart, #histogramChart {
   width: 100%;
   max-width: 100%;
   margin-top: 2rem;
-}
+}*/
 
 /* 메모/설명 텍스트 */
 .note {
