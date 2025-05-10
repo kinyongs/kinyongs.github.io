@@ -88,12 +88,24 @@ a:hover {
   text-decoration: underline;
 }
 
-/* 차트 영역 
-#chart, #chartCanvas, #rollingReturnChart, #histogramChart {
+/* 차트 영역 */
+.chart-wrapper {
   width: 100%;
-  max-width: 100%;
-  margin-top: 2rem;
-}*/
+  max-width: 720px;
+  margin: 2rem auto;
+  aspect-ratio: 1 / 1; /* 기본 모바일 1:1 */
+}
+
+@media (min-width: 768px) {
+  .chart-wrapper {
+    aspect-ratio: 3 / 2; /* PC는 더 와이드하게 */
+  }
+}
+
+canvas {
+  width: 100% !important;
+  height: auto !important;
+}
 
 /* 메모/설명 텍스트 */
 .note {
