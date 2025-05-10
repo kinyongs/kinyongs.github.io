@@ -94,6 +94,8 @@ a:hover {
   max-width: 720px;
   margin: 2rem auto;
   aspect-ratio: 1 / 1; /* 기본 모바일 1:1 */
+  position: relative;
+  min-height: 300px
 }
 
 @media (min-width: 768px) {
@@ -104,7 +106,7 @@ a:hover {
 
 canvas {
   width: 100% !important;
-  height: auto !important;
+  height: 100% !important;
 }
 
 /* 메모/설명 텍스트 */
