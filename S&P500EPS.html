@@ -3,10 +3,16 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>S&P500 지수와와 EPS 관계 분석</title>
+  <title>S&P500 지수와 EPS 관계 분석</title>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="styles.css">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    canvas {
+      width: 100% !important;
+      height: auto !important;
+    }
+  </style>
 </head>
 <body>
 
@@ -20,8 +26,8 @@
       동일한 기간 동안의 지수와 주당순이익(EPS)을 비교하여 추세와 상관관계를 분석합니다.
     </p>
 
-    <section>
-      <canvas id="doubleYChart" height="200"></canvas>
+    <section style="width: 100%;">
+      <canvas id="doubleYChart" height="500"></canvas>
       <div id="correlationText" style="text-align: center; font-size: 1.05rem; margin-top: 1.5rem; color: #495057;"></div>
     </section>
   </div>
@@ -45,7 +51,6 @@
         }
       }
 
-      // 상관계수 계산
       function pearsonCorrelation(x, y) {
         const n = x.length;
         const avgX = x.reduce((a, b) => a + b, 0) / n;
@@ -58,7 +63,6 @@
 
       const correlation = pearsonCorrelation(prices, eps);
 
-      // 차트 그리기
       const ctx = document.getElementById('doubleYChart').getContext('2d');
       new Chart(ctx, {
         type: 'line',
@@ -86,7 +90,7 @@
           plugins: {
             title: {
               display: true,
-              text: 'S&P500 지수와와 EPS 추세'
+              text: 'S&P500 지수와 EPS 추세'
             },
             legend: {
               position: 'bottom'
@@ -98,7 +102,7 @@
               position: 'left',
               title: {
                 display: true,
-                text: '지수수'
+                text: '지수'
               }
             },
             yEPS: {
@@ -123,10 +127,12 @@
       });
 
       document.getElementById('correlationText').innerHTML =
-        `📈 S&P500 지수와와 EPS 간의 상관계수는 <strong>${correlation.toFixed(4)}</strong>입니다.`;
+        `📈 S&P500 지수와 EPS 간의 상관계수는 <strong>${correlation.toFixed(4)}</strong>입니다.`;
     }
 
-    drawChart();
+    document.addEventListener("DOMContentLoaded", function () {
+      drawChart();
+    });
   </script>
 </body>
 </html>
