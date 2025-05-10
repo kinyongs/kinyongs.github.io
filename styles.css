@@ -95,7 +95,6 @@ a:hover {
   margin: 2rem auto;
   aspect-ratio: 1 / 1; /* 기본 모바일 1:1 */
   position: relative;
-  min-height: 300px
 }
 
 @media (min-width: 768px) {
