@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://kinyongs.github.io/</loc>
+  </url>
+  <url>
+    <loc>https://kinyongs.github.io/DCA_general.html</loc>
+  </url>
+  <url>
+    <loc>https://kinyongs.github.io/DCA_S&P500.html</loc>
+  </url>
+  <url>
+    <loc>https://kinyongs.github.io/S&P500_trend.html</loc>
+  </url>
+  <url>
+    <loc>https://kinyongs.github.io/S&P500EPS.html</loc>
+  </url>
+  <url>
+    <loc>https://kinyongs.github.io/S&P500_seasonality.html</loc>
+  </url>
+</urlset>
