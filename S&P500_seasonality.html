@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>S&P500 계절성 분석</title>
+  <link rel="stylesheet" href="styles.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="price_daily.js"></script>
+  <style>
+    canvas {
+      width: 100% !important;
+      height: 100% !important;
+    }
+  </style>
+</head>
+<body>
+  <div style="text-align: right; margin-bottom: 10px;">
+    <a href="index.html">🏠 메인으로</a>
+  </div>
+
+  <div class="card">
+    <h1>📈 S&P500 계절성 분석</h1>
+    <p style="text-align: center; color: #555; margin-top: -1rem;">
+      S&P500의 일별 누적 수익률과 월별 요약 수익률을 함께 시각화합니다.
+    </p>
+
+    <section style="text-align: center; margin-bottom: 20px;">
+      <label>시작 연도:
+        <input type="number" id="startYear" style="width: 100px;" />
+      </label>
+      <label style="margin-left: 1rem;">종료 연도:
+        <input type="number" id="endYear" style="width: 100px;" />
+      </label>
+      <br />
+      <button style="margin-top: 10px;" onclick="drawSeasonality()">📊 차트 그리기</button>
+    </section>
+
+    <section class="chart-wrapper">
+      <canvas id="seasonalityChart"></canvas>
+    </section>
+
+    <section class="chart-wrapper">
+      <canvas id="monthlyChart"></canvas>
+    </section>
+
+    <section style="max-width: 700px; margin: 2rem auto; font-size: 0.95rem;">
+      <div id="summaryBox" style="color: #333; text-align: left; line-height: 1.6;"></div>
+    </section>
+
+
+
+  </div>
+
+
+
+  <div style="text-align: center; margin-top: 20px;">
+    <button onclick="location.href='index.html'">🔙 메인으로 돌아가기</button>
+  </div>
+
+  <script>
+    function getDayKey(date) {
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      return `${month}-${day}`;
+    }
+
+    function drawSeasonality() {
+      const startYear = parseInt(document.getElementById('startYear').value);
+      const endYear = parseInt(document.getElementById('endYear').value);
+      const totalYears = endYear - startYear + 1;
+
+      const entries = Object.entries(priceData)
+        .map(([dateStr, price]) => ({ date: new Date(dateStr), price }))
+        .filter(d => {
+          const y = d.date.getFullYear();
+          return y >= startYear && y <= endYear;
+        })
+        .sort((a, b) => a.date - b.date);
+
+      const dailyReturnsByYear = {};
+
+      for (let i = 1; i < entries.length; i++) {
+        const current = entries[i];
+        const prev = entries[i - 1];
+        const year = current.date.getFullYear();
+
+        if (prev.date.getFullYear() !== year) continue;
+
+        const r = (current.price - prev.price) / prev.price;
+        const key = getDayKey(current.date);
+        const month = current.date.getMonth(); // 0~11
+
+        if (!dailyReturnsByYear[year]) dailyReturnsByYear[year] = [];
+        dailyReturnsByYear[year].push({ key, return: r, month });
+      }
+
+      // 모든 날짜 key 확보
+      const allDateKeys = new Set();
+      for (const year in dailyReturnsByYear) {
+        for (const entry of dailyReturnsByYear[year]) {
+          allDateKeys.add(entry.key);
+        }
+      }
+      const dateList = Array.from(allDateKeys).sort();
+
+      // 전일 값 유지 누적 수익률
+      const filledCumulative = {};
+      const monthlyReturns = Array(12).fill().map(() => []);
+
+      for (const year in dailyReturnsByYear) {
+        const returnMap = Object.fromEntries(dailyReturnsByYear[year].map(e => [e.key, e.return]));
+        const monthMap = Object.fromEntries(dailyReturnsByYear[year].map(e => [e.key, e.month]));
+
+        let product = 1;
+        for (const day of dateList) {
+          if (day in returnMap) {
+            product *= (1 + returnMap[day]);
+          }
+          if (!filledCumulative[day]) filledCumulative[day] = [];
+          filledCumulative[day].push(product - 1);
+
+          const m = monthMap[day];
+          if (m !== undefined) monthlyReturns[m].push(returnMap[day]);
+        }
+      }
+
+      // 누적 평균 수익률
+      const sortedKeys = dateList;
+      const avgCumulative = sortedKeys.map(key => {
+        const values = filledCumulative[key];
+        const avg = values.reduce((a, b) => a + b, 0) / values.length;
+        return (avg * 100).toFixed(2);
+      });
+
+      // 월별 수익률 평균 계산
+      const monthlyAvg = monthlyReturns.map(arr => {
+        if (arr.length === 0) return 0;
+        const sum = arr.reduce((a, b) => a + b, 0);
+        return (sum / arr.length * 100).toFixed(2);
+      });
+
+      const ctx1 = document.getElementById("seasonalityChart").getContext("2d");
+      const ctx2 = document.getElementById("monthlyChart").getContext("2d");
+
+      if (window.seasonalityChartInstance) window.seasonalityChartInstance.destroy();
+      if (window.monthlyChartInstance) window.monthlyChartInstance.destroy();
+
+      window.seasonalityChartInstance = new Chart(ctx1, {
+        type: "line",
+        data: {
+          labels: sortedKeys,
+          datasets: [{
+            label: `평균 누적 수익률 (%) (${startYear}~${endYear})`,
+            data: avgCumulative,
+            borderColor: "#4e79a7",
+            fill: false,
+            tension: 0.3,
+            pointRadius: 0
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            title: {
+              display: true,
+              text: "📈 연중 누적 수익률 흐름"
+            },
+            legend: {
+              position: 'bottom'
+            }
+          },
+          scales: {
+            x: {
+              title: {
+                display: true,
+                text: '월 (Month)'
+              },
+              ticks: {
+                callback: function (value) {
+                  const label = this.getLabelForValue(value);
+                  const month = label.slice(0, 2);
+                  const monthMap = {
+                    "01": "Jan", "02": "Feb", "03": "Mar", "04": "Apr",
+                    "05": "May", "06": "Jun", "07": "Jul", "08": "Aug",
+                    "09": "Sep", "10": "Oct", "11": "Nov", "12": "Dec"
+                  };
+                  return monthMap[month] || '';
+                },
+                maxTicksLimit: 12
+              }
+            },
+            y: {
+              title: {
+                display: true,
+                text: '누적 수익률 (%)'
+              }
+            }
+          }
+        }
+      });
+
+      window.monthlyChartInstance = new Chart(ctx2, {
+        type: "bar",
+        data: {
+          labels: ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
+                   "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
+          datasets: [{
+            label: `월별 평균 수익률 (%)`,
+            data: monthlyAvg,
+            backgroundColor: "#59a14f"
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            title: {
+              display: true,
+              text: "📊 월별 평균 수익률"
+            },
+            legend: {
+              display: false
+            }
+          },
+          scales: {
+            y: {
+              title: {
+                display: true,
+                text: '평균 수익률 (%)'
+              }
+            }
+          }
+        }
+      });
+
+      // 결과 요약 텍스트 작성
+      const monthNames = ["1월", "2월", "3월", "4월", "5월", "6월",
+                          "7월", "8월", "9월", "10월", "11월", "12월"];
+
+      const numericMonthly = monthlyAvg.map(parseFloat);
+      const maxVal = Math.max(...numericMonthly);
+      const minVal = Math.min(...numericMonthly);
+      const maxMonth = monthNames[numericMonthly.indexOf(maxVal)];
+      const minMonth = monthNames[numericMonthly.indexOf(minVal)];
+      const avgAll = (numericMonthly.reduce((a, b) => a + b, 0) / 12).toFixed(2);
+      const avgFirst = (numericMonthly.slice(0, 6).reduce((a, b) => a + b, 0) / 6).toFixed(2);
+      const avgSecond = (numericMonthly.slice(6).reduce((a, b) => a + b, 0) / 6).toFixed(2);
+
+      // 출력
+      document.getElementById("summaryBox").innerHTML = `
+        <p>- 평균 수익률이 가장 높은 달은 <strong>${maxMonth}</strong>이며, <strong>${maxVal.toFixed(2)}%</strong>입니다.</p>
+        <p>- 평균 수익률이 가장 낮은 달은 <strong>${minMonth}</strong>이며, <strong>${minVal.toFixed(2)}%</strong>입니다.</p>
+        <p>- 연간 월평균 수익률은 <strong>${avgAll}%</strong>입니다.</p>
+        <p>- 상반기(1~6월) 평균 수익률은 <strong>${avgFirst}%</strong>, 하반기(7~12월) 평균 수익률은 <strong>${avgSecond}%</strong>입니다.</p>
+      `;
+
+
+    }
+    
+
+
+
+    // ✅ 페이지 로드시 자동 실행
+    window.onload = () => {
+      const years = Object.keys(priceData).map(dateStr => new Date(dateStr).getFullYear());
+      const minYear = Math.min(...years);
+      const maxYear = Math.max(...years);
+      document.getElementById('startYear').value = minYear;
+      document.getElementById('endYear').value = maxYear;
+      drawSeasonality();
+    };
+  </script>
+</body>
+</html>
