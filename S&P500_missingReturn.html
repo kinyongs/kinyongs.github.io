@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>S&P500 장기투자 시 놓친 날들의 영향</title>
+  <link rel="stylesheet" href="styles.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@1.4.0"></script>
+  <script src="https://cdn.jsdelivr.net/npm/luxon@3/build/global/luxon.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-luxon@1"></script>
+
+  <script src="price_daily.js"></script>
+</head>
+<body>
+
+  <div style="text-align: right; margin-bottom: 10px;">
+    <a href="index.html">🏠 메인으로</a>
+  </div>
+
+  <div class="card">
+    <h1>📈 S&P 500 장기투자 시 놓친 날들의 영향</h1>
+    <p style="text-align: center; max-width: 720px; margin: 0 auto 1.5rem; font-size: 1rem; color: #555;">
+  이 시뮬레이션은 장기투자 전략의 중요성을 보여줍니다. 시장에 계속 투자했을 때와 비교해, 
+  최고의 수익일 혹은 최악의 손실일 며칠을 놓쳤을 때 누적 수익률이 얼마나 달라지는지를 시각적으로 확인할 수 있습니다.
+</p>
+
+    <section style="margin-bottom: 20px; text-align: center;">
+      <table style="margin: 0 auto;">
+        <tr>
+          <th style="text-align: right; padding: 6px 10px;">시작 연도</th>
+          <td style="text-align: left; padding: 6px 10px;"><input type="number" id="startYear" value="1928"  style="width: 120px;"/></td>
+        </tr>
+        <tr>
+          <th style="text-align: right; padding: 6px 10px;">종료 연도</th>
+          <td style="text-align: left; padding: 6px 10px;"><input type="number" id="endYear" value="2023"  style="width: 120px;"/></td>
+        </tr>
+        <tr>
+          <th style="text-align: right; padding: 6px 10px;">최고 수익일 제외 (N일)</th>
+          <td style="text-align: left; padding: 6px 10px;"><input type="number" id="topN" value="10" min="0"  style="width: 120px;"/></td>
+        </tr>
+        <tr>
+          <th style="text-align: right; padding: 6px 10px;">최악 수익일 제외 (N일)</th>
+          <td style="text-align: left; padding: 6px 10px;"><input type="number" id="bottomM" value="0" min="0"  style="width: 120px;"/></td>
+        </tr>
+        <tr>
+          <th style="text-align: right; padding: 6px 10px;">Y축 스케일</th>
+          <td style="text-align: left; padding: 6px 10px;">
+            <label><input type="radio" name="scaleType" value="linear" checked /> 선형</label>
+            <label><input type="radio" name="scaleType" value="log" /> 로그</label>
+          </td>
+        </tr>
+      </table>
+      <div style="text-align: center; margin-top: 1rem;">
+        <button onclick="drawChart()">📊 시뮬레이션 실행</button>
+      </div>
+    </section>
+
+    <section class="chart-wrapper">
+      <canvas id="cumulativeChart"></canvas>
+      <p style="font-size: 0.85rem; color: #666; text-align: center; margin-top: 0.5rem;">
+        <span style="color:orange;">🟧 주황색 화살표</span>: 최고 수익일 제외 &nbsp;&nbsp;&nbsp; <span style="color:teal;">🟦 청록색 화살표</span>: 최악 수익일 제외
+      </p>
+    </section>
+
+    <section style="max-width: 700px; margin: 2rem auto; font-size: 0.95rem; line-height: 1.6;" id="summaryText">
+    </section>
+  </div>
+
+  <div style="text-align: center; margin-top: 20px;">
+    <button onclick="location.href='index.html'">🔙 메인으로 돌아가기</button>
+  </div>
+
+  <script>
+    function drawChart() {
+      const startYear = parseInt(document.getElementById("startYear").value);
+      const endYear = parseInt(document.getElementById("endYear").value);
+      const topN = Math.max(0, parseInt(document.getElementById("topN").value));
+      const bottomM = Math.max(0, parseInt(document.getElementById("bottomM").value));
+      const scaleType = document.querySelector('input[name="scaleType"]:checked').value;
+
+      if (startYear < 1928 || endYear > 2023 || startYear > endYear) {
+        alert("⚠️ 연도 범위가 잘못되었습니다. 1928~2023 사이의 값을 입력하세요.");
+        return;
+      }
+
+      const entries = Object.entries(priceData)
+        .map(([date, price]) => ({ date: new Date(date), price }))
+        .filter(d => d.date.getFullYear() >= startYear && d.date.getFullYear() <= endYear)
+        .sort((a, b) => a.date - b.date);
+
+      const returns = [];
+      for (let i = 1; i < entries.length; i++) {
+        const r = (entries[i].price - entries[i - 1].price) / entries[i - 1].price;
+        if (Number.isFinite(r)) {
+          returns.push({ date: entries[i].date, return: r });
+        }
+      }
+
+      const shouldOptimize = returns.length >= 3000;
+
+      const sortedReturns = [...returns].sort((a, b) => b.return - a.return);
+      const topSlice = topN > 0 ? sortedReturns.slice(0, topN) : [];
+      const bottomSlice = bottomM > 0 ? sortedReturns.slice(-bottomM) : [];
+      const topDates = new Set(topSlice.map(d => +d.date));
+      const bottomDates = new Set(bottomSlice.map(d => +d.date));
+
+      let full = 1;
+      let excluded = 1;
+      const fullSeries = [];
+      const excludedSeries = [];
+      const labels = [];
+      const annotationLines = [];
+
+      for (let r of returns) {
+        full *= (1 + r.return);
+        const dateValue = +r.date;
+        if (!topDates.has(dateValue) && !bottomDates.has(dateValue)) {
+          excluded *= (1 + r.return);
+        }
+        const dateLabel = r.date.toISOString().slice(0, 10);
+        labels.push(dateLabel);
+        fullSeries.push(full);
+        excludedSeries.push(excluded);
+
+        if (topDates.has(dateValue)) {
+          annotationLines.push({
+            type: 'label',
+            xValue: dateLabel,
+            yValue: null,
+            content: ['🡇'],
+            position: {
+              x: 'center',
+              y: 'start'
+            },
+            color: 'orange',
+            font: {
+              weight: 'bold'
+            },
+            backgroundColor: 'transparent',
+            borderRadius: 0
+          });
+        }
+        if (bottomDates.has(dateValue)) {
+          annotationLines.push({
+            type: 'label',
+            xValue: dateLabel,
+            yValue: null,
+            content: ['🡇'],
+            position: {
+              x: 'center',
+              y: 'start'
+            },
+            color: 'teal',
+            font: {
+              weight: 'bold'
+            },
+            backgroundColor: 'transparent',
+            borderRadius: 0
+          });
+        }
+      }
+
+      const ctx1 = document.getElementById("cumulativeChart").getContext("2d");
+      if (window.cumulativeChartInstance) window.cumulativeChartInstance.destroy();
+
+      window.cumulativeChartInstance = new Chart(ctx1, {
+        type: 'line',
+        data: {
+          labels,
+          datasets: [
+            {
+              label: '전체 보유 전략',
+              data: fullSeries,
+              borderColor: '#007bff',
+              pointRadius: 0,
+              fill: false,
+              tension: 0.2
+            },
+            {
+              label: `최고 ${topN}일 + 최악 ${bottomM}일 제외 전략`,
+              data: excludedSeries,
+              borderColor: '#dc3545',
+              pointRadius: 0,
+              fill: false,
+              tension: 0.2
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          animation: shouldOptimize ? false : true,
+          scales: {
+            x: {
+              type: 'time',
+              time: {
+                tooltipFormat: 'yyyy-MM-dd',
+                displayFormats: {
+                  day: 'yyyy-MM-dd',
+                  month: 'yyyy-MM',
+                  year: 'yyyy'
+                }
+              },
+              ticks: {
+                autoSkip: true,
+                maxTicksLimit: 12
+              }
+            },
+            y: {
+              type: scaleType === 'log' ? 'logarithmic' : 'linear',
+              beginAtZero: false,
+              min: Math.min(...excludedSeries.concat(fullSeries)) * 0.95,
+              max: Math.max(...excludedSeries.concat(fullSeries)) * 1.05
+            }
+          },
+          plugins: {
+            decimation: shouldOptimize ? {
+              enabled: true,
+              algorithm: 'min-max'
+            } : false,
+            title: {
+              display: true,
+              text: "Missing Date가 장기 수익률에 미치는 영향"
+            },
+            annotation: {
+              annotations: annotationLines
+            }
+          }
+        },
+        plugins: [Chart.registry.getPlugin('annotation')]
+      });
+
+      const totalReturn = (full - 1) * 100;
+      const excludedReturn = (excluded - 1) * 100;
+      const diff = totalReturn - excludedReturn;
+      const direction = diff >= 0 ? "감소" : "증가";
+
+      document.getElementById("summaryText").innerHTML = `
+        <p>전체 기간 동안 시장에 계속 투자한 경우, 누적 수익률은 <strong>${totalReturn.toFixed(2)}%</strong>입니다.</p>
+        <p>만약 최고 ${topN}일과 최악 ${bottomM}일을 놓쳤다면, 누적 수익률은 <strong>${excludedReturn.toFixed(2)}%</strong>입니다.</p>
+        <p>이로 인해 장기 수익률은 <strong>${Math.abs(diff).toFixed(2)}%</strong>만큼 <strong>${direction}</strong>하게 됩니다.</p>
+      `;
+    }
+  drawChart();
+  </script>
+</body>
+</html>
