@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+
   <url>
     <loc>https://kinyongs.github.io/</loc>
   </url>
@@ -7,15 +8,31 @@
     <loc>https://kinyongs.github.io/DCA_general.html</loc>
   </url>
   <url>
-    <loc>https://kinyongs.github.io/DCA_S&P500.html</loc>
+    <loc>https://kinyongs.github.io/DCA_S&amp;P500.html</loc>
   </url>
   <url>
-    <loc>https://kinyongs.github.io/S&P500_trend.html</loc>
+    <loc>https://kinyongs.github.io/S&amp;P500_trend.html</loc>
   </url>
   <url>
-    <loc>https://kinyongs.github.io/S&P500EPS.html</loc>
+    <loc>https://kinyongs.github.io/S&amp;P500EPS.html</loc>
   </url>
   <url>
-    <loc>https://kinyongs.github.io/S&P500_seasonality.html</loc>
+    <loc>https://kinyongs.github.io/S&amp;P500_seasonality.html</loc>
   </url>
+  <url>
+    <loc>https://kinyongs.github.io/S&amp;P500_missingReturn.html</loc>
+  </url>
+  <url>
+    <loc>https://kinyongs.github.io/S&amp;P500_Streak_Stats.html</loc>
+  </url>
+  <url>
+    <loc>https://kinyongs.github.io/S&amp;P500_TUW.html</loc>
+  </url>
+  <url>
+    <loc>https://kinyongs.github.io/about.html</loc>
+  </url>
+  <url>
+    <loc>https://kinyongs.github.io/privacy.html</loc>
+  </url>
+
 </urlset>

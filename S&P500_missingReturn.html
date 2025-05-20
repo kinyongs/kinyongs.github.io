@@ -33,7 +33,7 @@
         </tr>
         <tr>
           <th style="text-align: right; padding: 6px 10px;">종료 연도</th>
-          <td style="text-align: left; padding: 6px 10px;"><input type="number" id="endYear" value="2023"  style="width: 120px;"/></td>
+          <td style="text-align: left; padding: 6px 10px;"><input type="number" id="endYear" value="2024"  style="width: 120px;"/></td>
         </tr>
         <tr>
           <th style="text-align: right; padding: 6px 10px;">최고 수익일 제외 (N일)</th>
@@ -78,8 +78,8 @@
       const bottomM = Math.max(0, parseInt(document.getElementById("bottomM").value));
       const scaleType = document.querySelector('input[name="scaleType"]:checked').value;
 
-      if (startYear < 1928 || endYear > 2023 || startYear > endYear) {
-        alert("⚠️ 연도 범위가 잘못되었습니다. 1928~2023 사이의 값을 입력하세요.");
+      if (startYear < 1928 || endYear > 2024 || startYear > endYear) {
+        alert("⚠️ 연도 범위가 잘못되었습니다. 1928~2024 사이의 값을 입력하세요.");
         return;
       }
 

@@ -9,7 +9,6 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
-
   <div style="text-align: right; margin-bottom: 10px;">
     <a href="index.html">🏠 메인으로</a>
   </div>
@@ -17,17 +16,18 @@
   <div class="card">
     <h1>📈 S&P500 투자 수익률 추세 분석</h1>
     <p style="text-align: center; color: #555; margin-top: -1rem; margin-bottom: 2rem;">
-      시작 월과 종료 월을 선택하고, 해당 구간의 실적 및 CAGR(연복리 수익률)을 확인해보세요.
+      시작 연도와 종료 연도를 입력하고, 해당 구간의 실적 및 CAGR(연복리 수익률)을 확인해보세요.
     </p>
 
     <section style="margin-bottom: 20px; text-align: center;">
       <table style="margin: 0 auto;">
         <tr>
-          <th style="text-align: right; padding: 6px 10px;">📊 데이터 선택</th>
-          <td style="text-align: left; padding: 6px 10px;">
-            <label><input type="radio" name="dataType" value="price" checked onchange="updateDateOptions()"> Price</label>
-            <label><input type="radio" name="dataType" value="totalReturn" onchange="updateDateOptions()"> Total Return</label>
-          </td>
+          <th style="text-align: right; padding: 6px 10px;">⏳ 시작 연도</th>
+          <td style="text-align: left; padding: 6px 10px;"><input type="number" id="startYear" style="width: 120px;"/></td>
+        </tr>
+        <tr>
+          <th style="text-align: right; padding: 6px 10px;">⏱️ 종료 연도</th>
+          <td style="text-align: left; padding: 6px 10px;"><input type="number" id="endYear" style="width: 120px;"/></td>
         </tr>
         <tr>
           <th style="text-align: right; padding: 6px 10px;">📐 Y축 스케일</th>
@@ -37,12 +37,11 @@
           </td>
         </tr>
         <tr>
-          <th style="text-align: right; padding: 6px 10px;">⏳ 시작 월</th>
-          <td style="text-align: left; padding: 6px 10px;"><select id="startMonth"></select></td>
-        </tr>
-        <tr>
-          <th style="text-align: right; padding: 6px 10px;">⏱️ 종료 월</th>
-          <td style="text-align: left; padding: 6px 10px;"><select id="endMonth"></select></td>
+          <th style="text-align: right; padding: 6px 10px;">📊 계산 방식</th>
+          <td style="text-align: left; padding: 6px 10px;">
+            <label><input type="radio" name="cagrMethod" value="fit" checked> 데이터 피팅</label>
+            <label><input type="radio" name="cagrMethod" value="startend"> 시작/종료값 기반</label>
+          </td>
         </tr>
       </table>
 
@@ -54,99 +53,98 @@
     <section>
       <div class="chart-wrapper">
         <canvas id="cagrChart"></canvas>
-       <div id="cagrText" style="text-align: center; font-size: 1.05rem; margin-top: 1.2rem; color: #495057;"></div>
-       </div>
- 
+        <div id="cagrText" style="text-align: center; font-size: 1.05rem; margin-top: 1.2rem; color: #495057;"></div>
+      </div>
     </section>
   </div>
 
-  <div style="text-align: center; margin-top: 20px;">
-    <button onclick="location.href='index.html'">🔙 메인으로 돌아가기</button>
-  </div>
-
-  <script src="price_totalreturn_monthly.js"></script>
+  <script src="price_daily.js"></script>
   <script>
-    // 로그 스케일 등록
     Chart.register(Chart.registry.getScale('logarithmic'));
+
+    const allKeys = Object.keys(priceData);
+    const years = allKeys.map(d => parseInt(d.split('-')[0]));
+    document.getElementById('startYear').value = Math.min(...years);
+    document.getElementById('endYear').value = Math.max(...years);
 
     let cagrChartInstance = null;
 
-    function updateDateOptions() {
-      const dataType = document.querySelector('input[name="dataType"]:checked').value;
-      const data = dataType === 'price' ? priceData : totalReturnData;
-      const keys = Object.keys(data);
+    function drawChart() {
+      const yScaleType = document.querySelector('input[name="yScale"]:checked').value;
+      const cagrMethod = document.querySelector('input[name="cagrMethod"]:checked').value;
+      const startYear = parseInt(document.getElementById('startYear').value);
+      const endYear = parseInt(document.getElementById('endYear').value);
 
-      const startSelect = document.getElementById('startMonth');
-      const endSelect = document.getElementById('endMonth');
-
-      startSelect.innerHTML = '';
-      endSelect.innerHTML = '';
-
-      keys.forEach((key, index) => {
-        const optionStart = document.createElement('option');
-        optionStart.value = index;
-        optionStart.text = key;
-        startSelect.appendChild(optionStart);
-
-        const optionEnd = document.createElement('option');
-        optionEnd.value = index;
-        optionEnd.text = key;
-        endSelect.appendChild(optionEnd);
+      const filteredKeys = Object.keys(priceData).filter(d => {
+        const year = parseInt(d.split('-')[0]);
+        return year >= startYear && year <= endYear;
       });
 
-      startSelect.selectedIndex = 0;
-      endSelect.selectedIndex = keys.length - 1;
-    }
-
-    function drawChart() {
-      const dataType = document.querySelector('input[name="dataType"]:checked').value;
-      const yScaleType = document.querySelector('input[name="yScale"]:checked').value;
-      const data = dataType === 'price' ? priceData : totalReturnData;
-
-      const startIndex = parseInt(document.getElementById('startMonth').value);
-      const endIndex = parseInt(document.getElementById('endMonth').value);
-
-      if (startIndex >= endIndex) {
-        alert('시작 월은 종료 월보다 앞서야 합니다.');
+      if (filteredKeys.length < 2) {
+        alert('해당 기간의 데이터가 부족합니다.');
         return;
       }
 
-      const keys = Object.keys(data);
-      const period = keys.slice(startIndex, endIndex + 1);
-      const values = period.map(k => data[k]);
+      const monthlyKeys = filteredKeys.filter((date, i, arr) => {
+        const currentMonth = date.slice(0, 7);
+        return i === 0 || currentMonth !== arr[i - 1].slice(0, 7);
+      });
 
-      const startValue = values[0];
-      const endValue = values[values.length - 1];
-      const years = (values.length - 1) / 12;
-      const cagr = Math.pow(endValue / startValue, 1 / years) - 1;
-      const fitted = values.map((_, i) => startValue * Math.pow(1 + cagr, i / 12));
+      const values = monthlyKeys.map(k => priceData[k]);
 
-      // 로그 스케일: 0 이하 값을 null 처리
-      let adjustedValues = values.map(v => (yScaleType === 'log' && v <= 0 ? null : v));
-      let adjustedFitted = fitted.map(v => (yScaleType === 'log' && v <= 0 ? null : v));
+      let cagr = 0;
+      let fitted = [];
+      let methodText = '';
+
+      if (cagrMethod === 'fit') {
+        // 로그 선형 회귀 방식
+        const x = [...Array(values.length).keys()];
+        const logY = values.map(v => Math.log(v));
+        const n = x.length;
+        const sumX = x.reduce((a, b) => a + b, 0);
+        const sumY = logY.reduce((a, b) => a + b, 0);
+        const sumXY = x.reduce((acc, val, i) => acc + val * logY[i], 0);
+        const sumXX = x.reduce((acc, val) => acc + val * val, 0);
+        const slope = (n * sumXY - sumX * sumY) / (n * sumXX - sumX * sumX);
+        const intercept = (sumY - slope * sumX) / n;
+        cagr = Math.exp(slope * 12) - 1;
+        fitted = x.map(i => Math.exp(intercept + slope * i));
+        methodText = '데이터 피팅 방식';
+      } else {
+        // 시작값과 종료값을 이용한 방식
+        const startValue = values[0];
+        const endValue = values[values.length - 1];
+        const yearsSpan = (monthlyKeys.length - 1) / 12;
+        cagr = Math.pow(endValue / startValue, 1 / yearsSpan) - 1;
+        fitted = values.map((_, i) => startValue * Math.pow(1 + cagr, i / 12));
+        methodText = '시작/종료값 기반 방식';
+      }
+
+      const adjustedValues = values.map(v => (yScaleType === 'log' && v <= 0 ? null : v));
+      const adjustedFitted = fitted.map(v => (yScaleType === 'log' && v <= 0 ? null : v));
 
       const ctx = document.getElementById('cagrChart').getContext('2d');
-      if (cagrChartInstance && typeof cagrChartInstance.destroy === 'function') {
-        cagrChartInstance.destroy();
-      }
+      if (cagrChartInstance) cagrChartInstance.destroy();
 
       cagrChartInstance = new Chart(ctx, {
         type: 'line',
         data: {
-          labels: period,
+          labels: monthlyKeys,
           datasets: [
             {
               label: '실제 지수',
               data: adjustedValues,
               borderColor: '#4e79a7',
+              pointRadius: 0,
               fill: false,
               tension: 0.3
             },
             {
-              label: `CAGR 적합선 (${(cagr * 100).toFixed(2)}%)`,
+              label: `CAGR 추세선 (${(cagr * 100).toFixed(2)}%)`,
               data: adjustedFitted,
-              borderColor: '#f28e2b',
+              borderColor: 'red',
               borderDash: [6, 3],
+              pointRadius: 0,
               fill: false,
               tension: 0.3
             }
@@ -156,10 +154,6 @@
           responsive: true,
           maintainAspectRatio: false,
           plugins: {
-            title: {
-              display: true,
-              text: 'S&P500 CAGR 추세'
-            },
             legend: {
               position: 'bottom'
             }
@@ -176,6 +170,10 @@
               } : undefined
             },
             x: {
+              ticks: {
+                maxTicksLimit: 12,
+                callback: (val, index) => monthlyKeys[index]?.slice(0, 7) || ''
+              },
               title: {
                 display: true,
                 text: '기간'
@@ -186,10 +184,9 @@
       });
 
       document.getElementById('cagrText').innerHTML =
-        `📈 <strong>${period[0]}</strong>부터 <strong>${period[period.length - 1]}</strong>까지의 CAGR(연복리 수익률)은 약 <strong style="color:#d9534f;">${(cagr * 100).toFixed(2)}%</strong>입니다.`;
+        `📈 <strong>${monthlyKeys[0]}</strong>부터 <strong>${monthlyKeys[monthlyKeys.length - 1]}</strong>까지의 CAGR은 약 <strong style="color:red;">${(cagr * 100).toFixed(2)}%</strong>입니다. <br><em>(${methodText})</em>`;
     }
 
-    updateDateOptions();
     drawChart();
   </script>
 </body>
