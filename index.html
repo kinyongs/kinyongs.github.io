@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
-  <title>S&P 500 분석 도구</title>
+  <title>S&P 500 투자 분석 플랫폼</title>
 
   <!-- Google tag (gtag.js) -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-W02VSLB7RP"></script>
@@ -10,163 +10,231 @@
     window.dataLayer = window.dataLayer || [];
     function gtag(){dataLayer.push(arguments);}
     gtag('js', new Date());
-
     gtag('config', 'G-W02VSLB7RP');
   </script>
 
-
-
+  <!-- Fonts -->
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
+
   <style>
+    * {
+      box-sizing: border-box;
+    }
+
     body {
-      background: linear-gradient(to bottom right, #e9f0fc, #f8fbff);
+      margin: 0;
       font-family: 'Noto Sans KR', sans-serif;
-      margin: 0;
+      background-color: #f4f7fb;
+      color: #333;
+    }
+
+    /* Hero Section */
+    .hero {
+      position: relative;
+      height: 90vh;
+      background: url('main2.png') center center / cover no-repeat;
       display: flex;
-      flex-direction: column;
-      min-height: 100vh;
-    }
-
-    header {
+      justify-content: center;
+      align-items: center;
       text-align: center;
-      padding: 40px 16px 8px;
     }
 
-    header h1 {
-      font-size: 2rem;
-      color: #2c3e50;
-      margin-bottom: 8px;
+    .hero::after {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 1;
     }
 
-    header p {
-      font-size: 1rem;
-      color: #555;
-      margin: 0;
+    .hero-content {
+      position: relative;
+      z-index: 2;
+      color: #fff;
+    }
+
+    .hero-content h1 {
+      font-size: 2.8rem;
+      margin-bottom: 1rem;
+      font-weight: 700;
+    }
+
+    .hero-content p {
+      font-size: 1.1rem;
+      margin-bottom: 2rem;
+    }
+
+    .hero-content a.button {
+      display: inline-block;
+      padding: 12px 28px;
+      border: 2px solid #fff;
+      border-radius: 6px;
+      color: #fff;
+      text-decoration: none;
+      transition: all 0.3s;
+    }
+
+    .hero-content a.button:hover {
+      background: #fff;
+      color: #000;
+    }
+
+    /* Section */
+    .section {
+      padding: 60px 20px;
+      background-color: #1f1f1f;
+      text-align: center;
+    }
+
+    .section h2 {
+      color: #f39c12;
+      font-size: 1.6rem;
+      margin-bottom: 1rem;
+    }
+
+    .section p.lead {
+      max-width: 700px;
+      margin: 0 auto 40px;
+      font-size: 0.95rem;
+      color: #bbb;
+      line-height: 1.6;
     }
 
     .cards {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
       gap: 24px;
-      max-width: 900px;
-      margin: 32px auto;
-      padding: 0 16px;
+      max-width: 1000px;
+      margin: 0 auto;
     }
 
     .card {
-      background-color: white;
-      padding: 16px 16px;
-      border-radius: 10px;
-      box-shadow: 0 3px 8px rgba(0, 0, 0, 0.06);
-      text-align: center;
+      background-color: #2a2a2a;
+      border-radius: 12px;
+      padding: 24px 16px;
+      color: #ddd;
       text-decoration: none;
-      color: #333;
       transition: transform 0.2s ease, box-shadow 0.2s ease;
     }
 
     .card:hover {
       transform: translateY(-6px);
-      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+      box-shadow: 0 10px 24px rgba(0, 0, 0, 0.2);
     }
 
     .card .icon {
-      font-size: 1.5rem;
-      margin-bottom: 4px;
+      font-size: 1.8rem;
+      margin-bottom: 8px;
     }
 
-    .card h2 {
+    .card h3 {
       font-size: 1.1rem;
-      margin-bottom: 4px;
+      margin: 8px 0;
+      color: #fff;
     }
 
     .card p {
       font-size: 0.85rem;
-      color: #555;
-      margin: 0;
+      line-height: 1.4;
+      color: #aaa;
     }
 
     footer {
-      text-align: center;
-      padding: 16px;
-      font-size: 0.85rem;
       background-color: #f0f2f5;
+      text-align: center;
+      padding: 20px;
+      font-size: 0.85rem;
       color: #666;
     }
 
     footer a {
       color: #3366cc;
       text-decoration: none;
+      margin: 0 4px;
+    }
+
+    @media (max-width: 600px) {
+      .hero-content h1 {
+        font-size: 2rem;
+      }
+
+      .hero-content p {
+        font-size: 1rem;
+      }
+
+      .card h3 {
+        font-size: 1rem;
+      }
     }
   </style>
 </head>
 <body>
 
-  <header>
-    <h1>📊 S&P 500 투자 분석 도구</h1>
-    <p>이 사이트는 S&P500 지수 기반의 다양한 투자 전략을 시각화하여<br>
-      사용자의 장기 투자 인사이트를 돕기 위해 만들어졌습니다.</p>
-    <img src="main.png" alt="Bull Market Illustration" style="max-width: 300px; margin-top: 16px;">
-  </header>
-
-  <section style="text-align: center; padding: 20px;">
-    <h2 style="font-size: 1.4rem; color: #2c3e50;">🔍 사용 방법 안내</h2>
-    <p style="max-width: 700px; margin: auto; color: #555;">
-      상단의 각 카드 메뉴를 클릭하면 시뮬레이션 도구 및 분석 자료에 접근할 수 있습니다.<br>
-      데이터는 S&P500의 실제 수익률 및 재무 지표를 기반으로 하며, 투자 전략의 가정을 자유롭게 설정할 수 있습니다.
-    </p>
+  <!-- Hero Section -->
+  <section class="hero">
+    <div class="hero-content">
+      <h1>S&P 500 투자 분석 도구</h1>
+      <p>실제 데이터를 바탕으로 투자 전략을 검토하고 시각화하세요</p>
+      <a href="#services" class="button">시작하기</a>
+    </div>
   </section>
 
-  <main class="cards">
-    <a class="card" href="DCA_general.html">
-      <div class="icon">🎯</div>
-      <h2>적립식 투자 시뮬레이션</h2>
-      <p>사용자 지정 수익률로 적립식 투자 목표와 성장 분석</p>
-    </a>
-    <a class="card" href="DCA_S&P500.html">
-      <div class="icon">📈</div>
-      <h2>S&P500 Rolling Returns</h2>
-      <p>실제 월간 수익률 기반 Rolling Returns 분석</p>
-    </a>
-    <a class="card" href="S&P500_trend.html">
-      <div class="icon">📊</div>
-      <h2>S&P500 CAGR 추세</h2>
-      <p>Price & Total Return의 연복리 성장 추세 시각화</p>
-    </a>
-    <a class="card" href="S&P500EPS.html">
-      <div class="icon">📉</div>
-      <h2>S&P500 vs EPS</h2>
-      <p>지수와 주당순이익(EPS)의 관계 시각화 및 상관분석</p>
-    </a>
-    <a class="card" href="S&P500_seasonality.html">
-      <div class="icon">🌤️</div>
-      <h2>S&P500 계절성 분석</h2>
-      <p>누적 수익률 흐름과 월별 평균 수익률을 시각화합니다</p>
-  </a>
-  <a class="card" href="S&P500_missingReturn.html">
-    <div class="icon">📈</div>
-    <h2>S&P500 놓친 날들의 영향 분석</h2>
-    <p>장기투자에서 단 며칠을 놓쳤을 때 누적 수익률이 어떻게 변하는지를 보여줍니다.</p>
-  </a>
-  <a class="card" href="S&P500_Streak_Stats.html">
-    <div class="icon">🔁</div>
-    <h2>S&P500 연속 상승/하락 분석</h2>
-    <p>상승 또는 하락이 며칠 연속되었을 때, 다음날 수익률의 통계적 확률을 확인합니다.</p>
-  </a>
-  <a class="card" href="S&P500_TUW.html">
-    <div class="icon">🕳️</div>
-    <h2>S&P500 Time Under Water</h2>
-    <p>고점 대비 손실 상태가 지속된 기간과 최대 손실(MDD)을 시각화합니다.</p>
-  </a>
+  <!-- Service Cards Section -->
+  <section class="section" id="services">
+    <h2>SERVICES</h2>
+    <p class="lead">S&P500 데이터를 기반으로 다양한 투자 전략과 인사이트를 제공합니다</p>
+    <div class="cards">
+      <a class="card" href="DCA_general.html">
+        <div class="icon">🎯</div>
+        <h3>적립식 투자 시뮬레이션</h3>
+        <p>사용자 지정 수익률로 적립식 투자 목표와 성장 분석</p>
+      </a>
+      <a class="card" href="DCA_S&P500.html">
+        <div class="icon">📈</div>
+        <h3>S&P500 Rolling Returns</h3>
+        <p>실제 월간 수익률 기반 Rolling Returns 분석</p>
+      </a>
+      <a class="card" href="S&P500_trend.html">
+        <div class="icon">📊</div>
+        <h3>S&P500 CAGR 추세</h3>
+        <p>Price & Total Return의 연복리 성장 추세 시각화</p>
+      </a>
+      <a class="card" href="S&P500EPS.html">
+        <div class="icon">📉</div>
+        <h3>S&P500 vs EPS</h3>
+        <p>지수와 주당순이익(EPS)의 관계 시각화 및 상관분석</p>
+      </a>
+      <a class="card" href="S&P500_seasonality.html">
+        <div class="icon">🌤️</div>
+        <h3>S&P500 계절성 분석</h3>
+        <p>누적 수익률 흐름과 월별 평균 수익률을 시각화합니다</p>
+      </a>
+      <a class="card" href="S&P500_missingReturn.html">
+        <div class="icon">📌</div>
+        <h3>S&P500 놓친 날들의 영향</h3>
+        <p>단 몇 일을 놓쳤을 때 누적 수익률 변화 분석</p>
+      </a>
+      <a class="card" href="S&P500_Streak_Stats.html">
+        <div class="icon">🔁</div>
+        <h3>S&P500 연속 상승/하락</h3>
+        <p>연속 상승/하락 후 다음날 수익률 통계 확인</p>
+      </a>
+      <a class="card" href="S&P500_TUW.html">
+        <div class="icon">🕳️</div>
+        <h3>Time Under Water</h3>
+        <p>고점 대비 손실 상태 지속 기간과 최대 손실(MDD) 분석</p>
+      </a>
+    </div>
+  </section>
 
-
-
-
-  </main>
-
+  <!-- Footer -->
   <footer>
     <p>© 2025 kinyongs | 이 사이트는 개인 투자 분석 및 학습 목적의 자료를 제공합니다.</p>
-    <p><a href="about.html">About</a> | <a href="privacy.html">Privacy Policy</a> | <a href="mailto:kinyongs@naver.com">Contact</a></p>  
-
+    <p>
+      <a href="about.html">About</a> |
+      <a href="privacy.html">Privacy Policy</a> |
+      <a href="mailto:kinyongs@naver.com">Contact</a>
+    </p>
   </footer>
 
 </body>
