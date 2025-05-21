@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>S&P500 장기투자: 놓친 날들의 영향 분석</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      line-height: 1.6;
+      max-width: 800px;
+      margin: 40px auto;
+      padding: 0 20px;
+      color: #333;
+    }
+    h1, h2, h3 {
+      color: #1a237e;
+    }
+    img {
+      max-width: 100%;
+      height: auto;
+      margin: 20px 0;
+    }
+    .divider {
+      border-top: 1px solid #ccc;
+      margin: 2rem 0;
+    }
+  </style>
+</head>
+<body>
+  <h1>S&P500 장기투자: 놓친 며칠이 수익률에 미치는 영향</h1>
+
+  <p>장기 투자 전략, 특히 "Buy and Hold" 또는 "Stay the Course" 전략을 강조할 때 자주 언급되는 이야기가 있습니다. <strong>
+    “만약 최고 수익률을 보인 단 며칠을 놓친다면 전체 수익률은 급격히 낮아진다”</strong>는 주장입니다. 실제로 몇몇 데이터에서는 <strong>상위 10일 또는 30일만 빠져도 전체 누적 수익률이 절반 이하로 줄어들 수 있음</strong>을 보여주곤 합니다.</p>
+
+  <p>하지만 이 주장은 한 가지 중요한 점을 간과합니다.<br>
+    <strong>“최고의 날을 골라낼 수 없다면, 최악의 날도 피할 수 없다.”</strong></p>
+
+  <p>따라서 <strong>최고 수익일과 최악 손실일을 함께 고려하는 전략</strong>이 보다 균형 잡힌 분석 방식입니다.</p>
+
+  <div class="divider"></div>
+  <h2>분석 방법 요약</h2>
+  <ul>
+    <li>데이터: 1928년부터 2024년까지의 S&P500 일일 종가</li>
+    <li>기준 전략:
+      <ul>
+        <li>전체 보유 전략 (Buy and Hold)</li>
+        <li>최고 N일 제외 전략</li>
+        <li>최고 N일 + 최악 M일 제외 전략</li>
+      </ul>
+    </li>
+    <li>수익률 계산 방식: 일별 수익률 누적 곱 계산</li>
+    <li>Y축 스케일: 로그/선형 스케일 선택 가능</li>
+    <li>시뮬레이션 도구: <a href="../S&P500_missingReturn.html">Missing Return 분석 시뮬레이터</a></li>
+  </ul>
+
+  <div class="divider"></div>
+  <h2>1. 최고 수익일만 제외했을 경우</h2>
+  <img src="./images/missing_best10days.png" alt="최고 10일 제외 전략">
+  <p>전체 보유 전략 대비 수익률이 <strong>크게 감소</strong>합니다. 단 <strong>몇 일만 빠져도 수익률 차이는 수십 배</strong>에 달할 수 있습니다. 이로 인해 장기투자자의 입장에서 “시장 타이밍”을 맞추는 것이 얼마나 어려운지를 강조하는 근거로 자주 활용됩니다.</p>
+
+  <div class="divider"></div>
+  <h2>2. 최고 30일 & 최악 30일을 동시에 제외했을 경우</h2>
+  <img src="./images/missing_best30_worst30days.png" alt="최고 30일 + 최악 30일 제외 전략">
+  <p>최고일과 최악일을 <strong>동시에 제외했을 경우</strong>, 수익률 곡선은 <strong>전체 보유 전략과 유사하게 유지</strong>됩니다. 이는 상·하위 수익일이 <strong>시간적으로 밀접하게 붙어 있는 경우가 많기 때문</strong>입니다.</p>
+  <p>이러한 패턴은 금융시장의 구조적인 특징을 반영합니다. 대규모 급등과 급락은 대부분 동일한 사건(예: 팬데믹, 금융위기, 금리발표 등)을 중심으로 며칠 간격으로 발생합니다. 즉, 상승과 하락은 <strong>같은 시장 이벤트의 양면</strong>으로 작용하는 것입니다.</p>
+
+  <div class="divider"></div>
+  <h2>3. 최근 20여년(2000~2024년) 구간 분석</h2>
+  <img src="./images/missing_best30_worst30days_2000.png" alt="2000~2024 최고 30일 + 최악 30일 제외 전략">
+  <p>최근 20여년 구간에서도 유사한 결과가 나타납니다. <strong>2008 금융위기, 2020 코로나 쇼크, 2022 인플레이션 쇼크</strong> 등 단기 급등락 이벤트들이 집중되어 있으며, 해당 이벤트 기간의 수익률을 잘라내면 전체 흐름이 급격히 왜곡됩니다.</p>
+  <p>이는 단기적인 공포나 과열에 반응해 시장에서 벗어났을 때, 투자자는 하락뿐 아니라 이후 반등도 놓칠 가능성이 크다는 점을 시사합니다. 실제로 많은 반등은 하락 직후 빠르게 발생하며, <strong>이 반등을 놓치면 회복이 매우 어렵습니다</strong>.</p>
+
+  <div class="divider"></div>
+  <h2>4. 제거 일 수를 100일까지 늘렸을 경우</h2>
+  <img src="./images/missing_best100_worst100days.png" alt="최고 100일 + 최악 100일 제외 전략">
+  <p>N이 100일 정도로 커질수록 전체 수익률과의 괴리는 존재하지만, 여전히 최고와 최악의 균형된 제거가 <strong>수익률 유지에 기여</strong>함을 보여줍니다. 특히 장기적으로 투자한 경우, 이러한 급등락의 평균적 영향은 점차 상쇄되며, 결국 <strong>전체 시장의 평균 수익률에 수렴</strong>하는 경향이 있습니다.</p>
+  <p>이는 장기투자자의 관점에서 매우 중요한 사실입니다. 단기 이벤트에 따른 감정적 매매보다는, <strong>시장에 머무르는 시간이 곧 수익의 근원</strong>임을 다시금 상기시켜 줍니다.</p>
+
+  <div class="divider"></div>
+  <h2>결론 및 투자에의 시사점</h2>
+  <ul>
+    <li><strong>시장을 떠나는 타이밍을 정확히 예측하는 것은 거의 불가능</strong>합니다.</li>
+    <li><strong>단기적 급등과 급락은 서로 교차하며 발생</strong>하고, 투자자가 이 둘을 동시에 피해가는 전략은 현실적으로 어렵습니다.</li>
+    <li><strong>최고 수익일만 제거한 분석은 시장 타이밍 실패를 과장</strong>할 수 있습니다.</li>
+    <li><strong>장기적인 관점에서 시장에 지속적으로 머무는 전략이 유리</strong>할 가능성이 큽니다.</li>
+    <li><strong>균형 있는 데이터 해석과 감정에 휘둘리지 않는 투자 태도</strong>가 장기 수익의 핵심입니다.</li>
+  </ul>
+
+  <div class="divider"></div>
+  <div style="text-align: center; margin-top: 2rem;">
+    <a href="../S&P500_missingReturn.html" style="display: inline-block; padding: 10px 20px; background-color: #e0e0e0; color: #333; text-decoration: none; border-radius: 6px; font-weight: 500;">
+      ← 시뮬레이터로 돌아가기
+    </a>
+  </div>
+
+</body>
+</html>
