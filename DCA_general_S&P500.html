@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>적립식 투자 시뮬레이션 (S&P500 지수 기반)</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css">
+  <script src="./price_daily.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+<div style="text-align: right; margin-bottom: 10px;">
+  <a href="index.html">🏠 메인으로</a>
+</div>
+
+<div class="card">
+  <h1>📈 적립식 투자 시뮬레이션 (S&P500 지수 기반)</h1>
+  <p style="text-align: center; color: #666; margin-top: -1rem; margin-bottom: 2rem;">
+    실제 S&P500 지수를 기반으로 투자 시뮬레이션을 진행합니다.
+  </p>
+
+  <section class="inputs">
+    <table style="margin: 0 auto;">
+      <tr>
+        <th style="text-align: right; padding: 6px 10px;">🏦 초기 투자금 (₩)</th>
+        <td style="padding: 6px 10px; text-align: left;"><input type="text" id="initialInvestment" value="0" style="width: 120px;" /></td>
+      </tr>
+      <tr>
+        <th style="text-align: right; padding: 6px 10px;">💰 월 적립 금액 (₩)</th>
+        <td style="padding: 6px 10px; text-align: left;"><input type="text" id="monthlyInvestment" value="1,000,000" style="width: 120px;" /></td>
+      </tr>
+      <tr>
+        <th style="text-align: right; padding: 6px 10px;">🔄 매년 적립금 증가율 (%)</th>
+        <td style="padding: 6px 10px; text-align: left;"><input type="number" id="monthlyIncreaseRate" value="0" style="width: 80px;" /></td>
+      </tr>
+      <tr>
+        <th style="text-align: right; padding: 6px 10px;">📅 시작 연도</th>
+        <td style="padding: 6px 10px; text-align: left;"><input type="number" id="startYear" value="2015" style="width: 80px;" /> 첫 거래일</td>
+      </tr>
+      <tr>
+        <th style="text-align: right; padding: 6px 10px;">📅 종료 연도</th>
+        <td style="padding: 6px 10px; text-align: left;"><input type="number" id="endYear" value="2024" style="width: 80px;" /> 마지막 거래일</td>
+      </tr>
+    </table>
+
+    <div id="errorMsg" class="note" style="color: red; text-align: center; margin: 10px auto 5px;"></div>
+    <div style="text-align: center; margin: 5px auto 20px;">
+      <button onclick="simulate()">📊 그래프 그리기</button>
+    </div>
+  </section>
+
+  <section>
+    <h3 style="text-align: center; margin-top: 30px;">📌 최종 투자 결과 (전체 기간 기준)</h3>
+    <table style="margin: 0 auto;">
+      <thead>
+        <tr>
+          <th>총 투자 기간 (년)</th>
+          <th>투자 원금 (억 원)</th>
+          <th>평가 금액 (억 원)</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td id="finalYear">-</td>
+          <td id="finalPrincipal">-</td>
+          <td id="finalValue">-</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <div class="chart-wrapper">
+    <canvas id="chartCanvas"></canvas>
+    <div id="resultComment" class="note" style="text-align: center; font-size: 1rem; margin-top: 1.5rem; color: #495057;"></div>
+  </div>
+</div>
+<div style="text-align: center; margin-top: 20px;">
+  <button onclick="location.href='index.html'">🔙 메인으로 돌아가기</button>
+</div>
+
+<script>
+function formatWithComma(value) {
+  return value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+}
+function formatCurrency(value) {
+  return (value / 1e8).toFixed(2);
+}
+
+function simulate() {
+  const initial = parseInt(document.getElementById('initialInvestment').value.replace(/,/g, '')) || 0;
+  const monthly = parseInt(document.getElementById('monthlyInvestment').value.replace(/,/g, '')) || 0;
+  const increaseRate = parseFloat(document.getElementById('monthlyIncreaseRate').value) / 100 || 0;
+  const startYear = parseInt(document.getElementById('startYear').value);
+  const endYear = parseInt(document.getElementById('endYear').value);
+
+  const errorMsg = document.getElementById('errorMsg');
+  const resultComment = document.getElementById('resultComment');
+  errorMsg.textContent = '';
+
+  const dates = Object.keys(priceData);
+  const years = dates.map(d => new Date(d).getFullYear());
+  const minYear = Math.min(...years);
+  const maxYear = Math.max(...years);
+
+  if (startYear < minYear + 1 || endYear > maxYear - 1 || startYear > endYear) {
+    errorMsg.textContent = `⚠️ 유효하지 않은 기간입니다. (${minYear + 1} ~ ${maxYear - 1} 사이의 연도만 가능)`;
+    return;
+  }
+
+  const monthlyData = {};
+  for (const [date, price] of Object.entries(priceData)) {
+    const y = date.substring(0, 4);
+    const m = date.substring(0, 7);
+    if (y >= startYear && y <= endYear) {
+      if (!monthlyData[m]) monthlyData[m] = [];
+      monthlyData[m].push(price);
+    }
+  }
+
+  const monthlyPrices = Object.entries(monthlyData).map(([ym, prices]) => {
+    const avg = prices.reduce((a, b) => a + b, 0) / prices.length;
+    return { ym, avg };
+  }).sort((a, b) => a.ym.localeCompare(b.ym));
+
+  let totalPrincipal = initial;
+  let totalValue = initial;
+  let mInvest = monthly;
+  const points = [];
+
+  for (let i = 0; i < monthlyPrices.length; i++) {
+    const { ym, avg } = monthlyPrices[i];
+    const priceRatio = i > 0 ? avg / monthlyPrices[i - 1].avg : 1;
+    totalValue = totalValue * priceRatio + mInvest;
+    totalPrincipal += mInvest;
+    if ((i + 1) % 12 === 0) mInvest *= (1 + increaseRate);
+    points.push({ ym, principal: totalPrincipal, value: totalValue });
+  }
+
+  // 연도별 수익률 계산
+  const yearlyTable = document.getElementById('yearlyReturns');
+  if (yearlyTable) yearlyTable.remove();
+
+  const yearlyStats = {};
+  points.forEach(p => {
+    const year = p.ym.substring(0, 4);
+    if (!yearlyStats[year]) yearlyStats[year] = { principal: 0, value: 0 };
+    yearlyStats[year].principal = p.principal;
+    yearlyStats[year].value = p.value;
+  });
+
+  const table = document.createElement('table');
+  table.id = 'yearlyReturns';
+  table.style.margin = '30px auto';
+  table.innerHTML = `
+    <thead>
+      <tr>
+        <th>투자기간</th>
+        <th>연도</th>
+        <th>투자원금 (억 원)</th>
+        <th>수익금 (억 원)</th>
+        <th>총 평가금 (억 원)</th>
+        <th>수익률 (%)</th>
+      </tr>
+    </thead>
+    <tbody>
+      ${Object.entries(yearlyStats).map(([year, stat], i) => {
+        const principal = stat.principal;
+        const value = stat.value;
+        const profit = value - principal;
+        const rate = (profit / principal) * 100;
+        return `<tr>
+          <td>${i + 1}년</td>
+          <td>${year}년</td>
+          <td>${formatCurrency(principal)}</td>
+          <td>${formatCurrency(profit)}</td>
+          <td>${formatCurrency(value)}</td>
+          <td>${rate.toFixed(2)}%</td>
+        </tr>`;
+      }).join('')}
+    </tbody>`;
+
+  document.querySelector('.chart-wrapper').after(table);
+
+  const last = points.at(-1);
+  document.getElementById('finalYear').textContent = `${endYear - startYear + 1}년`;
+  document.getElementById('finalPrincipal').textContent = formatCurrency(last.principal);
+  document.getElementById('finalValue').textContent = formatCurrency(last.value);
+
+  resultComment.textContent = `📌 총 ${endYear - startYear + 1}년간 투자한 원금은 약 ${formatCurrency(last.principal)}억 원이며, 평가금액은 약 ${formatCurrency(last.value)}억 원입니다.`;
+
+  const ctx = document.getElementById('chartCanvas').getContext('2d');
+  if (window.myChart) window.myChart.destroy();
+  window.myChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: points.map(p => p.ym),
+      datasets: [
+        { label: '총 원금', data: points.map(p => p.principal), borderColor: '#8884d8', borderWidth: 2, tension: 0.4 },
+        { label: '총 평가금액', data: points.map(p => p.value), borderColor: '#82ca9d', borderWidth: 2, tension: 0.4 }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      scales: {
+        x: { title: { display: true, text: '투자 월' } },
+        y: {
+          title: { display: true, text: '(억 원)' },
+          ticks: { callback: v => formatCurrency(v) }
+        }
+      }
+    }
+  });
+}
+
+['initialInvestment', 'monthlyInvestment'].forEach(id => {
+  const input = document.getElementById(id);
+  input.addEventListener('input', () => {
+    const numeric = input.value.replace(/[^0-9]/g, '');
+    input.value = formatWithComma(numeric);
+  });
+});
+
+window.addEventListener('DOMContentLoaded', simulate);
+</script>
+
+</body>
+</html>
