@@ -44,6 +44,8 @@
     <loc>https://kinyongs.github.io/privacy.html</loc>
     <lastmod>2025-05-21</lastmod>
   </url>
+
+  <!-- .docs 폴더 내의 추가 페이지들 -->
   <url>
     <loc>https://kinyongs.github.io/docs/missing-return.html</loc>
     <lastmod>2025-05-21</lastmod>
