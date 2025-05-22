@@ -205,6 +205,8 @@
         type: 'bar',
         data: { labels: binLabels, datasets: barDatasets },
         options: {
+          responsive: true,
+          maintainAspectRatio: false,
           plugins: {
             title: { display: true, text: '연도별 Drawdown 구간별 F&G 평균' },
             datalabels: { display: false }
@@ -313,6 +315,8 @@
         }]
       },
       options: {
+          responsive: true,
+          maintainAspectRatio: false,
         plugins: {
           title: { display: true, text: 'Drawdown 구간별 공포탐욕지수 평균 및 표준편차' },
           datalabels: { display: true }
