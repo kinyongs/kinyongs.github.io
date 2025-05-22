@@ -212,7 +212,13 @@
             datalabels: { display: false }
           },
           scales: { y: { min: 0, max: 100 } }
-        }
+        },
+          datasets: {
+            bar: {
+              categoryPercentage: 1.0,
+              barPercentage: 1.0
+            }
+          }
       });
 
       const tableHTML = `
@@ -323,7 +329,13 @@
         },
         scales: {
           y: { min: 0, max: 100, title: { display: true, text: 'Fear & Greed Index' } }
-        }
+        },
+          datasets: {
+            bar: {
+              categoryPercentage: 1.0,
+              barPercentage: 1.0
+            }
+          }
       }
     });
 
