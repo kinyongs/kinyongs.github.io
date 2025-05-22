@@ -1,0 +1,345 @@
+
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>S&P500 Drawdown vs Fear & Greed</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@1.1.0"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+  <script src="price_feargreed.js"></script>
+</head>
+<body>
+  <div style="text-align: right; margin-bottom: 10px;">
+    <a href="index.html">🏠 메인으로</a>
+  </div>
+
+  <div class="card">
+    <h1>😨 S&P500 Drawdown & 공포탐욕지수 분석</h1>
+    <p style="text-align: center; color: #555;">
+      공포탐욕지수(Fear & Greed Index)는 투자자들의 감정 상태를 0(극단적 공포)부터 100(극단적 탐욕)까지의 수치로 나타낸 지표입니다. 시장이 하락할수록 공포지수가 낮아지는 경향이 있으며, 반대로 상승기에는 탐욕이 높아질 수 있습니다.
+    </p>
+
+    <section style="text-align: center; margin-bottom: 20px;">
+      <table style="margin: 0 auto;">
+        <tr>
+          <th style="text-align: right; padding: 6px 10px;">⏳ 시작 연도</th>
+          <td style="text-align: left; padding: 6px 10px;"><input type="number" id="startYear" style="width: 120px;"/></td>
+        </tr>
+        <tr>
+          <th style="text-align: right; padding: 6px 10px;">⏱️ 종료 연도</th>
+          <td style="text-align: left; padding: 6px 10px;"><input type="number" id="endYear" style="width: 120px;"/></td>
+        </tr>
+        <tr>
+          <th style="text-align: right; padding: 6px 10px;">📊 분석 방식</th>
+          <td style="text-align: left; padding: 6px 10px;">
+            <label><input type="radio" name="mode" value="all" checked> 전체 분석</label>
+            <label style="margin-left: 10px;"><input type="radio" name="mode" value="yearly"> 연도별 분석</label>
+          </td>
+        </tr>
+      </table>
+      <div id="dateRangeInfo" style="margin-top: 10px; color: #666;"></div>
+      <br>
+      <button onclick="renderCharts()">📊 분석하기</button>
+    </section>
+
+    <section class="chart-wrapper" style="height: 500px;">
+      <canvas id="priceDrawdownChart"></canvas>
+    </section>
+
+    <section class="chart-wrapper" style="height: 400px;">
+      <canvas id="scatterChart"></canvas>
+    </section>
+
+    <section class="chart-wrapper" style="height: 400px;">
+      <canvas id="barBinChart"></canvas>
+    </section>
+
+    <section style="max-width: 800px; margin: 2rem auto; font-size: 0.95rem; line-height: 1.6;" id="analysisResult"></section>
+  </div>
+
+  <div style="text-align: center; margin-top: 20px;">
+    <button onclick="location.href='index.html'">🔙 메인으로 돌아가기</button>
+  </div>
+
+<script>
+
+  function renderCharts() {
+    const entries = Object.entries(priceData)
+      .map(([date, price]) => ({ date: new Date(date), price, rawDate: date }))
+      .sort((a, b) => a.date - b.date);
+
+    const allYears = entries.map(d => d.date.getFullYear());
+    const minYear = Math.min(...allYears);
+    const maxYear = Math.max(...allYears);
+    document.getElementById('dateRangeInfo').innerHTML = `<div style='font-size: 0.85rem; color: #888;'>데이터 연도 범위: ${minYear} ~ ${maxYear}</div>`;
+    if (!document.getElementById('startYear').value) document.getElementById('startYear').value = minYear;
+    if (!document.getElementById('endYear').value) document.getElementById('endYear').value = maxYear;
+
+    const startYear = parseInt(document.getElementById('startYear').value);
+    const endYear = parseInt(document.getElementById('endYear').value);
+    const mode = document.querySelector('input[name="mode"]:checked').value;
+
+    const filtered = entries.filter(e => e.date.getFullYear() >= startYear && e.date.getFullYear() <= endYear);
+    const labels = filtered.map(e => e.rawDate);
+    const prices = filtered.map(e => e.price);
+    const fearGreed = labels.map(date => fearGreedData[date] ?? null);
+
+    const ctxDraw = document.getElementById("priceDrawdownChart").getContext("2d");
+    const ctxScatter = document.getElementById("scatterChart").getContext("2d");
+    const ctxBar = document.getElementById("barBinChart").getContext("2d");
+
+    if (window.scatterChart && typeof window.scatterChart.destroy === 'function') {
+      window.scatterChart.destroy();
+    }
+    if (window.priceChart && typeof window.priceChart.destroy === 'function') {
+      window.priceChart.destroy();
+    }
+    if (window.barChart && typeof window.barChart.destroy === 'function') {
+      window.barChart.destroy();
+    }
+
+
+    const colorList = ['#e15759', '#4e79a7', '#f28e2c', '#76b7b2', '#59a14f', '#edc948', '#af7aa1', '#ff9da7'];
+
+    if (mode === "yearly") {
+
+      // 연도별 drawdown 차트
+      let yLabels = filtered.map(e => e.rawDate);
+      let yPrices = filtered.map(e => e.price);
+      let maxPrice = -Infinity;
+      let yDrawdowns = yPrices.map(p => {
+        maxPrice = Math.max(maxPrice, p);
+        return ((p - maxPrice) / maxPrice) * 100;
+      });
+
+      window.priceChart = new Chart(ctxDraw, {
+        type: 'bar',
+        data: {
+          labels: yLabels,
+          datasets: [
+            {
+              type: 'line',
+              label: 'S&P500 지수',
+              data: yPrices,
+              borderColor: '#1f77b4',
+              yAxisID: 'y1',
+              tension: 0.3,
+              pointRadius: 0
+            },
+            {
+              type: 'bar',
+              label: 'Drawdown (%)',
+              data: yDrawdowns,
+              backgroundColor: 'rgba(225,87,89,0.6)',
+              borderColor: '#e15759',
+              yAxisID: 'y2'
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            y1: { position: 'left', title: { display: true, text: '지수' } },
+            y2: { position: 'right', title: { display: true, text: 'Drawdown (%)' }, grid: { drawOnChartArea: false } },
+            x: { ticks: { maxTicksLimit: 12 } }
+          }
+        }
+      });
+
+
+
+
+      let scatterDatasets = [];
+      let barDatasets = [];
+      const binLabels = ["-25%~", "-20~-25%", "-15~-20%", "-10~-15%", "-5~-10%", "0~-5%"];
+
+      for (let year = startYear; year <= endYear; year++) {
+        const yearly = filtered.filter(e => e.date.getFullYear() === year);
+        const yLabels = yearly.map(e => e.rawDate);
+        const yPrices = yearly.map(e => e.price);
+        const yFear = yLabels.map(d => fearGreedData[d] ?? null);
+        let maxPrice = -Infinity;
+        const yDrawdowns = yPrices.map(p => {
+          maxPrice = Math.max(maxPrice, p);
+          return ((p - maxPrice) / maxPrice) * 100;
+        });
+
+        const points = yLabels.map((d, i) => yFear[i] != null ? { x: yDrawdowns[i], y: yFear[i] } : null).filter(p => p);
+        scatterDatasets.push({
+          label: `${year}`,
+          data: points,
+          backgroundColor: colorList[(year - startYear) % colorList.length]
+        });
+
+        const bins = [0, -5, -10, -15, -20, -25];
+        const avgByBin = bins.map((b, i) => {
+          const subset = points.filter(p => p.x <= b && (i === bins.length - 1 || p.x > bins[i + 1]));
+          return subset.reduce((sum, v) => sum + v.y, 0) / (subset.length || 1);
+        }).reverse();
+
+        barDatasets.push({
+          label: `${year}`,
+          data: avgByBin,
+          backgroundColor: colorList[(year - startYear) % colorList.length]
+        });
+      }
+
+      window.scatterChart = new Chart(ctxScatter, {
+        type: "scatter",
+        data: { datasets: scatterDatasets },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            x: { title: { display: true, text: 'Drawdown (%)' } },
+            y: { min: 0, max: 100, title: { display: true, text: 'Fear & Greed Index' } }
+          }
+        }
+      });
+
+      window.barChart = new Chart(ctxBar, {
+        type: 'bar',
+        data: { labels: binLabels, datasets: barDatasets },
+        options: {
+          plugins: {
+            title: { display: true, text: '연도별 Drawdown 구간별 F&G 평균' },
+            datalabels: { display: false }
+          },
+          scales: { y: { min: 0, max: 100 } }
+        }
+      });
+
+      const tableHTML = `
+        <h3>📊 분석 결과</h3>
+        <table border="1" style="border-collapse: collapse; width: 100%; text-align: center;">
+          <thead><tr><th>연도</th>${binLabels.map(b => `<th>${b}</th>`).join('')}</tr></thead>
+          <tbody>${barDatasets.map(ds => `<tr><td>${ds.label}</td>${ds.data.map(v => `<td>${v.toFixed(2)}</td>`).join('')}</tr>`).join('')}</tbody>
+        </table>`;
+      document.getElementById("analysisResult").innerHTML = tableHTML;
+      return;
+    }
+
+    // 전체 분석 - Drawdown 계산
+    let maxPrice = -Infinity;
+    const drawdowns = prices.map(p => {
+      maxPrice = Math.max(maxPrice, p);
+      return ((p - maxPrice) / maxPrice) * 100;
+    });
+
+    window.priceChart = new Chart(ctxDraw, {
+      type: 'bar',
+      data: {
+        labels: labels,
+        datasets: [
+          {
+            type: 'line',
+            label: 'S&P500 지수',
+            data: prices,
+            borderColor: '#1f77b4',
+            yAxisID: 'y1',
+            tension: 0.3,
+            pointRadius: 0
+          },
+          {
+            type: 'bar',
+            label: 'Drawdown (%)',
+            data: drawdowns,
+            backgroundColor: 'rgba(225,87,89,0.6)',
+            borderColor: '#e15759',
+            yAxisID: 'y2'
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          y1: { position: 'left', title: { display: true, text: '지수' } },
+          y2: { position: 'right', title: { display: true, text: 'Drawdown (%)' }, grid: { drawOnChartArea: false } },
+          x: { ticks: { maxTicksLimit: 12 } }
+        }
+      }
+    });
+
+    const valid = drawdowns.map((d, i) => ({ x: d, y: fearGreed[i] })).filter(p => p.y != null);
+    const scatterData = valid;
+    const bins = [0, -5, -10, -15, -20, -25];
+    const avgByBin = bins.map((b, i) => {
+      const subset = valid.filter(p => p.x <= b && (i === bins.length - 1 || p.x > bins[i + 1]));
+      const avg = subset.reduce((sum, v) => sum + v.y, 0) / (subset.length || 1);
+      const std = Math.sqrt(subset.reduce((sum, v) => sum + (v.y - avg) ** 2, 0) / (subset.length || 1));
+      return {
+        label: `${bins[i + 1] ?? '-∞'} ~ ${b}%`,
+        avg: avg.toFixed(2),
+        std: std.toFixed(2),
+        count: subset.length
+      };
+    }).reverse();
+
+    window.scatterChart = new Chart(ctxScatter, {
+      type: "scatter",
+      data: {
+        datasets: [{
+          label: "Drawdown vs Fear & Greed",
+          data: scatterData,
+          backgroundColor: '#59a14f'
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          x: { title: { display: true, text: 'Drawdown (%)' } },
+          y: { min: 0, max: 100, title: { display: true, text: 'Fear & Greed Index' } }
+        }
+      }
+    });
+
+    window.barChart = new Chart(ctxBar, {
+      type: 'bar',
+      plugins: [ChartDataLabels],
+      data: {
+        labels: avgByBin.map(b => b.label),
+        datasets: [{
+          label: '평균 Fear & Greed Index',
+          data: avgByBin.map(b => b.avg),
+          backgroundColor: 'rgba(242, 142, 43, 0.6)',
+          borderColor: 'rgba(242, 142, 43, 1)',
+          borderWidth: 1
+        }]
+      },
+      options: {
+        plugins: {
+          title: { display: true, text: 'Drawdown 구간별 공포탐욕지수 평균 및 표준편차' },
+          datalabels: { display: true }
+        },
+        scales: {
+          y: { min: 0, max: 100, title: { display: true, text: 'Fear & Greed Index' } }
+        }
+      }
+    });
+
+    const xs = valid.map(v => v.x);
+    const ys = valid.map(v => v.y);
+    const meanX = xs.reduce((a, b) => a + b, 0) / xs.length;
+    const meanY = ys.reduce((a, b) => a + b, 0) / ys.length;
+    const num = xs.reduce((sum, x, i) => sum + (x - meanX) * (ys[i] - meanY), 0);
+    const den = Math.sqrt(xs.reduce((sum, x) => sum + (x - meanX) ** 2, 0) * ys.reduce((sum, y) => sum + (y - meanY) ** 2, 0));
+    const corr = num / den;
+
+    document.getElementById("analysisResult").innerHTML = `
+      <h3>📊 분석 결과</h3>
+      <p>- Drawdown과 Fear & Greed Index 간의 상관계수: <strong>${corr.toFixed(2)}</strong></p>
+      <p>- Drawdown 구간별 공포탐욕지수 평균 및 표준편차:</p>
+      <ul>${avgByBin.map(b => `<li>${b.label} → 평균: ${b.avg}, 표준편차: ${b.std} (N=${b.count})</li>`).join('')}</ul>`;
+  }
+
+  window.onload = renderCharts;
+
+</script>
+</body>
+</html>
