@@ -191,4 +191,18 @@
   drawChart();
 </script>
 </body>
+<script>
+  fetch("includes/nav.html")
+    .then(res => res.text())
+    .then(data => {
+      document.getElementById("nav-placeholder").innerHTML = data;
+
+      // ⬇️ 주입 후 toggle 이벤트 연결
+      const toggle = document.getElementById('navToggle');
+      const links = document.getElementById('navLinks');
+      toggle?.addEventListener('click', () => {
+        links?.classList.toggle('active');
+      });
+    });
+</script>
 </html>

@@ -92,4 +92,19 @@
     <p><a href="about.html">About</a> | <a href="privacy.html">Privacy Policy</a> | <a href="mailto:kinyongs@naver.com">Contact</a></p>
   </footer>
 </body>
+<script>
+  fetch("includes/nav.html")
+    .then(res => res.text())
+    .then(data => {
+      document.getElementById("nav-placeholder").innerHTML = data;
+
+      // ⬇️ 주입 후 toggle 이벤트 연결
+      const toggle = document.getElementById('navToggle');
+      const links = document.getElementById('navLinks');
+      toggle?.addEventListener('click', () => {
+        links?.classList.toggle('active');
+      });
+    });
+</script>
+
 </html>

@@ -114,4 +114,18 @@
     © 2025 S&P 500 투자 분석 도구 | 개인정보 처리 책임자: kinyongs
   </footer>
 </body>
+<script>
+  fetch("includes/nav.html")
+    .then(res => res.text())
+    .then(data => {
+      document.getElementById("nav-placeholder").innerHTML = data;
+
+      // ⬇️ 주입 후 toggle 이벤트 연결
+      const toggle = document.getElementById('navToggle');
+      const links = document.getElementById('navLinks');
+      toggle?.addEventListener('click', () => {
+        links?.classList.toggle('active');
+      });
+    });
+</script>
 </html>
