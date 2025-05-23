@@ -5,200 +5,226 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>S&P500 투자 시뮬레이션</title>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <div style="text-align: right; margin-bottom: 10px;">
-    <a href="index.html">🏠 메인으로</a>
-  </div>
 
-  <div class="card">
-    <h1>📈 S&P500 투자 시뮬레이션</h1>
-    <p class="description">
-      Price 또는 Total Return 데이터를 기반으로, 투자 방식(일시금/적립식)에 따라 수익률을 분석합니다.
-    </p>
+<div id="nav-placeholder"></div>
+<script>
+  fetch("includes/nav.html")
+    .then(response => response.text())
+    .then(data => {
+      document.getElementById("nav-placeholder").innerHTML = data;
+    });
+</script>
 
-    <section style="margin-bottom: 20px; text-align: center;">
-      <table style="margin: 0 auto;">
-        <tr>
-          <th style="text-align: right; padding: 6px 10px;">📊 데이터 선택</th>
-          <td style="text-align: left; padding: 6px 10px;">
-            <label><input type="radio" name="dataType" value="price" checked> Price</label>
-            <label><input type="radio" name="dataType" value="totalReturn"> Total Return</label>
-          </td>
-        </tr>
-        <tr>
-          <th style="text-align: right; padding: 6px 10px;">💼 투자 방식</th>
-          <td style="text-align: left; padding: 6px 10px;">
-            <label><input type="radio" name="investMode" value="dca" checked> 적립식 투자</label>
-            <label><input type="radio" name="investMode" value="lump"> 일시금 투자</label>
-          </td>
-        </tr>
-        <tr>
-          <th style="text-align: right; padding: 6px 10px;">⏳ 투자 기간 (년)</th>
-          <td style="text-align: left; padding: 6px 10px;">
-            <input type="number" id="investmentPeriod" value="20" style="width: 80px;" />
-          </td>
-        </tr>
-      </table>
-          <div style="text-align: center; padding: 6px 10px;">
-            <button onclick="runSimulation()">📊 시뮬레이션 실행</button>
-          </div>
-    </section>
+<div class="card">
+  <h1>📈 S&P500 투자 시뮬레이션</h1>
+  <p class="note">
+    Price 또는 Total Return 데이터를 기반으로, 투자 방식(일시금/적립식)에 따라 수익률을 분석합니다.
+  </p>
 
-    <div class="chart-wrapper">
-      <canvas id="rollingReturnChart"></canvas>
+  <section class="inputs">
+    <table>
+      <tr>
+        <th>📊 데이터 선택</th>
+        <td>
+          <label><input type="radio" name="dataType" value="price" checked> Price</label>
+          <label><input type="radio" name="dataType" value="totalReturn"> Total Return</label>
+        </td>
+      </tr>
+      <tr>
+        <th>💼 투자 방식</th>
+        <td>
+          <label><input type="radio" name="investMode" value="dca" checked> 적립식 투자</label>
+          <label><input type="radio" name="investMode" value="lump"> 일시금 투자</label>
+        </td>
+      </tr>
+      <tr>
+        <th>⏳ 투자 기간 (년)</th>
+        <td><input type="number" id="investmentPeriod" value="20" /></td>
+      </tr>
+    </table>
+    <div style="text-align: center; margin-top: 15px;">
+      <button onclick="runSimulation()">📊 시뮬레이션 실행</button>
     </div>
-    <div class="chart-wrapper">
-      <canvas id="histogramChart"></canvas>
-    </div>
-      <div id="summaryComment" class="comment"></div>
+  </section>
+
+  <div class="chart-wrapper">
+    <canvas id="rollingReturnChart"></canvas>
   </div>
 
-  <div style="text-align: center; margin-top: 20px;">
-    <button onclick="location.href='index.html'">🔙 메인으로 돌아가기</button>
+  <div class="chart-wrapper">
+    <canvas id="histogramChart"></canvas>
   </div>
 
-  <script src="price_totalreturn_monthly.js"></script>
-  <script>
-    let rollingReturnChartInstance = null;
-    let histogramChartInstance = null;
+  <div id="summaryComment" class="note" style="text-align: center; margin-top: 20px;"></div>
+</div>
 
-    function calculateMonthlyReturns(data) {
-      const keys = Object.keys(data).sort();
-      const result = {};
-      for (let i = 1; i < keys.length; i++) {
-        const prev = data[keys[i - 1]];
-        const curr = data[keys[i]];
-        if (prev && curr) {
-          result[keys[i]] = (curr - prev) / prev;
+<div style="text-align: center; margin-top: 20px;">
+  <button onclick="location.href='index.html'">🔙 메인으로 돌아가기</button>
+</div>
+
+<script src="price_totalreturn_monthly.js"></script>
+<script>
+  let rollingReturnChartInstance = null;
+  let histogramChartInstance = null;
+
+  function calculateMonthlyReturns(data) {
+    const keys = Object.keys(data).sort();
+    const result = {};
+    for (let i = 1; i < keys.length; i++) {
+      const prev = data[keys[i - 1]];
+      const curr = data[keys[i]];
+      if (prev && curr) result[keys[i]] = (curr - prev) / prev;
+    }
+    return result;
+  }
+
+  function runSimulation() {
+    const selectedType = document.querySelector('input[name="dataType"]:checked').value;
+    const investMode = document.querySelector('input[name="investMode"]:checked').value;
+    const baseData = selectedType === 'price' ? priceData : totalReturnData;
+    const monthlyReturns = calculateMonthlyReturns(baseData);
+
+    const investmentPeriod = parseInt(document.getElementById('investmentPeriod').value);
+    const monthlyInvestment = 1;
+    const lumpSumInvestment = 12 * investmentPeriod;
+    const keys = Object.keys(monthlyReturns);
+    const startMonths = keys.filter((_, idx) => idx + investmentPeriod * 12 <= keys.length);
+
+    const rollingReturns = [];
+
+    for (let i = 0; i < startMonths.length; i++) {
+      let principal = 0;
+      let value = 0;
+
+      if (investMode === 'dca') {
+        for (let j = 0; j < investmentPeriod * 12; j++) {
+          const idx = i + j;
+          const key = keys[idx];
+          if (!monthlyReturns[key]) continue;
+          principal += monthlyInvestment;
+          value = value * (1 + monthlyReturns[key]) + monthlyInvestment;
+        }
+      } else {
+        principal = lumpSumInvestment;
+        value = lumpSumInvestment;
+        for (let j = 0; j < investmentPeriod * 12; j++) {
+          const idx = i + j;
+          const key = keys[idx];
+          if (!monthlyReturns[key]) continue;
+          value *= (1 + monthlyReturns[key]);
         }
       }
-      return result;
+
+      const cagr = (value > 0 && principal > 0) ? Math.pow(value / principal, 1 / investmentPeriod) - 1 : 0;
+      rollingReturns.push({ start: keys[i], cagr });
     }
 
-    function runSimulation() {
-      const selectedType = document.querySelector('input[name="dataType"]:checked').value;
-      const investMode = document.querySelector('input[name="investMode"]:checked').value;
-      const baseData = selectedType === 'price' ? priceData : totalReturnData;
-      const monthlyReturns = calculateMonthlyReturns(baseData);
+    const labels = rollingReturns.map(e => e.start);
+    const cagrData = rollingReturns.map(e => e.cagr * 100);
 
-      const investmentPeriod = parseInt(document.getElementById('investmentPeriod').value);
-      const monthlyInvestment = 1;
-      const lumpSumInvestment = 12 * investmentPeriod;
-      const keys = Object.keys(monthlyReturns);
-      const startMonths = keys.filter((_, idx) => idx + investmentPeriod * 12 <= keys.length);
-
-      const rollingReturns = [];
-
-      for (let i = 0; i < startMonths.length; i++) {
-        let principal = 0;
-        let value = 0;
-
-        if (investMode === 'dca') {
-          // 적립식 투자
-          for (let j = 0; j < investmentPeriod * 12; j++) {
-            const idx = i + j;
-            const key = keys[idx];
-            if (!monthlyReturns[key]) continue;
-            principal += monthlyInvestment;
-            value = value * (1 + monthlyReturns[key]) + monthlyInvestment;
-          }
-        } else {
-          // 일시금 투자
-          principal = lumpSumInvestment;
-          value = lumpSumInvestment;
-          for (let j = 0; j < investmentPeriod * 12; j++) {
-            const idx = i + j;
-            const key = keys[idx];
-            if (!monthlyReturns[key]) continue;
-            value *= (1 + monthlyReturns[key]);
-          }
-        }
-
-        const cagr = (value > 0 && principal > 0) ? Math.pow(value / principal, 1 / investmentPeriod) - 1 : 0;
-        rollingReturns.push({ start: keys[i], cagr });
-      }
-
-      const labels = rollingReturns.map(e => e.start);
-      const cagrData = rollingReturns.map(e => e.cagr * 100);
-
-      if (rollingReturnChartInstance) rollingReturnChartInstance.destroy();
-      rollingReturnChartInstance = new Chart(document.getElementById('rollingReturnChart'), {
-        type: 'line',
-        data: {
-          labels,
-          datasets: [{
-            label: '연평균 수익률 (%)',
-            data: cagrData,
-            borderColor: '#ff7f50',
-            tension: 0.4
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-            title: {
-              display: true,
-              text: `Rolling Returns (${selectedType}, ${investMode === 'dca' ? '적립식' : '일시금'})`
+    if (rollingReturnChartInstance) rollingReturnChartInstance.destroy();
+    rollingReturnChartInstance = new Chart(document.getElementById('rollingReturnChart'), {
+      type: 'line',
+      data: {
+        labels,
+        datasets: [{
+          label: '연평균 수익률 (%)',
+          data: cagrData,
+          borderColor: '#ff7f50',
+          tension: 0.4
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        layout: { padding: { bottom: 40 } },
+        plugins: {
+          legend: {
+            labels: {
+              color: '#f8f9fa',
+              font: { size: 13 }
             }
           },
-          scales: {
-            y: {
-              ticks: {
-                callback: value => value.toFixed(2) + '%'
-              }
-            }
+          title: {
+            display: true,
+            text: `Rolling Returns (${selectedType}, ${investMode === 'dca' ? '적립식' : '일시금'})`,
+            color: '#ffffff'
           }
-        }
-      });
-
-      const bins = {};
-      rollingReturns.forEach(e => {
-        const r = Math.floor(e.cagr * 400) / 4;
-        const label = r.toFixed(2);
-        bins[label] = (bins[label] || 0) + 1;
-      });
-
-      const sortedLabels = Object.keys(bins).sort((a, b) => parseFloat(a) - parseFloat(b));
-
-      const minCAGR = Math.min(...rollingReturns.map(e => e.cagr));
-      const maxCAGR = Math.max(...rollingReturns.map(e => e.cagr));
-      const avgCAGR = rollingReturns.reduce((a, b) => a + b.cagr, 0) / rollingReturns.length;
-
-      if (histogramChartInstance) histogramChartInstance.destroy();
-      histogramChartInstance = new Chart(document.getElementById('histogramChart'), {
-        type: 'bar',
-        data: {
-          labels: sortedLabels.map(l => l + '%'),
-          datasets: [{
-            label: '횟수',
-            data: sortedLabels.map(l => bins[l]),
-            backgroundColor: '#6ca0dc',
-            categoryPercentage: 1.0,
-            barPercentage: 1.0
-          }]
         },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-            title: {
-              display: true,
-              text: `수익률 분포 (평균 ${(avgCAGR * 100).toFixed(2)}%, 최소 ${(minCAGR * 100).toFixed(2)}%, 최대 ${(maxCAGR * 100).toFixed(2)}%)`
-            }
+        scales: {
+          y: {
+            ticks: {
+              callback: value => value.toFixed(2) + '%',
+              color: '#adb5bd'
+            },
+            grid: { color: '#333' }
+          },
+          x: {
+            ticks: { color: '#adb5bd' },
+            grid: { color: '#333' }
           }
         }
-      });
+      }
+    });
 
-      document.getElementById('summaryComment').innerHTML =
-        `📌 ${investmentPeriod}년간 <strong>${investMode === 'dca' ? '적립식' : '일시금'}</strong> 투자 시 평균 연복리 수익률은 <strong style="color:#d9534f;">${(avgCAGR * 100).toFixed(2)}%</strong>이며, ` +
-        `최대 <strong>${(maxCAGR * 100).toFixed(2)}%</strong>, 최소 <strong>${(minCAGR * 100).toFixed(2)}%</strong>를 기록했습니다.`;
-    }
+    const bins = {};
+    rollingReturns.forEach(e => {
+      const r = Math.floor(e.cagr * 400) / 4;
+      const label = r.toFixed(2);
+      bins[label] = (bins[label] || 0) + 1;
+    });
 
-    runSimulation();
-  </script>
+    const sortedLabels = Object.keys(bins).sort((a, b) => parseFloat(a) - parseFloat(b));
+    const minCAGR = Math.min(...rollingReturns.map(e => e.cagr));
+    const maxCAGR = Math.max(...rollingReturns.map(e => e.cagr));
+    const avgCAGR = rollingReturns.reduce((a, b) => a + b.cagr, 0) / rollingReturns.length;
+
+    if (histogramChartInstance) histogramChartInstance.destroy();
+    histogramChartInstance = new Chart(document.getElementById('histogramChart'), {
+      type: 'bar',
+      data: {
+        labels: sortedLabels.map(l => l + '%'),
+        datasets: [{
+          label: '횟수',
+          data: sortedLabels.map(l => bins[l]),
+          backgroundColor: '#6ca0dc',
+          categoryPercentage: 1.0,
+          barPercentage: 1.0
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          title: {
+            display: true,
+            text: `수익률 분포 (평균 ${(avgCAGR * 100).toFixed(2)}%, 최소 ${(minCAGR * 100).toFixed(2)}%, 최대 ${(maxCAGR * 100).toFixed(2)}%)`,
+            color: '#ffffff'
+          },
+          legend: {
+            labels: {
+              color: '#f8f9fa'
+            }
+          }
+        },
+        scales: {
+          x: { ticks: { color: '#adb5bd' }, grid: { color: '#333' } },
+          y: { ticks: { color: '#adb5bd' }, grid: { color: '#333' } }
+        }
+      }
+    });
+
+    document.getElementById('summaryComment').innerHTML =
+      `📌 ${investmentPeriod}년간 <strong>${investMode === 'dca' ? '적립식' : '일시금'}</strong> 투자 시 평균 연복리 수익률은 <strong style="color:#d9534f;">${(avgCAGR * 100).toFixed(2)}%</strong>이며, ` +
+      `최대 <strong>${(maxCAGR * 100).toFixed(2)}%</strong>, 최소 <strong>${(minCAGR * 100).toFixed(2)}%</strong>를 기록했습니다.`;
+  }
+
+  runSimulation();
+</script>
+
 </body>
 </html>

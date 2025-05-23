@@ -15,152 +15,159 @@
   </style>
 </head>
 <body>
-  <div style="text-align: right; margin-bottom: 10px;">
-    <a href="index.html">🏠 메인으로</a>
-  </div>
-  <div class="card">
-    <h1>🔁 연속 하락/상승 분석</h1>
-    <p style="text-align: center; max-width: 720px; margin: 0 auto 1.5rem; font-size: 1rem; color: #555;">
-      S&P500의 일일 수익률을 분석하여, 연속 하락/상승/정지의 빈도와 다음 날 수익률 방향의 확률을 통계적으로 분석합니다.
-    </p>
 
-    <section style="margin-bottom: 20px; text-align: center;">
-      <table style="margin: 0 auto;">
-        <tr>
-          <th style="text-align: right; padding: 6px 10px;">시작 연도</th>
-          <td style="text-align: left; padding: 6px 10px;"><input type="number" id="startYear" value="2000" style="width: 120px;" /></td>
-        </tr>
-        <tr>
-          <th style="text-align: right; padding: 6px 10px;">종료 연도</th>
-          <td style="text-align: left; padding: 6px 10px;"><input type="number" id="endYear" value="2025" style="width: 120px;" /></td>
-        </tr>
-        <tr>
-          <th style="text-align: right; padding: 6px 10px;">0% 수익률 포함 여부</th>
-          <td style="text-align: left; padding: 6px 10px;">
-            <label><input type="radio" name="includeZero" value="true" /> 포함</label>
-            <label><input type="radio" name="includeZero" value="false" checked /> 무시</label>
-          </td>
-        </tr>
-      </table>
-      <div style="text-align: center; margin-top: 1rem;">
-        <button onclick="analyzeStreaks()">📊 분석 실행</button>
-      </div>
-    </section>
-
-    <section class="chart-wrapper">
-      <canvas id="streakChart"></canvas>
-    </section>
-
-    <section id="summaryTable" style="max-width: 720px; margin: 2rem auto;"></section>
-    <section id="textSummary" style="max-width: 720px; margin: 2rem auto; font-size: 1rem; text-align: center;"></section>
-  </div>
+<div id="nav-placeholder"></div>
 <script>
-function analyzeStreaks() {
-  const startYear = parseInt(document.getElementById("startYear").value);
-  const endYear = parseInt(document.getElementById("endYear").value);
-  const includeZero = document.querySelector('input[name="includeZero"]:checked').value === "true";
-  if (startYear < 1928 || endYear > 2025 || startYear > endYear) {
-    alert("⚠️ 연도 범위가 잘못되었습니다. 1928~2025 사이의 값을 입력하세요.");
-    return;
-  }
+  fetch("includes/nav.html")
+    .then(response => response.text())
+    .then(data => document.getElementById("nav-placeholder").innerHTML = data);
+</script>
 
-  const entries = Object.entries(priceData)
-    .map(([date, price]) => ({ date: new Date(date), price }))
-    .filter(d => d.date.getFullYear() >= startYear && d.date.getFullYear() <= endYear)
-    .sort((a, b) => a.date - b.date);
+<div class="card">
+  <h1>🔁 연속 하락/상승 분석</h1>
+  <p class="note">
+    S&P500의 일일 수익률을 분석하여, 연속 하락/상승/정지의 빈도와 다음 날 수익률 방향의 확률을 통계적으로 분석합니다.
+  </p>
 
-  const returns = [];
-  for (let i = 1; i < entries.length; i++) {
-    const r = (entries[i].price - entries[i - 1].price) / entries[i - 1].price;
-    returns.push({ date: entries[i].date, return: r });
-  }
+  <section class="inputs">
+    <table>
+      <tr>
+        <th>시작 연도</th>
+        <td><input type="number" id="startYear" value="2000" /></td>
+      </tr>
+      <tr>
+        <th>종료 연도</th>
+        <td><input type="number" id="endYear" value="2025" /></td>
+      </tr>
+      <tr>
+        <th>0% 수익률 포함 여부</th>
+        <td>
+          <label><input type="radio" name="includeZero" value="true" /> 포함</label>
+          <label><input type="radio" name="includeZero" value="false" checked /> 무시</label>
+        </td>
+      </tr>
+    </table>
+    <div style="text-align: center; margin-top: 15px;">
+      <button onclick="analyzeStreaks()">📊 분석 실행</button>
+    </div>
+  </section>
 
-  const streakStats = {};
-  let i = 0;
-  while (i < returns.length - 1) {
-    let direction = null;
-    let streakStart = i;
-    let streakLength = 1;
+  <div class="chart-wrapper">
+    <canvas id="streakChart"></canvas>
+  </div>
 
-    const isUp = r => r > 0;
-    const isDown = r => r < 0;
-    const isZero = r => r === 0;
+  <div class="note" id="textSummary" style="max-width: 800px; margin: 2rem auto; text-align: center;"></div>
 
-    if (isUp(returns[i].return)) direction = "상승";
-    else if (isDown(returns[i].return)) direction = "하락";
-    else if (includeZero && isZero(returns[i].return)) direction = "정지";
-    else { i++; continue; }
+  <section id="summaryTable" class="note" style="max-width: 800px; margin: 2rem auto;"></section>
+</div>
 
-    while (i + streakLength < returns.length) {
-      const r = returns[i + streakLength].return;
-      if ((direction === "상승" && isUp(r)) ||
-          (direction === "하락" && isDown(r)) ||
-          (direction === "정지" && includeZero && isZero(r))) {
-        streakLength++;
-      } else {
-        break;
-      }
+<script>
+  function analyzeStreaks() {
+    const startYear = parseInt(document.getElementById("startYear").value);
+    const endYear = parseInt(document.getElementById("endYear").value);
+    const includeZero = document.querySelector('input[name="includeZero"]:checked').value === "true";
+    if (startYear < 1928 || endYear > 2025 || startYear > endYear) {
+      alert("⚠️ 연도 범위가 잘못되었습니다. 1928~2025 사이의 값을 입력하세요.");
+      return;
     }
 
-    const endIdx = i + streakLength - 1;
-    const nextIdx = endIdx + 1;
+    const entries = Object.entries(priceData)
+      .map(([date, price]) => ({ date: new Date(date), price }))
+      .filter(d => d.date.getFullYear() >= startYear && d.date.getFullYear() <= endYear)
+      .sort((a, b) => a.date - b.date);
 
-    if (streakLength >= 1 && nextIdx < returns.length) {
-      const nextR = returns[nextIdx].return;
-      const label = `${direction} ${streakLength}`;
-      if (!streakStats[label]) streakStats[label] = { count: 0 };
-      streakStats[label].count++;
+    const returns = [];
+    for (let i = 1; i < entries.length; i++) {
+      const r = (entries[i].price - entries[i - 1].price) / entries[i - 1].price;
+      returns.push({ date: entries[i].date, return: r });
     }
-    i += streakLength;
-  }
 
-  const sortedLabels = Object.keys(streakStats).sort((a, b) => {
-    const parse = s => {
-      const [dir, n] = s.split(" ");
-      return { dir, n: parseInt(n) };
-    };
-    const aP = parse(a), bP = parse(b);
-    const order = { 하락: 0, 정지: 1, 상승: 2 };
-    if (aP.dir === bP.dir) return aP.dir === "하락" ? bP.n - aP.n : aP.n - bP.n;
-    return order[aP.dir] - order[bP.dir];
-  });
+    const streakStats = {};
+    let i = 0;
+    while (i < returns.length - 1) {
+      let direction = null;
+      let streakStart = i;
+      let streakLength = 1;
 
-  const totalCount = Object.values(streakStats).reduce((sum, obj) => sum + obj.count, 0);
-  const chartLabels = sortedLabels;
-  const chartData = sortedLabels.map(label => (streakStats[label].count / totalCount) * 100);
+      const isUp = r => r > 0;
+      const isDown = r => r < 0;
+      const isZero = r => r === 0;
 
-  const ctx = document.getElementById("streakChart").getContext("2d");
-  if (window.streakChartInstance) window.streakChartInstance.destroy();
-  window.streakChartInstance = new Chart(ctx, {
-    type: 'bar',
-    data: {
-      labels: chartLabels,
-      datasets: [{
-        label: '발생 확률 (%)',
-        data: chartData,
-        backgroundColor: '#007bff'
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        title: {
-          display: true,
-          text: '연속 상승 / 하락 / 정지 발생 확률'
+      if (isUp(returns[i].return)) direction = "상승";
+      else if (isDown(returns[i].return)) direction = "하락";
+      else if (includeZero && isZero(returns[i].return)) direction = "정지";
+      else { i++; continue; }
+
+      while (i + streakLength < returns.length) {
+        const r = returns[i + streakLength].return;
+        if ((direction === "상승" && isUp(r)) ||
+            (direction === "하락" && isDown(r)) ||
+            (direction === "정지" && includeZero && isZero(r))) {
+          streakLength++;
+        } else {
+          break;
         }
+      }
+
+      const endIdx = i + streakLength - 1;
+      const nextIdx = endIdx + 1;
+
+      if (streakLength >= 1 && nextIdx < returns.length) {
+        const nextR = returns[nextIdx].return;
+        const label = `${direction} ${streakLength}`;
+        if (!streakStats[label]) streakStats[label] = { count: 0 };
+        streakStats[label].count++;
+      }
+      i += streakLength;
+    }
+
+    const sortedLabels = Object.keys(streakStats).sort((a, b) => {
+      const parse = s => {
+        const [dir, n] = s.split(" ");
+        return { dir, n: parseInt(n) };
+      };
+      const aP = parse(a), bP = parse(b);
+      const order = { 하락: 0, 정지: 1, 상승: 2 };
+      if (aP.dir === bP.dir) return aP.dir === "하락" ? bP.n - aP.n : aP.n - bP.n;
+      return order[aP.dir] - order[bP.dir];
+    });
+
+    const totalCount = Object.values(streakStats).reduce((sum, obj) => sum + obj.count, 0);
+    const chartLabels = sortedLabels;
+    const chartData = sortedLabels.map(label => (streakStats[label].count / totalCount) * 100);
+
+    const ctx = document.getElementById("streakChart").getContext("2d");
+    if (window.streakChartInstance) window.streakChartInstance.destroy();
+    window.streakChartInstance = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: chartLabels,
+        datasets: [{
+          label: '발생 확률 (%)',
+          data: chartData,
+          backgroundColor: '#007bff'
+        }]
       },
-      scales: {
-        y: {
-          beginAtZero: true,
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
           title: {
             display: true,
-            text: '확률 (%)'
+            text: '연속 상승 / 하락 / 정지 발생 확률'
+          }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            title: {
+              display: true,
+              text: '확률 (%)'
+            }
           }
         }
       }
-    }
-  });
+    });
 
   let tableHTML = `<table><thead><tr><th>선택</th><th>패턴</th><th>총 발생</th><th>총 발생 빈도(%)</th></tr></thead><tbody>`;
   sortedLabels.forEach(label => {

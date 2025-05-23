@@ -4,175 +4,194 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>S&P500 계절성 분석 - 기준 시점에 따른 차이</title>
+  <link rel="stylesheet" href="../styles.css">
   <style>
     body {
-      font-family: 'Segoe UI', sans-serif;
-      line-height: 1.6;
+      font-family: 'Noto Sans KR', sans-serif;
+      background-color: #f9fbfd;
+      margin: 0;
+      padding-top: 50px;
+      color: #2c3e50;
+    }
+
+    .container {
       max-width: 800px;
-      margin: 40px auto;
-      padding: 0 20px;
-      color: #333;
+      margin: 0 auto;
+      padding: 40px 20px;
     }
-    h1, h2, h3 {
-      color: #1a237e;
+
+    h1 {
+      font-size: 2rem;
+      border-bottom: 2px solid #ccc;
+      padding-bottom: 10px;
+      margin-bottom: 24px;
     }
-    img {
-      max-width: 100%;
-      height: auto;
-      margin: 20px 0;
+
+    h2 {
+      font-size: 1.4rem;
+      color: #34495e;
+      margin-top: 32px;
     }
-    table {
-      border-collapse: collapse;
-      width: 100%;
-      margin-top: 20px;
+
+    p {
+      font-size: 1rem;
+      line-height: 1.8;
     }
-    th, td {
-      border: 1px solid #ccc;
-      padding: 8px;
+
+    footer {
       text-align: center;
-    }
-    .divider {
-      border-top: 1px solid #ccc;
-      margin: 2rem 0;
+      font-size: 0.85rem;
+      color: #888;
+      padding: 20px;
+      background-color: #f0f2f5;
+      margin-top: 40px;
     }
   </style>
 </head>
 <body>
-  <h1>S&P500 계절성 분석: 기준 시점에 따라 달라지는 패턴</h1>
 
-  <p>S&P500의 계절성 분석은 투자 시기를 고려할 때 중요한 힌트를 제공합니다. 하지만 기준 시점을 어디로 설정하느냐에 따라 결과는 크게 달라질 수 있습니다. 이번 글에서는 <strong>1928~2024년 전체 구간</strong>과 <strong>2000~2024년 최근 구간</strong>을 비교하여 월별 수익률의 계절 패턴이 어떻게 변화했는지 살펴봅니다.</p>
+  <div id="nav-placeholder"></div>
+  <script>
+    fetch("../includes/nav.html")
+      .then(res => res.text())
+      .then(data => document.getElementById("nav-placeholder").innerHTML = data);
+  </script>
+  <div class="container">
+    <h1>S&P500 계절성 분석: 기준 시점에 따라 달라지는 패턴</h1>
+
+    <p>S&P500의 계절성 분석은 투자 시기를 고려할 때 중요한 힌트를 제공합니다. 하지만 기준 시점을 어디로 설정하느냐에 따라 결과는 크게 달라질 수 있습니다. 이번 글에서는 <strong>1928~2024년 전체 구간</strong>과 <strong>2000~2024년 최근 구간</strong>을 비교하여 월별 수익률의 계절 패턴이 어떻게 변화했는지 살펴봅니다.</p>
+
+    <div class="divider"></div>
+    <h2>분석 방법 요약</h2>
+    <ul>
+      <li>데이터: S&P500 일별 종가</li>
+      <li>분석 범위:
+        <ul>
+          <li>1928년 ~ 2024년</li>
+          <li>2000년 ~ 2024년</li>
+        </ul>
+      </li>
+      <li>방법:
+        <ul>
+          <li>일별 수익률 → 누적 수익률 계산</li>
+          <li>누락일은 0% 수익률로 간주</li>
+          <li>월별 평균 수익률 및 연중 누적 수익률 시각화</li>
+          <li>기하평균 수익률 사용</li>
+        </ul>
+      </li>
+    </ul>
+
+    <div class="divider"></div>
+    <h2>1928년 ~ 2024년 전체 구간 분석</h2>
+    <h3>연중 누적 수익률 흐름</h3>
+    <img src="./images/seasonality_chart_1928_2024.png" alt="1928~2024 누적 수익률 흐름">
+
+    <h3>월별 평균 수익률</h3>
+    <img src="./images/seasonality_monthly_1928_2024.png" alt="1928~2024 월별 수익률">
+
+    <p><strong>핵심 요약:</strong><br>
+      - 연중 내내 꾸준한 상승 흐름을 보이며, 특히 10~12월 상승 탄력이 큼큼<br>
+      - 하락이 빈번한 달은 9월 한 달뿐<br>
+      - 평균적으로 연간 월평균 수익률은 약 0.70%</p>
+
+    <div class="divider"></div>
+    <h2>2000년 ~ 2024년 최근 25년 구간 분석</h2>
+    <h3>연중 누적 수익률 흐름</h3>
+    <img src="./images/seasonality_chart_2000_2024.png" alt="2000~2024 누적 수익률 흐름">
+
+    <h3>월별 평균 수익률</h3>
+    <img src="./images/seasonality_monthly_2000_2024.png" alt="2000~2024 월별 수익률">
+
+    <p><strong>핵심 요약:</strong><br>
+      - 상승 구간이 여름(5~7월)에 집중, 9월의 약세가 뚜렷함<br>
+      - 전통적으로 강세장이던 4월보다 7월이 더 높은 평균 수익률<br>
+      - 평균적으로 연간 월평균 수익률은 약 0.51%</p>
+
+    <div class="divider"></div>
+    <h2>구간별 비교 요약</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>항목</th>
+          <th>1928~2024</th>
+          <th>2000~2024</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>연간 월평균 수익률</td>
+          <td>0.70%</td>
+          <td>0.51%</td>
+        </tr>
+        <tr>
+          <td>가장 수익률 높은 달</td>
+          <td>11월</td>
+          <td>7월</td>
+        </tr>
+        <tr>
+          <td>가장 수익률 낮은 달</td>
+          <td>9월</td>
+          <td>9월</td>
+        </tr>
+        <tr>
+          <td>상반기 평균</td>
+          <td>0.64%</td>
+          <td>0.49%</td>
+        </tr>
+        <tr>
+          <td>하반기 평균</td>
+          <td>0.76%</td>
+          <td>0.54%</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="divider"></div>
+    <h2>해석 및 결론</h2>
+    <p>계절성은 고정되지 않습니다. 시장 구조, 투자자 행동, 정책 환경에 따라 달라질 수 있습니다.</p>
+    <ul>
+      <li>장기 구간에서는 연말(10~12월)의 랠리가 강하게 나타남</li>
+      <li>최근 구간에서는 여름철(5~7월)의 상승 흐름이 두드러짐</li>
+      <li>9월은 과거와 현재 모두에서 일관된 약세 확인</li>
+    </ul>
 
   <div class="divider"></div>
-  <h2>분석 방법 요약</h2>
+  <h2>심화 해석: 왜 계절성이 생기는가?</h2>
+
+  <p>S&P500의 월별 수익률 패턴에는 단순히 가격의 흐름 이상으로 다양한 요인이 복합적으로 작용합니다. 다음은 대표적인 계절성의 원인들입니다.</p>
+
   <ul>
-    <li>데이터: S&P500 일별 종가</li>
-    <li>분석 범위:
-      <ul>
-        <li>1928년 ~ 2024년</li>
-        <li>2000년 ~ 2024년</li>
-      </ul>
-    </li>
-    <li>방법:
-      <ul>
-        <li>일별 수익률 → 누적 수익률 계산</li>
-        <li>누락일은 0% 수익률로 간주</li>
-        <li>월별 평균 수익률 및 연중 누적 수익률 시각화</li>
-        <li>기하평균 수익률 사용</li>
-      </ul>
-    </li>
+    <li><strong>세금 요인:</strong> 미국 회계연도 마감 시기(12월) 전후로 투자자들이 손익을 정리하는 움직임이 나타납니다.</li>
+    <li><strong>펀드 리밸런싱:</strong> 연말과 분기 말에 발생하는 펀드들의 포트폴리오 조정이 특정 월 수익률에 영향을 줍니다.</li>
+    <li><strong>심리적 요인:</strong> '1월 효과', '여름 휴가 시즌', '산타랠리'와 같은 투자자 심리가 특정 시기에 매매 패턴을 형성합니다.</li>
+    <li><strong>거시경제 일정:</strong> 연준의 금리 회의, 기업 실적 시즌, 고용지표 발표 등도 계절적으로 몰려 있으며, 이들이 시장에 반복적인 반응을 유도할 수 있습니다.</li>
   </ul>
 
-  <div class="divider"></div>
-  <h2>1928년 ~ 2024년 전체 구간 분석</h2>
-  <h3>연중 누적 수익률 흐름</h3>
-  <img src="./images/seasonality_chart_1928_2024.png" alt="1928~2024 누적 수익률 흐름">
-
-  <h3>월별 평균 수익률</h3>
-  <img src="./images/seasonality_monthly_1928_2024.png" alt="1928~2024 월별 수익률">
-
-  <p><strong>핵심 요약:</strong><br>
-    - 연중 내내 꾸준한 상승 흐름을 보이며, 특히 10~12월 상승 탄력이 큼큼<br>
-    - 하락이 빈번한 달은 9월 한 달뿐<br>
-    - 평균적으로 연간 월평균 수익률은 약 0.70%</p>
+  <p>이러한 요인은 고정된 것은 아니며, 시대별로 영향을 달리 미칩니다. 실제로 2000년 이후의 데이터에서 4월보다 7월 수익률이 더 높아진 것은 펀드 설정 구조나 글로벌 자본 유입 타이밍 변화 등 시장 구조 변화와 연관 있을 수 있습니다.</p>
 
   <div class="divider"></div>
-  <h2>2000년 ~ 2024년 최근 25년 구간 분석</h2>
-  <h3>연중 누적 수익률 흐름</h3>
-  <img src="./images/seasonality_chart_2000_2024.png" alt="2000~2024 누적 수익률 흐름">
 
-  <h3>월별 평균 수익률</h3>
-  <img src="./images/seasonality_monthly_2000_2024.png" alt="2000~2024 월별 수익률">
+  <h2>추가 고려사항</h2>
 
-  <p><strong>핵심 요약:</strong><br>
-    - 상승 구간이 여름(5~7월)에 집중, 9월의 약세가 뚜렷함<br>
-    - 전통적으로 강세장이던 4월보다 7월이 더 높은 평균 수익률<br>
-    - 평균적으로 연간 월평균 수익률은 약 0.51%</p>
-
-  <div class="divider"></div>
-  <h2>구간별 비교 요약</h2>
-  <table>
-    <thead>
-      <tr>
-        <th>항목</th>
-        <th>1928~2024</th>
-        <th>2000~2024</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr>
-        <td>연간 월평균 수익률</td>
-        <td>0.70%</td>
-        <td>0.51%</td>
-      </tr>
-      <tr>
-        <td>가장 수익률 높은 달</td>
-        <td>11월</td>
-        <td>7월</td>
-      </tr>
-      <tr>
-        <td>가장 수익률 낮은 달</td>
-        <td>9월</td>
-        <td>9월</td>
-      </tr>
-      <tr>
-        <td>상반기 평균</td>
-        <td>0.64%</td>
-        <td>0.49%</td>
-      </tr>
-      <tr>
-        <td>하반기 평균</td>
-        <td>0.76%</td>
-        <td>0.54%</td>
-      </tr>
-    </tbody>
-  </table>
-
-  <div class="divider"></div>
-  <h2>해석 및 결론</h2>
-  <p>계절성은 고정되지 않습니다. 시장 구조, 투자자 행동, 정책 환경에 따라 달라질 수 있습니다.</p>
   <ul>
-    <li>장기 구간에서는 연말(10~12월)의 랠리가 강하게 나타남</li>
-    <li>최근 구간에서는 여름철(5~7월)의 상승 흐름이 두드러짐</li>
-    <li>9월은 과거와 현재 모두에서 일관된 약세 확인</li>
+    <li><strong>계절성은 퀀트 전략의 일부로 활용될 수 있습니다.</strong> 단독으로 예측 신호로 사용하기보다, 분산 투자, 리밸런싱 타이밍 결정, 위험 관리 기준에 보조 신호로 활용하는 것이 이상적입니다.</li>
+    <li><strong>자산군별 계절성 차이</strong>도 존재합니다. S&P500뿐 아니라 채권, 원자재, 해외지수 등은 계절적 흐름이 전혀 다를 수 있습니다.</li>
+    <li><strong>정책/사건 리스크</strong>: 팬데믹(2020), 금융위기(2008), 금리 인상기와 같이 특정 국면에서는 계절성과 무관한 급변 흐름이 나타납니다.</li>
   </ul>
 
-<div class="divider"></div>
-<h2>심화 해석: 왜 계절성이 생기는가?</h2>
-
-<p>S&P500의 월별 수익률 패턴에는 단순히 가격의 흐름 이상으로 다양한 요인이 복합적으로 작용합니다. 다음은 대표적인 계절성의 원인들입니다.</p>
-
-<ul>
-  <li><strong>세금 요인:</strong> 미국 회계연도 마감 시기(12월) 전후로 투자자들이 손익을 정리하는 움직임이 나타납니다.</li>
-  <li><strong>펀드 리밸런싱:</strong> 연말과 분기 말에 발생하는 펀드들의 포트폴리오 조정이 특정 월 수익률에 영향을 줍니다.</li>
-  <li><strong>심리적 요인:</strong> '1월 효과', '여름 휴가 시즌', '산타랠리'와 같은 투자자 심리가 특정 시기에 매매 패턴을 형성합니다.</li>
-  <li><strong>거시경제 일정:</strong> 연준의 금리 회의, 기업 실적 시즌, 고용지표 발표 등도 계절적으로 몰려 있으며, 이들이 시장에 반복적인 반응을 유도할 수 있습니다.</li>
-</ul>
-
-<p>이러한 요인은 고정된 것은 아니며, 시대별로 영향을 달리 미칩니다. 실제로 2000년 이후의 데이터에서 4월보다 7월 수익률이 더 높아진 것은 펀드 설정 구조나 글로벌 자본 유입 타이밍 변화 등 시장 구조 변화와 연관 있을 수 있습니다.</p>
-
-<div class="divider"></div>
-
-<h2>추가 고려사항</h2>
-
-<ul>
-  <li><strong>계절성은 퀀트 전략의 일부로 활용될 수 있습니다.</strong> 단독으로 예측 신호로 사용하기보다, 분산 투자, 리밸런싱 타이밍 결정, 위험 관리 기준에 보조 신호로 활용하는 것이 이상적입니다.</li>
-  <li><strong>자산군별 계절성 차이</strong>도 존재합니다. S&P500뿐 아니라 채권, 원자재, 해외지수 등은 계절적 흐름이 전혀 다를 수 있습니다.</li>
-  <li><strong>정책/사건 리스크</strong>: 팬데믹(2020), 금융위기(2008), 금리 인상기와 같이 특정 국면에서는 계절성과 무관한 급변 흐름이 나타납니다.</li>
-</ul>
-
-<p>따라서 계절성은 통계적 경향일 뿐, 전적으로 의존해서는 안 되며 복합적 의사결정 구조 내에서 의미 있게 활용되어야 합니다.</p>
+  <p>따라서 계절성은 통계적 경향일 뿐, 전적으로 의존해서는 안 되며 복합적 의사결정 구조 내에서 의미 있게 활용되어야 합니다.</p>
 
 
-  <h3>투자 적용 시 유의점</h3>
-  <p>계절성은 절대적인 예측 도구가 아니라, 시장 흐름에 대한 통계적 참고자료로 활용하는 것이 적절합니다. 다른 지표와 함께 종합적으로 고려해야 합니다.</p>
+    <h3>투자 적용 시 유의점</h3>
+    <p>계절성은 절대적인 예측 도구가 아니라, 시장 흐름에 대한 통계적 참고자료로 활용하는 것이 적절합니다. 다른 지표와 함께 종합적으로 고려해야 합니다.</p>
 
-  <div class="divider"></div>
-  <div style="text-align: center; margin-top: 2rem;">
-    <a href="../S&P500_seasonality.html" style="display: inline-block; padding: 10px 20px; background-color: #e0e0e0; color: #333; text-decoration: none; border-radius: 6px; font-weight: 500;">
-      ← 시뮬레이터로 돌아가기
-    </a>
+    <div class="divider"></div>
+    <div style="text-align: center; margin-top: 2rem;">
+      <a href="../S&P500_seasonality.html" style="display: inline-block; padding: 10px 20px; background-color: #e0e0e0; color: #333; text-decoration: none; border-radius: 6px; font-weight: 500;">
+        ← 시뮬레이터로 돌아가기
+      </a>
+    </div>
   </div>
-
 
 </body>
 </html>

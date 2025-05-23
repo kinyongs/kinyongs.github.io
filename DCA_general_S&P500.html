@@ -11,49 +11,52 @@
 </head>
 <body>
 
-<div style="text-align: right; margin-bottom: 10px;">
-  <a href="index.html">🏠 메인으로</a>
-</div>
+<div id="nav-placeholder"></div>
+<script>
+  fetch("includes/nav.html")
+    .then(response => response.text())
+    .then(data => {
+      document.getElementById("nav-placeholder").innerHTML = data;
+    });
+</script>
 
 <div class="card">
   <h1>📈 적립식 투자 시뮬레이션 (S&P500 지수 기반)</h1>
-  <p style="text-align: center; color: #666; margin-top: -1rem; margin-bottom: 2rem;">
-    실제 S&P500 지수를 기반으로 투자 시뮬레이션을 진행합니다.
-  </p>
+  <p class="note">실제 S&P500 지수를 기반으로 투자 시뮬레이션을 진행합니다.</p>
 
   <section class="inputs">
-    <table style="margin: 0 auto;">
+    <table>
       <tr>
-        <th style="text-align: right; padding: 6px 10px;">🏦 초기 투자금 (₩)</th>
-        <td style="padding: 6px 10px; text-align: left;"><input type="text" id="initialInvestment" value="0" style="width: 120px;" /></td>
+        <th>🏦 초기 투자금 (₩)</th>
+        <td><input type="text" id="initialInvestment" value="0" /></td>
       </tr>
       <tr>
-        <th style="text-align: right; padding: 6px 10px;">💰 월 적립 금액 (₩)</th>
-        <td style="padding: 6px 10px; text-align: left;"><input type="text" id="monthlyInvestment" value="1,000,000" style="width: 120px;" /></td>
+        <th>💰 월 적립 금액 (₩)</th>
+        <td><input type="text" id="monthlyInvestment" value="1,000,000" /></td>
       </tr>
       <tr>
-        <th style="text-align: right; padding: 6px 10px;">🔄 매년 적립금 증가율 (%)</th>
-        <td style="padding: 6px 10px; text-align: left;"><input type="number" id="monthlyIncreaseRate" value="0" style="width: 80px;" /></td>
+        <th>🔄 매년 적립금 증가율 (%)</th>
+        <td><input type="number" id="monthlyIncreaseRate" value="0" /></td>
       </tr>
       <tr>
-        <th style="text-align: right; padding: 6px 10px;">📅 시작 연도</th>
-        <td style="padding: 6px 10px; text-align: left;"><input type="number" id="startYear" value="2015" style="width: 80px;" /> 첫 거래일</td>
+        <th>📅 시작 연도</th>
+        <td><input type="number" id="startYear" value="2015" /> 첫 거래일</td>
       </tr>
       <tr>
-        <th style="text-align: right; padding: 6px 10px;">📅 종료 연도</th>
-        <td style="padding: 6px 10px; text-align: left;"><input type="number" id="endYear" value="2024" style="width: 80px;" /> 마지막 거래일</td>
+        <th>📅 종료 연도</th>
+        <td><input type="number" id="endYear" value="2024" /> 마지막 거래일</td>
       </tr>
     </table>
 
-    <div id="errorMsg" class="note" style="color: red; text-align: center; margin: 10px auto 5px;"></div>
-    <div style="text-align: center; margin: 5px auto 20px;">
+    <div id="errorMsg" class="note" style="color: red;"></div>
+    <div style="text-align: center; margin-top: 15px;">
       <button onclick="simulate()">📊 그래프 그리기</button>
     </div>
   </section>
 
   <section>
-    <h3 style="text-align: center; margin-top: 30px;">📌 최종 투자 결과 (전체 기간 기준)</h3>
-    <table style="margin: 0 auto;">
+    <h3 class="note" style="text-align: center; margin-top: 30px;">📌 최종 투자 결과 (전체 기간 기준)</h3>
+    <table>
       <thead>
         <tr>
           <th>총 투자 기간 (년)</th>
@@ -73,11 +76,8 @@
 
   <div class="chart-wrapper">
     <canvas id="chartCanvas"></canvas>
-    <div id="resultComment" class="note" style="text-align: center; font-size: 1rem; margin-top: 1.5rem; color: #495057;"></div>
+    <div id="resultComment" class="note" style="text-align: center; font-size: 1rem; margin-top: 1.5rem;"></div>
   </div>
-</div>
-<div style="text-align: center; margin-top: 20px;">
-  <button onclick="location.href='index.html'">🔙 메인으로 돌아가기</button>
 </div>
 
 <script>
@@ -138,56 +138,10 @@ function simulate() {
     points.push({ ym, principal: totalPrincipal, value: totalValue });
   }
 
-  // 연도별 수익률 계산
-  const yearlyTable = document.getElementById('yearlyReturns');
-  if (yearlyTable) yearlyTable.remove();
-
-  const yearlyStats = {};
-  points.forEach(p => {
-    const year = p.ym.substring(0, 4);
-    if (!yearlyStats[year]) yearlyStats[year] = { principal: 0, value: 0 };
-    yearlyStats[year].principal = p.principal;
-    yearlyStats[year].value = p.value;
-  });
-
-  const table = document.createElement('table');
-  table.id = 'yearlyReturns';
-  table.style.margin = '30px auto';
-  table.innerHTML = `
-    <thead>
-      <tr>
-        <th>투자기간</th>
-        <th>연도</th>
-        <th>투자원금 (억 원)</th>
-        <th>수익금 (억 원)</th>
-        <th>총 평가금 (억 원)</th>
-        <th>수익률 (%)</th>
-      </tr>
-    </thead>
-    <tbody>
-      ${Object.entries(yearlyStats).map(([year, stat], i) => {
-        const principal = stat.principal;
-        const value = stat.value;
-        const profit = value - principal;
-        const rate = (profit / principal) * 100;
-        return `<tr>
-          <td>${i + 1}년</td>
-          <td>${year}년</td>
-          <td>${formatCurrency(principal)}</td>
-          <td>${formatCurrency(profit)}</td>
-          <td>${formatCurrency(value)}</td>
-          <td>${rate.toFixed(2)}%</td>
-        </tr>`;
-      }).join('')}
-    </tbody>`;
-
-  document.querySelector('.chart-wrapper').after(table);
-
   const last = points.at(-1);
   document.getElementById('finalYear').textContent = `${endYear - startYear + 1}년`;
   document.getElementById('finalPrincipal').textContent = formatCurrency(last.principal);
   document.getElementById('finalValue').textContent = formatCurrency(last.value);
-
   resultComment.textContent = `📌 총 ${endYear - startYear + 1}년간 투자한 원금은 약 ${formatCurrency(last.principal)}억 원이며, 평가금액은 약 ${formatCurrency(last.value)}억 원입니다.`;
 
   const ctx = document.getElementById('chartCanvas').getContext('2d');
@@ -204,12 +158,26 @@ function simulate() {
     options: {
       responsive: true,
       maintainAspectRatio: false,
+      layout: { padding: { bottom: 40 } },
+      plugins: {
+        legend: {
+          labels: {
+            color: '#f8f9fa',
+            font: { size: 13 }
+          }
+        }
+      },
       interaction: { mode: 'index', intersect: false },
       scales: {
-        x: { title: { display: true, text: '투자 월' } },
+        x: {
+          title: { display: true, text: '투자 월', color: '#dee2e6' },
+          ticks: { color: '#adb5bd' },
+          grid: { color: '#333' }
+        },
         y: {
-          title: { display: true, text: '(억 원)' },
-          ticks: { callback: v => formatCurrency(v) }
+          title: { display: true, text: '(억 원)', color: '#dee2e6' },
+          ticks: { callback: v => formatCurrency(v), color: '#adb5bd' },
+          grid: { color: '#333' }
         }
       }
     }

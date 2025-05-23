@@ -4,214 +4,188 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>S&P500 지수 상승 요인 분석: EPS 성장과 PER 변화</title>
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="styles.css">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <style>
-    canvas {
-      width: 100% !important;
-      height: 400px !important;
-    }
-    .chart-wrapper {
-      margin-bottom: 2rem;
-    }
-    table {
-      margin: 0 auto;
-    }
-    th, td {
-      padding: 6px 10px;
-    }
-  </style>
 </head>
 <body>
-  <div style="text-align: right; margin-bottom: 10px;">
-    <a href="index.html">🏠 메인으로</a>
+
+<div id="nav-placeholder"></div>
+<script>
+  fetch("includes/nav.html")
+    .then(response => response.text())
+    .then(data => document.getElementById("nav-placeholder").innerHTML = data);
+</script>
+
+<div class="card">
+  <h1>📈 S&P500 지수 상승 요인 분석: EPS 성장과 PER 변화</h1>
+  <p class="note">
+    EPS는 기업의 실제 이익을, PER은 시장이 주가에 부여한 프리미엄을 의미합니다.<br>
+    본 분석은 S&P500 지수 상승을 EPS 성장과 PER 변화 관점에서 분해하여 시각화합니다.
+  </p>
+
+  <section class="inputs">
+    <table>
+      <tr>
+        <th>⏳ 시작 연도</th>
+        <td><input type="number" id="startYear" /></td>
+      </tr>
+      <tr>
+        <th>⏱️ 종료 연도</th>
+        <td><input type="number" id="endYear" /></td>
+      </tr>
+      <tr>
+        <th>📐 Y축 스케일</th>
+        <td>
+          <label><input type="radio" name="scaleType" value="linear" checked> 선형</label>
+          <label><input type="radio" name="scaleType" value="log"> 로그</label>
+        </td>
+      </tr>
+    </table>
+    <div style="text-align: center; margin-top: 15px;">
+      <button onclick="renderCharts()">📊 분석 실행</button>
+    </div>
+  </section>
+
+  <div class="chart-wrapper">
+    <canvas id="chartEPS"></canvas>
   </div>
 
-  <div class="card">
-    <h1>📈 S&P500 지수 상승 요인 분석: EPS 성장과 PER 변화</h1>
-    <p style="text-align: center; color: #555; margin-top: -1rem; margin-bottom: 2rem;">
-      EPS는 기업의 실제 이익을, PER은 시장이 주가에 부여한 프리미엄을 의미합니다.<br>
-      S&P500의 지수 상승은 이 두 요소가 복합적으로 작용한 결과입니다.<br>
-      본 분석은 지수와 EPS의 관계, 지수와 PER의 관계를 시각화하고, 지수 상승률을 구성 요인별로 분해하여 보여줍니다.
-    </p>
-
-    <section style="margin-bottom: 20px; text-align: center;">
-      <table style="margin: 0 auto;">
-        <tr>
-          <th style="text-align: right; padding: 6px 10px;">⏳ 시작 연도</th>
-          <td style="text-align: left; padding: 6px 10px;"><input type="number" id="startYear" style="width: 120px;" /></td>
-        </tr>
-        <tr>
-          <th style="text-align: right; padding: 6px 10px;">⏱️ 종료 연도</th>
-          <td style="text-align: left; padding: 6px 10px;"><input type="number" id="endYear" style="width: 120px;" /></td>
-        </tr>
-        <tr>
-          <th style="text-align: right; padding: 6px 10px;">📐 Y축 스케일</th>
-          <td style="text-align: left; padding: 6px 10px;">
-            <label><input type="radio" name="scaleType" value="linear" checked> 선형</label>
-            <label><input type="radio" name="scaleType" value="log"> 로그</label>
-          </td>
-        </tr>
-      </table>
-
-      <div style="text-align: center; margin-top: 1rem;">
-        <button onclick="renderCharts()">📊 분석 실행</button>
-      </div>
-    </section>
-
-    <section class="chart-wrapper">
-      <canvas id="chartEPS"></canvas>
-    </section>
-
-    <section class="chart-wrapper">
-      <canvas id="chartPER"></canvas>
-    </section>
-
-    <div id="analysisText" style="text-align: center; font-size: 1.05rem; color: #495057; line-height: 1.8;"></div>
+  <div class="chart-wrapper">
+    <canvas id="chartPER"></canvas>
   </div>
 
-  <div style="text-align: center; margin-top: 20px;">
-    <button onclick="location.href='index.html'">🔙 메인으로 돌아가기</button>
-  </div>
+  <section id="analysisText" class="note" style="max-width: 800px; margin: 2rem auto;"></section>
+</div>
 
-  <script src="price_EPS_monthly.js"></script>
-  <script>
-    Chart.register(Chart.registry.getScale('logarithmic'));
+<script src="price_EPS_monthly.js"></script>
+<script>
+  Chart.register(Chart.registry.getScale('logarithmic'));
 
-    const allDates = Object.keys(priceData);
-    const years = allDates.map(d => parseInt(d.split('-')[0]));
-    document.getElementById('startYear').value = Math.min(...years);
-    document.getElementById('endYear').value = Math.max(...years);
+  const allDates = Object.keys(priceData);
+  const years = allDates.map(d => parseInt(d.split('-')[0]));
+  document.getElementById('startYear').value = Math.min(...years);
+  document.getElementById('endYear').value = Math.max(...years);
 
-    function filterByYearRange(start, end) {
-      const filteredLabels = [];
-      const filteredPrices = [];
-      const filteredEPS = [];
-      const filteredPER = [];
-
-      for (const date in priceData) {
-        const year = parseInt(date.split('-')[0]);
-        if (year >= start && year <= end && EPSData[date]) {
-          filteredLabels.push(date);
-          filteredPrices.push(priceData[date]);
-          filteredEPS.push(EPSData[date]);
-          filteredPER.push(EPSData[date] > 0 ? priceData[date] / EPSData[date] : null);
-        }
+  function filterByYearRange(start, end) {
+    const labels = [], prices = [], eps = [], per = [];
+    for (const date in priceData) {
+      const year = parseInt(date.split('-')[0]);
+      if (year >= start && year <= end && EPSData[date]) {
+        labels.push(date);
+        prices.push(priceData[date]);
+        eps.push(EPSData[date]);
+        per.push(EPSData[date] > 0 ? priceData[date] / EPSData[date] : null);
       }
-
-      return { labels: filteredLabels, prices: filteredPrices, eps: filteredEPS, per: filteredPER };
     }
+    return { labels, prices, eps, per };
+  }
 
-    function drawDoubleChart(canvasId, labelRight, dataRight, labelLeft, dataLeft, colorRight, colorLeft, logScale = false) {
-      const ctx = document.getElementById(canvasId).getContext('2d');
-      return new Chart(ctx, {
-        type: 'line',
-        data: {
-          labels: shared.labels,
-          datasets: [
-            {
-              label: labelLeft,
-              data: dataLeft,
-              borderColor: colorLeft,
-              yAxisID: 'yLeft',
-              tension: 0.3,
-              pointRadius: 0
-            },
-            {
-              label: labelRight,
-              data: dataRight,
-              borderColor: colorRight,
-              yAxisID: 'yRight',
-              tension: 0.3,
-              pointRadius: 0
-            }
-          ]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-            legend: { position: 'bottom' },
-            title: {
-              display: true,
-              text: `${labelLeft} vs ${labelRight}`
-            }
+  function drawDoubleChart(canvasId, labelRight, dataRight, labelLeft, dataLeft, colorRight, colorLeft, useLogLeft = false, useLogRight = false) {
+    const ctx = document.getElementById(canvasId).getContext('2d');
+    return new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: shared.labels,
+        datasets: [
+          {
+            label: labelLeft,
+            data: dataLeft,
+            borderColor: colorLeft,
+            yAxisID: 'yLeft',
+            tension: 0.3,
+            pointRadius: 0
           },
-          scales: {
-            yLeft: {
-              type: logScale ? 'logarithmic' : 'linear',
-              position: 'left',
-              title: { display: true, text: labelLeft },
-              ticks: logScale ? { callback: value => value.toLocaleString() } : undefined
-            },
-            yRight: {
-              type: 'linear',
-              position: 'right',
-              title: { display: true, text: labelRight },
-              grid: { drawOnChartArea: false }
-            },
-            x: {
-              title: { display: true, text: '기간' }
-            }
+          {
+            label: labelRight,
+            data: dataRight,
+            borderColor: colorRight,
+            yAxisID: 'yRight',
+            tension: 0.3,
+            pointRadius: 0
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { position: 'bottom' },
+          title: { display: true, text: `${labelLeft} vs ${labelRight}` }
+        },
+        scales: {
+          yLeft: {
+            type: useLogLeft ? 'logarithmic' : 'linear',
+            position: 'left',
+            title: { display: true, text: labelLeft },
+            ticks: useLogLeft ? { callback: value => value.toLocaleString() } : undefined
+          },
+          yRight: {
+            type: useLogRight ? 'logarithmic' : 'linear',
+            position: 'right',
+            title: { display: true, text: labelRight },
+            grid: { drawOnChartArea: false },
+            ticks: useLogRight ? { callback: value => value.toLocaleString() } : undefined
+          },
+          x: {
+            title: { display: true, text: '기간' }
           }
         }
-      });
-    }
+      }
+    });
+  }
 
-    function pearsonCorrelation(x, y) {
-      const n = x.length;
-      const avgX = x.reduce((a, b) => a + b, 0) / n;
-      const avgY = y.reduce((a, b) => a + b, 0) / n;
-      const cov = x.map((xi, i) => (xi - avgX) * (y[i] - avgY)).reduce((a, b) => a + b, 0);
-      const stdX = Math.sqrt(x.map(xi => (xi - avgX) ** 2).reduce((a, b) => a + b, 0));
-      const stdY = Math.sqrt(y.map(yi => (yi - avgY) ** 2).reduce((a, b) => a + b, 0));
-      return cov / (stdX * stdY);
-    }
 
-    let chartEPS = null;
-    let chartPER = null;
-    let shared = {};
 
-    function renderCharts() {
-      const start = parseInt(document.getElementById('startYear').value);
-      const end = parseInt(document.getElementById('endYear').value);
-      const scaleType = document.querySelector('input[name="scaleType"]:checked').value;
-      const logScale = scaleType === 'log';
+  function pearsonCorrelation(x, y) {
+    const n = x.length;
+    const avgX = x.reduce((a, b) => a + b, 0) / n;
+    const avgY = y.reduce((a, b) => a + b, 0) / n;
+    const cov = x.map((xi, i) => (xi - avgX) * (y[i] - avgY)).reduce((a, b) => a + b, 0);
+    const stdX = Math.sqrt(x.map(xi => (xi - avgX) ** 2).reduce((a, b) => a + b, 0));
+    const stdY = Math.sqrt(y.map(yi => (yi - avgY) ** 2).reduce((a, b) => a + b, 0));
+    return cov / (stdX * stdY);
+  }
 
-      shared = filterByYearRange(start, end);
+  let chartEPS = null;
+  let chartPER = null;
+  let shared = {};
 
-      if (chartEPS) chartEPS.destroy();
-      if (chartPER) chartPER.destroy();
+  function renderCharts() {
+    const start = parseInt(document.getElementById('startYear').value);
+    const end = parseInt(document.getElementById('endYear').value);
+    const logScale = document.querySelector('input[name="scaleType"]:checked').value === 'log';
 
-      chartEPS = drawDoubleChart('chartEPS', 'EPS', shared.eps, 'S&P500 지수', shared.prices, '#f28e2b', '#4e79a7', logScale);
-      chartPER = drawDoubleChart('chartPER', 'PER', shared.per, 'S&P500 지수', shared.prices, '#59a14f', '#4e79a7', false);
+    shared = filterByYearRange(start, end);
 
-      const corr = pearsonCorrelation(shared.prices, shared.eps).toFixed(4);
-      const priceStart = shared.prices[0], priceEnd = shared.prices.at(-1);
-      const epsStart = shared.eps[0], epsEnd = shared.eps.at(-1);
-      const perStart = shared.per[0], perEnd = shared.per.at(-1);
-      const priceGrowth = ((priceEnd / priceStart) - 1) * 100;
-      const epsGrowth = ((epsEnd / epsStart) - 1) * 100;
-      const perGrowth = ((perEnd / perStart) - 1) * 100;
+    if (chartEPS) chartEPS.destroy();
+    if (chartPER) chartPER.destroy();
 
-      const epsContribution = epsGrowth / (epsGrowth + perGrowth) * 100;
-      const perContribution = perGrowth / (epsGrowth + perGrowth) * 100;
+    chartEPS = drawDoubleChart('chartEPS', 'EPS', shared.eps, 'S&P500 지수', shared.prices, '#f28e2b', '#4e79a7', logScale, logScale);
+    chartPER = drawDoubleChart('chartPER', 'PER', shared.per, 'S&P500 지수', shared.prices, '#59a14f', '#4e79a7', logScale, false);
 
-      document.getElementById('analysisText').innerHTML = `
-        <strong>📊 분석 결과</strong><br>
-        분석 기간 (${shared.labels[0]} ~ ${shared.labels.at(-1)}) 동안,<br>
-        S&P500 지수는 <strong>${priceStart.toFixed(2)}</strong>에서 <strong>${priceEnd.toFixed(2)}</strong>로 상승하며 총 <strong>${priceGrowth.toFixed(2)}%</strong> 증가하였습니다.<br>
-        EPS는 <strong>${epsStart.toFixed(2)}</strong>에서 <strong>${epsEnd.toFixed(2)}</strong>로 <strong>${epsGrowth.toFixed(2)}%</strong> 증가하였고,<br>
-        PER은 <strong>${perStart.toFixed(2)}</strong>에서 <strong>${perEnd.toFixed(2)}</strong>로 <strong>${perGrowth.toFixed(2)}%</strong> 상승하였습니다.<br><br>
-        지수 상승 기여도 기준으로 볼 때,<br>
-        ▶ EPS는 전체 상승의 약 <strong>${epsContribution.toFixed(1)}%</strong>를,<br>
-        ▶ PER은 약 <strong>${perContribution.toFixed(1)}%</strong>를 차지한 것으로 분석됩니다.<br><br>
-        
-        지수와 EPS, 두 지표 간의 상관계수는 <strong>${corr}</strong>이며, 이는 ${corr > 0.7 ? '매우 강한' : corr > 0.4 ? '상당한' : '약한'} 양의 상관관계를 나타냅니다.`;
-    }
+    const corr = pearsonCorrelation(shared.prices, shared.eps).toFixed(4);
+    const priceStart = shared.prices[0], priceEnd = shared.prices.at(-1);
+    const epsStart = shared.eps[0], epsEnd = shared.eps.at(-1);
+    const perStart = shared.per[0], perEnd = shared.per.at(-1);
+    const priceGrowth = ((priceEnd / priceStart) - 1) * 100;
+    const epsGrowth = ((epsEnd / epsStart) - 1) * 100;
+    const perGrowth = ((perEnd / perStart) - 1) * 100;
 
-    renderCharts();
-  </script>
+    const epsContribution = epsGrowth / (epsGrowth + perGrowth) * 100;
+    const perContribution = perGrowth / (epsGrowth + perGrowth) * 100;
+
+    document.getElementById('analysisText').innerHTML = `
+      <strong>📊 분석 결과</strong><br>
+      분석 기간 (${shared.labels[0]} ~ ${shared.labels.at(-1)}) 동안,<br>
+      S&P500 지수는 <strong>${priceStart.toFixed(2)}</strong> → <strong>${priceEnd.toFixed(2)}</strong> 상승하며 <strong>${priceGrowth.toFixed(2)}%</strong> 증가.<br>
+      EPS: <strong>${epsStart.toFixed(2)}</strong> → <strong>${epsEnd.toFixed(2)}</strong> (<strong>${epsGrowth.toFixed(2)}%</strong>)<br>
+      PER: <strong>${perStart.toFixed(2)}</strong> → <strong>${perEnd.toFixed(2)}</strong> (<strong>${perGrowth.toFixed(2)}%</strong>)<br><br>
+      상승 기여도: EPS <strong>${epsContribution.toFixed(1)}%</strong>, PER <strong>${perContribution.toFixed(1)}%</strong><br>
+      상관계수: <strong>${corr}</strong> → ${corr > 0.7 ? '매우 강한' : corr > 0.4 ? '상당한' : '약한'} 양의 상관관계
+    `;
+  }
+
+  renderCharts();
+</script>
 </body>
 </html>

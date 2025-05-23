@@ -1,136 +1,314 @@
-/* 기본 설정 */
 body {
-  background-color: #f8f9fa;
+  background-color: #121212;
+  color: #f8f9fa;
   font-family: 'Noto Sans KR', sans-serif;
   margin: 0;
-  padding: 20px;
-  color: #212529;
+  padding-top: 80px;
   line-height: 1.6;
 }
 
-/* 카드 레이아웃 */
-.card, .container {
-  background: #ffffff;
-  max-width: 960px;
-  margin: 2rem auto;
-  padding: 2rem;
-  border-radius: 10px;
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1);
-}
-
-/* 제목 */
-h1 {
-  font-size: 1.75rem;
-  text-align: center;
-  color: #343a40;
-  margin-bottom: 1.5rem;
-}
-
-/* 표 스타일 */
-table {
+nav {
+  position: fixed;
+  top: 0;
   width: 100%;
-  border-collapse: collapse;
-  margin-top: 1.5rem;
+  background: #1f1f1f;
+  border-bottom: 1px solid #333;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
+  padding: 12px 16px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
+  z-index: 1000;
+}
+
+nav a {
+  color: #66b2ff;
+  text-decoration: none;
+  padding: 8px 14px;
+  border-radius: 4px;
+  font-size: 0.95rem;
+  transition: background 0.3s;
+}
+
+nav a:hover {
+  background: #333;
+  color: #ffffff;
+}
+
+/* ✅ 모바일 화면 대응 */
+@media (max-width: 600px) {
+  nav {
+    flex-direction: column;
+    align-items: center;
+    padding: 12px 0;
+  }
+
+  nav a {
+    display: block;
+    width: 100%;
+    text-align: center;
+    padding: 12px;
+    font-size: 1.05rem;
+  }
+}
+
+
+nav a:hover {
+  background: #333;
+  color: #ffffff;
+}
+
+.section {
+  background-color: #181818;
+  padding: 80px 20px;
+  text-align: center;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.section h2 {
+  color: #ffffff;
+  font-size: 2rem;
+  margin-bottom: 1rem;
+  border-bottom: 2px solid #0d6efd;
+  display: inline-block;
+  padding-bottom: 4px;
+}
+
+.section p.lead {
+  color: #adb5bd;
+  max-width: 800px;
+  margin: 0 auto 20px;
+}
+
+.cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 24px;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.card {
+  background-color: #1f1f1f;
+  border: 1px solid #333;
+  border-radius: 12px;
+  padding: 24px 16px;
+  text-align: center;
+  text-decoration: none;
+  color: #f8f9fa;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+}
+
+.card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.4);
+}
+
+.card .icon {
+  font-size: 2.2rem;
+  margin-bottom: 12px;
+  color: #0d6efd;
+}
+
+.card h1 {
+  font-size: 1.8rem;
+  margin-bottom: 1rem;
+  text-align: center;
+}
+
+.card h3 {
+  font-size: 1.1rem;
+  margin: 8px 0;
+  font-weight: 600;
+  color: #f1f3f5;
+}
+
+.card p {
+  font-size: 0.95rem;
+  color: #ced4da;
+  text-align: center;
+}
+
+.inputs table {
+  width: 100%;
+  max-width: 600px;
+  margin: 0 auto;
+  border-collapse: separate;
+  border-spacing: 0 10px;
+  color: #f8f9fa;
+}
+
+.inputs th {
+  white-space: nowrap;
+  width: 180px;
+  text-align: right; /* 왼쪽 열 오른쪽 정렬 */
+  padding-right: 12px;
+  vertical-align: middle;
+}
+
+.inputs td {
+  text-align: left; /* 오른쪽 열 왼쪽 정렬 */
+  vertical-align: middle;
+}
+
+
+.inputs input {
+  width: 160px;
+  padding: 8px;
+  background-color: #2a2a2a;
+  color: #f8f9fa;
+  border: 1px solid #444;
+  border-radius: 6px;
   font-size: 0.95rem;
 }
 
-th, td {
-  padding: 0.75rem;
-  text-align: center;
-  border: 1px solid #dee2e6;
-}
-
-th {
-  background-color: #e9ecef;
-  color: #495057;
-  font-weight: 600;
-}
-
-/* 입력 및 버튼 */
-.inputs label {
-  display: block;
-  margin-bottom: 1rem;
-  font-weight: 500;
-  color: #495057;
-}
-
-input[type="text"], input[type="number"] {
-  padding: 0.5rem;
-  font-size: 1rem;
-  border: 1px solid #ced4da;
-  border-radius: 5px;
-  width: 100%;
-  box-sizing: border-box;
+.inputs td input[type="number"],
+.inputs td input[type="text"] {
+  text-align: right;
 }
 
 button {
-  padding: 10px 20px;
+  background-color: #444;
+  color: #f8f9fa;
+  border: 1px solid #666;
   font-size: 1rem;
-  background-color: #007bff;
-  color: white;
-  border: none;
+  padding: 10px 20px;
   border-radius: 6px;
   cursor: pointer;
-  transition: background-color 0.3s ease;
+  transition: background 0.2s ease-in-out, transform 0.2s ease-in-out;
 }
 
 button:hover {
-  background-color: #0056b3;
+  background-color: #555;
+  transform: translateY(-1px);
 }
 
-/* 링크 */
-a {
-  text-decoration: none;
-  color: #007bff;
-}
-
-a:hover {
-  text-decoration: underline;
-}
-
-/* 차트 영역 */
-.chart-wrapper {
+input, textarea {
+  background-color: #2a2a2a;
+  color: #f8f9fa;
+  border: 1px solid #444;
   width: 100%;
-  max-width: 720px;
-  margin: 2rem auto;
-  aspect-ratio: 1 / 1; /* 기본 모바일 1:1 */
-  position: relative;
+  padding: 10px;
+  margin-top: 4px;
 }
 
-@media (min-width: 768px) {
-  .chart-wrapper {
-    aspect-ratio: 3 / 2; /* PC는 더 와이드하게 */
-  }
-}
-
-canvas {
-  width: 100% !important;
-  height: 100% !important;
-}
-
-/* 메모/설명 텍스트 */
-.note {
-  font-size: 0.9rem;
+footer {
+  background-color: #1a1a1a;
   color: #868e96;
-  margin-top: 1rem;
+  text-align: center;
+  padding: 20px;
+  font-size: 0.85rem;
 }
 
-/* 반응형 처리 */
-@media (max-width: 768px) {
-  .card, .container {
-    padding: 1rem;
-  }
+footer a {
+  color: #66b2ff;
+}
 
-  h1 {
-    font-size: 1.4rem;
-  }
+.hero {
+  height: 100vh;
+  background: url('main2.png') center center / cover no-repeat;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  text-align: center;
+}
 
-  table {
-    font-size: 0.85rem;
-  }
+.hero::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+}
 
-  button {
-    width: 100%;
-    margin-top: 1rem;
-  }
+.hero-content {
+  position: relative;
+  z-index: 2;
+  color: #fff;
+}
+
+.hero-content h1 {
+  font-size: 2.8rem;
+  margin-bottom: 1rem;
+  font-weight: 700;
+}
+
+.hero-content p {
+  font-size: 1.2rem;
+  margin-bottom: 2rem;
+}
+
+.hero-content a.button {
+  padding: 10px 24px;
+  border: 2px solid #fff;
+  border-radius: 6px;
+  color: #fff;
+  text-decoration: none;
+}
+
+.hero-content a.button:hover {
+  background: #fff;
+  color: #000;
+}
+
+.note {
+  font-size: 0.85rem;
+  color: #adb5bd;
+}
+
+.chart-wrapper {
+  position: relative;
+  height: 400px;
+  margin-top: 40px;
+  margin-bottom: 40px;
+  max-width: 800px;       
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.chart-wrapper canvas {
+  display: block;
+  width: 100% !important;
+  max-width: 800px !important;
+  height: auto !important;
+  margin: 0 auto;
+}
+
+
+section table {
+  width: 100%;
+  max-width: 800px;
+  margin: 0 auto;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+section table thead {
+  background-color: #212529;
+  color: #ffffff;
+}
+
+section table td, section table th {
+  padding: 10px;
+  border: 1px solid #444;
+  text-align: center;
+}
+
+.inputs td label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px; /* 버튼과 텍스트 사이 간격 */
+  margin-right: 16px;
+  font-size: 0.95rem;
+  color: #f8f9fa;
+  cursor: pointer;
+}
+
+.inputs td input[type="radio"] {
+  margin: 0;
+  accent-color: #0d6efd; /* 선택된 색상 강조 */
 }

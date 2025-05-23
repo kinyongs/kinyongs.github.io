@@ -4,103 +4,114 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>S&P500 추세 분석: CAGR 계산 방식, 시각화 기법, 시대별 상승률</title>
+  <link rel="stylesheet" href="../styles.css">
   <style>
     body {
-      font-family: 'Segoe UI', sans-serif;
-      line-height: 1.7;
-      max-width: 820px;
-      margin: 40px auto;
-      padding: 0 20px;
-      color: #2e2e2e;
+      font-family: 'Noto Sans KR', sans-serif;
+      background-color: #f9fbfd;
+      margin: 0;
+      padding-top: 50px;
+      color: #2c3e50;
     }
-    h1, h2, h3 {
-      color: #0d47a1;
+
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 40px 20px;
     }
-    img {
-      max-width: 100%;
-      height: auto;
-      margin: 20px 0;
-      border: 1px solid #ccc;
-      box-shadow: 2px 2px 8px rgba(0,0,0,0.05);
+
+    h1 {
+      font-size: 2rem;
+      border-bottom: 2px solid #ccc;
+      padding-bottom: 10px;
+      margin-bottom: 24px;
     }
-    ul {
-      padding-left: 1.4rem;
+
+    h2 {
+      font-size: 1.4rem;
+      color: #34495e;
+      margin-top: 32px;
     }
-    li {
-      margin-bottom: 8px;
+
+    p {
+      font-size: 1rem;
+      line-height: 1.8;
     }
-    .divider {
-      border-top: 1px solid #ccc;
-      margin: 2rem 0;
-    }
-    .back-button {
-      display: inline-block;
-      padding: 10px 20px;
-      background-color: #e0e0e0;
-      color: #333;
-      text-decoration: none;
-      border-radius: 6px;
-      font-weight: 500;
-      margin-top: 2rem;
+
+    footer {
       text-align: center;
+      font-size: 0.85rem;
+      color: #888;
+      padding: 20px;
+      background-color: #f0f2f5;
+      margin-top: 40px;
     }
   </style>
 </head>
 <body>
-  <h1>S&P500 추세 분석: CAGR 계산 방식, 시각화 기법, 시대별 상승률 비교</h1>
 
-  <p>S&P500 지수는 지난 100년간 미국 경제를 대표하며 성장해 왔습니다. 하지만 그 상승률을 평가하는 방식에 따라, 우리가 받아들이는 메시지는 달라질 수 있습니다. 이 글에서는 <strong>복리 수익률(CAGR)의 계산 방식 차이</strong>, <strong>Y축 스케일 선택이 미치는 영향</strong>, 그리고 <strong>시기별 추세 변화</strong>를 정밀하게 분석합니다.</p>
+  <div id="nav-placeholder"></div>
+  <script>
+    fetch("../includes/nav.html")
+      .then(res => res.text())
+      .then(data => document.getElementById("nav-placeholder").innerHTML = data);
+  </script>
+    <div class="container">
+    <h1>S&P500 추세 분석: CAGR 계산 방식, 시각화 기법, 시대별 상승률 비교</h1>
 
-  <div class="divider"></div>
+    <p>S&P500 지수는 지난 100년간 미국 경제를 대표하며 성장해 왔습니다. 하지만 그 상승률을 평가하는 방식에 따라, 우리가 받아들이는 메시지는 달라질 수 있습니다. 이 글에서는 <strong>복리 수익률(CAGR)의 계산 방식 차이</strong>, <strong>Y축 스케일 선택이 미치는 영향</strong>, 그리고 <strong>시기별 추세 변화</strong>를 정밀하게 분석합니다.</p>
 
-  <h2>1. CAGR 계산 방식: 단순 vs 회귀 기반</h2>
-  <p><strong>단순 방식</strong>은 특정 구간의 시작 가격과 종료 가격만을 이용하여 CAGR을 계산합니다. 계산이 빠르고 직관적이지만, <strong>중간 구간의 변동성이나 일시적 급등락을 고려하지 못한다</strong>는 약점이 있습니다.</p>
-  <img src="./images/trend_log_startend_1927_2025.png" alt="시작-종료값 기반 CAGR (Log 스케일)">
-  <p>반면 <strong>로그 선형 회귀 기반 데이터 피팅</strong>은 전체 기간의 수많은 지점을 고려하여 추세선을 그립니다. 아래는 같은 구간의 회귀 기반 추세입니다.</p>
-  <img src="./images/trend_log_fitting_1927_2025.png" alt="로그 회귀 기반 CAGR 추세선">
-  <ul>
-    <li><strong>단순 계산:</strong> (종료값 / 시작값)^(1/기간) - 1</li>
-    <li><strong>회귀 기반:</strong> 로그 변환 후 선형 회귀 → 연간 성장률 = exp(기울기 × 12) - 1</li>
-  </ul>
-  <p>전체 추세의 기울기를 기반으로 한 회귀 방식은 <strong>지수의 전반적 성장률</strong>을 대표하는 지표로써 더 신뢰성이 높습니다.</p>
+    <div class="divider"></div>
 
-  <div class="divider"></div>
+    <h2>1. CAGR 계산 방식: 단순 vs 회귀 기반</h2>
+    <p><strong>단순 방식</strong>은 특정 구간의 시작 가격과 종료 가격만을 이용하여 CAGR을 계산합니다. 계산이 빠르고 직관적이지만, <strong>중간 구간의 변동성이나 일시적 급등락을 고려하지 못한다</strong>는 약점이 있습니다.</p>
+    <img src="./images/trend_log_startend_1927_2025.png" alt="시작-종료값 기반 CAGR (Log 스케일)">
+    <p>반면 <strong>로그 선형 회귀 기반 데이터 피팅</strong>은 전체 기간의 수많은 지점을 고려하여 추세선을 그립니다. 아래는 같은 구간의 회귀 기반 추세입니다.</p>
+    <img src="./images/trend_log_fitting_1927_2025.png" alt="로그 회귀 기반 CAGR 추세선">
+    <ul>
+      <li><strong>단순 계산:</strong> (종료값 / 시작값)^(1/기간) - 1</li>
+      <li><strong>회귀 기반:</strong> 로그 변환 후 선형 회귀 → 연간 성장률 = exp(기울기 × 12) - 1</li>
+    </ul>
+    <p>전체 추세의 기울기를 기반으로 한 회귀 방식은 <strong>지수의 전반적 성장률</strong>을 대표하는 지표로써 더 신뢰성이 높습니다.</p>
 
-  <h2>2. Y축 스케일: 선형 vs 로그</h2>
-  <p>시계열 데이터를 시각화할 때 Y축의 스케일은 인식에 큰 영향을 미칩니다.</p>
-  <img src="./images/trend_linear_fitting_1927_2025.png" alt="선형 스케일 시각화">
-  <p>위 그림처럼 선형 스케일에서는 최근 급등이 강조되고, 과거의 변화는 거의 느껴지지 않습니다. 이는 과거 데이터를 왜곡하여 해석할 가능성을 높입니다.</p>
-  <p>로그 스케일은 모든 백분율 변화를 동일한 간격으로 표시하여 <strong>장기 투자에 적합한 시각화</strong>를 제공합니다.</p>
-  <img src="./images/trend_log_fitting_1927_2025.png" alt="로그 스케일 시각화">
-  <p>→ <strong>100 → 200</strong>과 <strong>1,000 → 2,000</strong>은 로그 스케일에서 동일한 거리로 표현됩니다. 이 때문에 장기 추세의 기울기를 정확하게 비교할 수 있습니다.</p>
+    <div class="divider"></div>
 
-  <div class="divider"></div>
+    <h2>2. Y축 스케일: 선형 vs 로그</h2>
+    <p>시계열 데이터를 시각화할 때 Y축의 스케일은 인식에 큰 영향을 미칩니다.</p>
+    <img src="./images/trend_linear_fitting_1927_2025.png" alt="선형 스케일 시각화">
+    <p>위 그림처럼 선형 스케일에서는 최근 급등이 강조되고, 과거의 변화는 거의 느껴지지 않습니다. 이는 과거 데이터를 왜곡하여 해석할 가능성을 높입니다.</p>
+    <p>로그 스케일은 모든 백분율 변화를 동일한 간격으로 표시하여 <strong>장기 투자에 적합한 시각화</strong>를 제공합니다.</p>
+    <img src="./images/trend_log_fitting_1927_2025.png" alt="로그 스케일 시각화">
+    <p>→ <strong>100 → 200</strong>과 <strong>1,000 → 2,000</strong>은 로그 스케일에서 동일한 거리로 표현됩니다. 이 때문에 장기 추세의 기울기를 정확하게 비교할 수 있습니다.</p>
 
-  <h2>3. 시대별 상승률 비교: 최근 추세는 더 가파르다</h2>
-  <p>1928~2025년 전체 데이터를 보면 CAGR은 약 <strong>6.89%</strong>입니다. 그러나 2012년 이후의 10년간 데이터를 보면 그 수치는 <strong>11.2%</strong>로 대폭 상승합니다.</p>
-  <img src="./images/trend_linear_fitting_2012_2025.png" alt="최근 10년 상승률 (선형 스케일)">
-  <p>이 차이는 단순히 기술주 중심의 상승 때문만은 아닙니다. <strong>저금리, 양적완화, ETF 확산</strong> 등 구조적 변화가 시장의 상승 속도를 가속화시킨 것입니다.</p>
-  <p>결국, 동일한 분석 기법이라도 적용 구간에 따라 전혀 다른 결론에 도달할 수 있습니다. <strong>구간 선택은 반드시 명시되어야 합니다.</strong></p>
+    <div class="divider"></div>
 
-  <div class="divider"></div>
+    <h2>3. 시대별 상승률 비교: 최근 추세는 더 가파르다</h2>
+    <p>1928~2025년 전체 데이터를 보면 CAGR은 약 <strong>6.89%</strong>입니다. 그러나 2012년 이후의 10년간 데이터를 보면 그 수치는 <strong>11.2%</strong>로 대폭 상승합니다.</p>
+    <img src="./images/trend_linear_fitting_2012_2025.png" alt="최근 10년 상승률 (선형 스케일)">
+    <p>이 차이는 단순히 기술주 중심의 상승 때문만은 아닙니다. <strong>저금리, 양적완화, ETF 확산</strong> 등 구조적 변화가 시장의 상승 속도를 가속화시킨 것입니다.</p>
+    <p>결국, 동일한 분석 기법이라도 적용 구간에 따라 전혀 다른 결론에 도달할 수 있습니다. <strong>구간 선택은 반드시 명시되어야 합니다.</strong></p>
 
-  <h2>🔍 추가 해석: 실질 수익률 vs 명목 수익률</h2>
-  <p>명목 CAGR은 실제 지수 상승률을 나타내지만, <strong>인플레이션을 반영하지 않습니다.</strong> 예를 들어, 1970년대의 7% CAGR은 실질적으로 마이너스 수익일 수 있습니다.</p>
-  <p>이에 따라 <strong>실질 수익률 = 명목 수익률 - 평균 인플레이션률</strong> 로 보정할 필요가 있으며, 장기 투자 판단에서는 필수적인 요소입니다.</p>
+    <div class="divider"></div>
 
-  <div class="divider"></div>
+    <h2>🔍 추가 해석: 실질 수익률 vs 명목 수익률</h2>
+    <p>명목 CAGR은 실제 지수 상승률을 나타내지만, <strong>인플레이션을 반영하지 않습니다.</strong> 예를 들어, 1970년대의 7% CAGR은 실질적으로 마이너스 수익일 수 있습니다.</p>
+    <p>이에 따라 <strong>실질 수익률 = 명목 수익률 - 평균 인플레이션률</strong> 로 보정할 필요가 있으며, 장기 투자 판단에서는 필수적인 요소입니다.</p>
 
-  <h2>✅ 정리 및 제언</h2>
-  <ul>
-    <li><strong>장기 분석 시 로그 스케일</strong>을 활용하세요. 지수형 성장을 왜곡 없이 볼 수 있습니다.</li>
-    <li><strong>CAGR 계산 방식</strong>은 데이터 피팅 방식을 우선 고려하세요. 시작/종료값만으로는 왜곡 위험이 큽니다.</li>
-    <li><strong>구간별 비교</strong>를 통해 최근 시장 특성을 이해하세요. 상승 속도와 변동성은 시대에 따라 다릅니다.</li>
-    <li><strong>실질 수익률</strong>도 반드시 병행 고려하세요. 명목 수익률만 보면 착시가 생길 수 있습니다.</li>
-  </ul>
+    <div class="divider"></div>
 
-  <div class="divider"></div>
-  <div style="text-align: center;">
-    <a href="../S&P500_trend.html" class="back-button">← 시뮬레이터로 돌아가기</a>
+    <h2>✅ 정리 및 제언</h2>
+    <ul>
+      <li><strong>장기 분석 시 로그 스케일</strong>을 활용하세요. 지수형 성장을 왜곡 없이 볼 수 있습니다.</li>
+      <li><strong>CAGR 계산 방식</strong>은 데이터 피팅 방식을 우선 고려하세요. 시작/종료값만으로는 왜곡 위험이 큽니다.</li>
+      <li><strong>구간별 비교</strong>를 통해 최근 시장 특성을 이해하세요. 상승 속도와 변동성은 시대에 따라 다릅니다.</li>
+      <li><strong>실질 수익률</strong>도 반드시 병행 고려하세요. 명목 수익률만 보면 착시가 생길 수 있습니다.</li>
+    </ul>
+
+    <div class="divider"></div>
+    <div style="text-align: center;">
+      <a href="../S&P500_trend.html" class="back-button">← 시뮬레이터로 돌아가기</a>
+    </div>
   </div>
 </body>
 </html>

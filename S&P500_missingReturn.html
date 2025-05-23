@@ -9,80 +9,77 @@
   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@1.4.0"></script>
   <script src="https://cdn.jsdelivr.net/npm/luxon@3/build/global/luxon.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-luxon@1"></script>
-
   <script src="price_daily.js"></script>
 </head>
 <body>
 
-  <div style="text-align: right; margin-bottom: 10px;">
-    <a href="index.html">🏠 메인으로</a>
-  </div>
+<div id="nav-placeholder"></div>
+<script>
+  fetch("includes/nav.html")
+    .then(response => response.text())
+    .then(data => document.getElementById("nav-placeholder").innerHTML = data);
+</script>
 
-  <div class="card">
-    <h1>📈 S&P 500 장기투자 시 놓친 날들의 영향</h1>
-    <p style="text-align: center; max-width: 720px; margin: 0 auto 1.5rem; font-size: 1rem; color: #555;">
-  이 시뮬레이션은 장기투자 전략의 중요성을 보여줍니다. 시장에 계속 투자했을 때와 비교해, 
-  최고의 수익일 혹은 최악의 손실일 며칠을 놓쳤을 때 누적 수익률이 얼마나 달라지는지를 시각적으로 확인할 수 있습니다.
-</p>
+<div class="card">
+  <h1>📈 S&P 500 장기투자 시 놓친 날들의 영향</h1>
+  <p class="note">
+    장기투자 전략에서, 특정 며칠을 놓치는 것이 누적 수익률에 얼마나 큰 영향을 미치는지를 분석합니다.
+  </p>
 
-    <section style="margin-bottom: 20px; text-align: center;">
-      <table style="margin: 0 auto;">
-        <tr>
-          <th style="text-align: right; padding: 6px 10px;">시작 연도</th>
-          <td style="text-align: left; padding: 6px 10px;"><input type="number" id="startYear" value="1928"  style="width: 120px;"/></td>
-        </tr>
-        <tr>
-          <th style="text-align: right; padding: 6px 10px;">종료 연도</th>
-          <td style="text-align: left; padding: 6px 10px;"><input type="number" id="endYear" value="2024"  style="width: 120px;"/></td>
-        </tr>
-        <tr>
-          <th style="text-align: right; padding: 6px 10px;">최고 수익일 제외 (N일)</th>
-          <td style="text-align: left; padding: 6px 10px;"><input type="number" id="topN" value="10" min="0"  style="width: 120px;"/></td>
-        </tr>
-        <tr>
-          <th style="text-align: right; padding: 6px 10px;">최악 수익일 제외 (N일)</th>
-          <td style="text-align: left; padding: 6px 10px;"><input type="number" id="bottomM" value="0" min="0"  style="width: 120px;"/></td>
-        </tr>
-        <tr>
-          <th style="text-align: right; padding: 6px 10px;">Y축 스케일</th>
-          <td style="text-align: left; padding: 6px 10px;">
-            <label><input type="radio" name="scaleType" value="linear" checked /> 선형</label>
-            <label><input type="radio" name="scaleType" value="log" /> 로그</label>
-          </td>
-        </tr>
-      </table>
-      <div style="text-align: center; margin-top: 1rem;">
-        <button onclick="drawChart()">📊 시뮬레이션 실행</button>
-      </div>
-    </section>
-
-    <section class="chart-wrapper">
-      <canvas id="cumulativeChart"></canvas>
-    </section>
-      <p style="font-size: 0.85rem; color: #666; text-align: center; margin-top: 0.5rem;">
-        <span style="color:orange;">🟧 주황색 화살표</span>: 최고 수익일 제외 &nbsp;&nbsp;&nbsp; <span style="color:teal;">🟦 청록색 화살표</span>: 최악 수익일 제외
-      </p>
-    <section style="max-width: 700px; margin: 2rem auto; font-size: 0.95rem; line-height: 1.6;" id="summaryText">
-    </section>
-
-    <div style="max-width: 700px; margin: 2rem auto 3rem; padding: 1.5rem; background-color: #f9f9f9; border: 1px solid #ddd; border-radius: 8px; text-align: center;">
-      <h3 style="margin-top: 0; font-size: 1.2rem; color: #222;">📊 놓친 날 분석 리포트</h3>
-      <p style="font-size: 0.95rem; color: #555; line-height: 1.6;">
-        장기 투자 전략에서 일부 거래일을 놓쳤을 때 수익률에 어떤 영향을 미치는지를<br>
-        다양한 시각 자료와 함께 자세히 정리한 분석입니다.
-      </p>
-      <a href="./docs/missing-return.html" style="display: inline-block; margin-top: 0.8rem; padding: 10px 18px; background-color: #e0e0e0; color: #333; text-decoration: none; border-radius: 6px; font-weight: 500; border: 1px solid #ccc;">
-        전체 분석 리포트 보기
-      </a>
+  <section class="inputs">
+    <table>
+      <tr>
+        <th>시작 연도</th>
+        <td><input type="number" id="startYear" value="1928" /></td>
+      </tr>
+      <tr>
+        <th>종료 연도</th>
+        <td><input type="number" id="endYear" value="2024" /></td>
+      </tr>
+      <tr>
+        <th>최고 수익일 제외 (N일)</th>
+        <td><input type="number" id="topN" value="10" min="0" /></td>
+      </tr>
+      <tr>
+        <th>최악 수익일 제외 (N일)</th>
+        <td><input type="number" id="bottomM" value="0" min="0" /></td>
+      </tr>
+      <tr>
+        <th>Y축 스케일</th>
+        <td>
+          <label><input type="radio" name="scaleType" value="linear" checked /> 선형</label>
+          <label><input type="radio" name="scaleType" value="log" /> 로그</label>
+        </td>
+      </tr>
+    </table>
+    <div style="text-align: center; margin-top: 15px;">
+      <button onclick="drawChart()">📊 시뮬레이션 실행</button>
     </div>
+  </section>
 
-
-  
+  <div class="chart-wrapper">
+    <canvas id="cumulativeChart"></canvas>
   </div>
 
-  <div style="text-align: center; margin-top: 20px;">
-    <button onclick="location.href='index.html'">🔙 메인으로 돌아가기</button>
+  <p class="note" style="text-align: center; margin-top: -20px;">
+    <span style="color:orange;">🟧 주황색 화살표</span>: 최고 수익일 제외 &nbsp;&nbsp;&nbsp;
+    <span style="color:teal;">🟦 청록색 화살표</span>: 최악 수익일 제외
+  </p>
+
+  <section id="summaryText" class="note" style="max-width: 800px; margin: 2rem auto;"></section>
+
+  <div class="card" style="margin-top: 30px;">
+    <h3>📊 놓친 날 분석 리포트</h3>
+    <p class="note">
+      장기 투자 전략에서 일부 거래일을 놓쳤을 때 수익률에 어떤 영향을 미치는지를<br>
+      다양한 시각 자료와 함께 자세히 정리한 분석입니다.
+    </p>
+    <a href="./docs/missing-return.html" style="display: inline-block; margin-top: 1rem; padding: 10px 18px; background-color: #2a2a2a; color: #f8f9fa; text-decoration: none; border-radius: 6px; border: 1px solid #666;">
+      전체 분석 리포트 보기
+    </a>
   </div>
+</div>
+
 
   <script>
     function drawChart() {

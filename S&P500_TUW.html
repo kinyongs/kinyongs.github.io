@@ -11,179 +11,171 @@
   <script src="price_daily.js"></script>
 </head>
 <body>
-  <div style="text-align: right; margin-bottom: 10px;">
-    <a href="index.html">🏠 메인으로</a>
-  </div>
 
-  <div class="card">
-    <h1>📉 S&P500 Time Under Water(TUW) 분석</h1>
-    <p style="text-align: center; max-width: 720px; margin: 0 auto 1.5rem; font-size: 1rem; color: #555;">
+<div id="nav-placeholder"></div>
+<script>
+  fetch("includes/nav.html")
+    .then(res => res.text())
+    .then(data => document.getElementById("nav-placeholder").innerHTML = data);
+</script>
+
+<div class="card">
+  <h1>📉 S&P500 Time Under Water(TUW) 분석</h1>
+  <p class="note">
     투자 자산이 고점 대비 손실 상태에 머물러 있는 기간을 확인하고,<br />
     <strong>가장 긴 회복 기간과 그 동안의 최대 손실(MDD)</strong>을 시각적으로 살펴볼 수 있습니다.
-    </p>
+  </p>
 
+  <section class="inputs">
+    <table>
+      <tr>
+        <th>시작 연도</th>
+        <td><input type="number" id="startYear" value="1928" /></td>
+      </tr>
+      <tr>
+        <th>종료 연도</th>
+        <td><input type="number" id="endYear" value="2025" /></td>
+      </tr>
+      <tr>
+        <th>상위 표시 개수</th>
+        <td><input type="number" id="topK" value="10" min="1" /></td>
+      </tr>
+      <tr>
+        <th>Y축 스케일</th>
+        <td>
+          <label><input type="radio" name="scaleType" value="linear" checked /> 선형</label>
+          <label><input type="radio" name="scaleType" value="log" /> 로그</label>
+        </td>
+      </tr>
+    </table>
+    <div style="text-align: center; margin-top: 15px;">
+      <button onclick="analyzeTUW()">📊 TUW 분석 실행</button>
+    </div>
+  </section>
 
-    <section style="margin-bottom: 20px; text-align: center;">
-      <table style="margin: 0 auto;">
-        <tr>
-          <th style="text-align: right; padding: 6px 10px;">시작 연도</th>
-          <td style="text-align: left; padding: 6px 10px;"><input type="number" id="startYear" value="1928" style="width: 120px;" /></td>
-        </tr>
-        <tr>
-          <th style="text-align: right; padding: 6px 10px;">종료 연도</th>
-          <td style="text-align: left; padding: 6px 10px;"><input type="number" id="endYear" value="2025" style="width: 120px;" /></td>
-        </tr>
-        <tr>
-          <th style="text-align: right; padding: 6px 10px;">상위 표시 개수</th>
-          <td style="text-align: left; padding: 6px 10px;"><input type="number" id="topK" value="10" min="1" style="width: 120px;" /></td>
-        </tr>
-        <tr>
-          <th style="text-align: right; padding: 6px 10px;">Y축 스케일</th>
-          <td style="text-align: left; padding: 6px 10px;">
-            <label><input type="radio" name="scaleType" value="linear" checked /> 선형</label>
-            <label><input type="radio" name="scaleType" value="log" /> 로그</label>
-          </td>
-        </tr>
-      </table>
-      <div style="text-align:center; margin-top:1rem;">
-        <button onclick="analyzeTUW()">📊 TUW 분석 실행</button>
-      </div>
-    </section>
-
-    <section class="chart-wrapper">
-      <canvas id="tuwChart"></canvas>
-    </section>
-
-    <section>
-      <table id="tuwTable">
-        <thead>
-          <tr><th>시작일</th><th>회복일</th><th>TUW 일수</th><th>MDD (%)</th></tr>
-        </thead>
-        <tbody></tbody>
-      </table>
-    </section>
-    <section style="max-width: 700px; margin: 2rem auto; font-size: 0.95rem; line-height: 1.6;" id="summaryText">
-    </section>
-  
+  <div class="chart-wrapper">
+    <canvas id="tuwChart"></canvas>
   </div>
 
-  <div style="text-align: center; margin-top: 20px;">
-    <button onclick="location.href='index.html'">🔙 메인으로 돌아가기</button>
-  </div>
-  
-  <script>
-    function analyzeTUW() {
-      const startYear = parseInt(document.getElementById('startYear').value);
-      const endYear = parseInt(document.getElementById('endYear').value);
-      const topK = parseInt(document.getElementById('topK').value);
-      const scaleType = document.querySelector('input[name="scaleType"]:checked').value;
-      
-      const data = Object.entries(priceData)
-        .map(([d, p]) => ({ date: new Date(d), price: p }))
-        .filter(d => d.date.getFullYear() >= startYear && d.date.getFullYear() <= endYear)
-        .sort((a, b) => a.date - b.date);
+  <section class="note" style="max-width: 800px; margin: 2rem auto;">
+    <table id="tuwTable">
+      <thead>
+        <tr><th>시작일</th><th>회복일</th><th>TUW 일수</th><th>MDD (%)</th></tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </section>
 
-      let high = data[0].price;
-      let startIdx = 0;
-      const tuwList = [];
+  <section id="summaryText" class="note" style="max-width: 800px; margin: 2rem auto;"></section>
+</div>
 
-      for (let i = 1; i < data.length; i++) {
-        if (data[i].price > high) {
-          high = data[i].price;
-          startIdx = i;
-        } else {
-          let j = i;
-          while (j < data.length && data[j].price < high) j++;
-          if (j < data.length) {
-            const mdd = Math.min(...data.slice(startIdx, j + 1).map(d => d.price)) / high - 1;
-            tuwList.push({
-              start: data[startIdx].date,
-              end: data[j].date,
-              days: (data[j].date - data[startIdx].date) / (1000 * 60 * 60 * 24),
-              mdd: mdd * 100,
-              range: data.slice(startIdx, j + 1)
-            });
-            i = j;
-            high = data[j].price;
-            startIdx = j;
-          }
+<script>
+  function analyzeTUW() {
+    const startYear = parseInt(document.getElementById('startYear').value);
+    const endYear = parseInt(document.getElementById('endYear').value);
+    const topK = parseInt(document.getElementById('topK').value);
+    const scaleType = document.querySelector('input[name="scaleType"]:checked').value;
+
+    const data = Object.entries(priceData)
+      .map(([d, p]) => ({ date: new Date(d), price: p }))
+      .filter(d => d.date.getFullYear() >= startYear && d.date.getFullYear() <= endYear)
+      .sort((a, b) => a.date - b.date);
+
+    let high = data[0].price;
+    let startIdx = 0;
+    const tuwList = [];
+
+    for (let i = 1; i < data.length; i++) {
+      if (data[i].price > high) {
+        high = data[i].price;
+        startIdx = i;
+      } else {
+        let j = i;
+        while (j < data.length && data[j].price < high) j++;
+        if (j < data.length) {
+          const mdd = Math.min(...data.slice(startIdx, j + 1).map(d => d.price)) / high - 1;
+          tuwList.push({
+            start: data[startIdx].date,
+            end: data[j].date,
+            days: (data[j].date - data[startIdx].date) / (1000 * 60 * 60 * 24),
+            mdd: mdd * 100,
+            range: data.slice(startIdx, j + 1)
+          });
+          i = j;
+          high = data[j].price;
+          startIdx = j;
         }
       }
+    }
 
-      tuwList.sort((a, b) => b.days - a.days);
-      const top = tuwList.slice(0, topK);
+    tuwList.sort((a, b) => b.days - a.days);
+    const top = tuwList.slice(0, topK);
 
-      const labels = data.map(d => d.date.toISOString().slice(0, 10));
-      const prices = data.map(d => d.price);
+    const labels = data.map(d => d.date.toISOString().slice(0, 10));
+    const prices = data.map(d => d.price);
 
-      const segments = labels.map((_, i) => {
-        const date = data[i].date.getTime();
-        for (const tuw of top) {
-          if (date >= tuw.start.getTime() && date <= tuw.end.getTime()) {
-            return true;
-          }
-        }
-        return false;
-      });
+    const segments = labels.map((_, i) => {
+      const date = data[i].date.getTime();
+      for (const tuw of top) {
+        if (date >= tuw.start.getTime() && date <= tuw.end.getTime()) return true;
+      }
+      return false;
+    });
 
-      const ctx = document.getElementById('tuwChart').getContext('2d');
-      if (window.tuwChartInstance) window.tuwChartInstance.destroy();
-      window.tuwChartInstance = new Chart(ctx, {
-        type: 'line',
-        data: {
-          labels: labels,
-          datasets: [{
-            label: 'S&P500 가격',
-            data: prices,
-            borderColor: '#007bff',
-            pointRadius: 0,
-            fill: false,
-            segment: {
-              borderColor: ctx => segments[ctx.p0DataIndex] ? '#ff4d4f' : '#007bff'
-            },
-            tension: 0.1
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          scales: {
-            x: { type: 'time', time: { unit: 'year' } },
-            y: {
-              type: scaleType === 'log' ? 'logarithmic' : 'linear',
-              beginAtZero: false,
-              min: Math.min(...prices) * 0.95,
-              max: Math.max(...prices) * 1.05
-            }
+    const ctx = document.getElementById('tuwChart').getContext('2d');
+    if (window.tuwChartInstance) window.tuwChartInstance.destroy();
+    window.tuwChartInstance = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels,
+        datasets: [{
+          label: 'S&P500 가격',
+          data: prices,
+          borderColor: '#007bff',
+          pointRadius: 0,
+          fill: false,
+          segment: {
+            borderColor: ctx => segments[ctx.p0DataIndex] ? '#ff4d4f' : '#007bff'
           },
-          plugins: {
-            legend: { display: false },
-            title: {
-              display: true,
-              text: '📉 Time Under Water 구간 시각화'
-            }
+          tension: 0.1
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          x: { type: 'time', time: { unit: 'year' } },
+          y: {
+            type: scaleType === 'log' ? 'logarithmic' : 'linear',
+            beginAtZero: false,
+            min: Math.min(...prices) * 0.95,
+            max: Math.max(...prices) * 1.05
           }
+        },
+        plugins: {
+          legend: { display: false },
+          title: { display: true, text: '📉 Time Under Water 구간 시각화' }
         }
-      });
+      }
+    });
 
-      const tbody = document.querySelector("#tuwTable tbody");
-      tbody.innerHTML = "";
-      top.forEach(t => {
-        const row = `<tr><td>${t.start.toISOString().slice(0,10)}</td><td>${t.end.toISOString().slice(0,10)}</td><td>${t.days.toFixed(0)}</td><td>${t.mdd.toFixed(2)}%</td></tr>`;
-        tbody.insertAdjacentHTML("beforeend", row);
-      });
-      if (top.length > 0) {
-        const t = top[0];
-        const summary = `
-            <p>📌 가장 긴 Time Under Water 구간은 <strong>${t.start.toISOString().slice(0, 10)}</strong>부터 <strong>${t.end.toISOString().slice(0, 10)}</strong>까지 총 <strong>${t.days.toFixed(0)}일</strong>간 지속되었습니다.</p>
-            <p>이 기간 중 최대 손실(MDD)은 <strong>${t.mdd.toFixed(2)}%</strong>입니다.</p>
-        `;
-        document.getElementById("summaryText").innerHTML = summary;
+    const tbody = document.querySelector("#tuwTable tbody");
+    tbody.innerHTML = "";
+    top.forEach(t => {
+      const row = `<tr><td>${t.start.toISOString().slice(0,10)}</td><td>${t.end.toISOString().slice(0,10)}</td><td>${t.days.toFixed(0)}</td><td>${t.mdd.toFixed(2)}%</td></tr>`;
+      tbody.insertAdjacentHTML("beforeend", row);
+    });
+
+    if (top.length > 0) {
+      const t = top[0];
+      document.getElementById("summaryText").innerHTML = `
+        <p>📌 가장 긴 Time Under Water 구간은 <strong>${t.start.toISOString().slice(0, 10)}</strong>부터 <strong>${t.end.toISOString().slice(0, 10)}</strong>까지 총 <strong>${t.days.toFixed(0)}일</strong>간 지속되었습니다.</p>
+        <p>이 기간 중 최대 손실(MDD)은 <strong>${t.mdd.toFixed(2)}%</strong>입니다.</p>
+      `;
     }
+  }
 
-
-    }
-    analyzeTUW();
-  </script>
+  analyzeTUW();
+</script>
 </body>
 </html>

@@ -3,43 +3,48 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>적립식 투자 시뮬레이션</title>
+  <title>적립식 투자 시뮬레이션 (일반)</title>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
 
-<div style="text-align: right; margin-bottom: 10px;">
-  <a href="index.html">🏠 메인으로</a>
-</div>
+<div id="nav-placeholder"></div>
+<script>
+  fetch("./includes/nav.html")
+    .then(response => response.text())
+    .then(data => {
+      document.getElementById("nav-placeholder").innerHTML = data;
+    });
+</script>
 
 <div class="card">
-  <h1>📈 적립식 투자 시뮬레이션</h1>
-  <p style="text-align: center; color: #666; margin-top: -1rem; margin-bottom: 2rem;">
+  <h1>📈 적립식 투자 시뮬레이션 (일반)</h1>
+  <p class="note">
     매월 일정 금액을 투자했을 때의 미래 가치를 예측하고, 다양한 자산 기준과 비교해보세요.
   </p>
 
   <section class="inputs">
     <table style="margin: 0 auto;">
       <tr>
-        <th style="text-align: right; padding: 6px 10px;">🏦 초기 투자금 (₩)</th>
-        <td style="padding: 6px 10px; text-align: left;"><input type="text" id="initialInvestment" value="0" style="width: 120px;" /></td>
+        <th>🏦 초기 투자금 (₩)</th>
+        <td><input type="text" id="initialInvestment" value="0" style="width: 120px;" /></td>
       </tr>
       <tr>
-        <th style="text-align: right; padding: 6px 10px;">💰 월 적립 금액 (₩)</th>
-        <td style="padding: 6px 10px; text-align: left;"><input type="text" id="monthlyInvestment" value="1,000,000" style="width: 120px;" /></td>
+        <th>💰 월 적립 금액 (₩)</th>
+        <td><input type="text" id="monthlyInvestment" value="1,000,000" style="width: 120px;" /></td>
       </tr>
       <tr>
-        <th style="text-align: right; padding: 6px 10px;">🔄 매년 적립금 증가율 (%)</th>
-        <td style="padding: 6px 10px; text-align: left;"><input type="number" id="monthlyIncreaseRate" value="0" style="width: 80px;" /></td>
+        <th>🔄 매년 적립금 증가율 (%)</th>
+        <td><input type="number" id="monthlyIncreaseRate" value="0" style="width: 80px;" /></td>
       </tr>
       <tr>
-        <th style="text-align: right; padding: 6px 10px;">📅 투자 기간 (년)</th>
-        <td style="padding: 6px 10px; text-align: left;"><input type="number" id="investmentPeriod" value="30" style="width: 80px;" /></td>
+        <th>📅 투자 기간 (년)</th>
+        <td><input type="number" id="investmentPeriod" value="30" style="width: 80px;" /></td>
       </tr>
       <tr>
-        <th style="text-align: right; padding: 6px 10px;">📈 예상 연 수익률 (%)</th>
-        <td style="padding: 6px 10px; text-align: left;""><input type="number" id="annualReturn" value="8" style="width: 80px;" /></td>
+        <th>📈 예상 연 수익률 (%)</th>
+        <td><input type="number" id="annualReturn" value="8" style="width: 80px;" /></td>
       </tr>
     </table>
   </section>
@@ -73,10 +78,6 @@
     <canvas id="chartCanvas"></canvas>
     <div id="resultComment" class="note" style="text-align: center; font-size: 1rem; margin-top: 1.5rem; color: #495057;"></div>
   </div>
-</div>
-
-<div style="text-align: center; margin-top: 20px;">
-  <button onclick="location.href='index.html'">🔙 메인으로 돌아가기</button>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -128,15 +129,52 @@
     options: {
       responsive: true,
       maintainAspectRatio: false,
-      interaction: { mode: 'index', intersect: false },
+      layout: {
+        padding: {
+          bottom: 40
+        }
+      },
+      plugins: {
+        legend: {
+          labels: {
+            color: '#f8f9fa',
+            font: {
+              size: 13
+            }
+          }
+        }
+      },
       scales: {
-        x: { title: { display: true, text: '투자 연도' } },
+        x: {
+          title: {
+            display: true,
+            text: '투자 연도',
+            color: '#dee2e6'
+          },
+          ticks: {
+            color: '#adb5bd'
+          },
+          grid: {
+            color: '#333'
+          }
+        },
         y: {
-          title: { display: true, text: '(억 원)' },
-          ticks: { callback: v => formatCurrency(v) }
+          title: {
+            display: true,
+            text: '(억 원)',
+            color: '#dee2e6'
+          },
+          ticks: {
+            callback: v => formatCurrency(v),
+            color: '#adb5bd'
+          },
+          grid: {
+            color: '#333'
+          }
         }
       }
     }
+
   });
 
   function recalcAndUpdate() {
