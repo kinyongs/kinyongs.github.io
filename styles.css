@@ -51,6 +51,33 @@ nav a:hover {
     padding: 12px;
     font-size: 1.05rem;
   }
+
+  .nav-links {
+    display: none;
+    flex-direction: column;
+    gap: 0;
+    background-color: #1f1f1f;
+    position: absolute;
+    top: 50px;
+    left: 0;
+    width: 100%;
+    border-top: 1px solid #333;
+  }
+
+  .nav-links.active {
+    display: flex;
+  }
+
+  .nav-links a {
+    padding: 14px;
+    border-bottom: 1px solid #333;
+    text-align: center;
+  }
+
+  .nav-toggle {
+    display: block;
+  }
+
 }
 
 
@@ -311,4 +338,56 @@ section table td, section table th {
 .inputs td input[type="radio"] {
   margin: 0;
   accent-color: #0d6efd; /* 선택된 색상 강조 */
+}
+
+/* 기본 네비게이션 스타일 */
+.navbar {
+  background-color: #1f1f1f;
+  padding: 10px 16px;
+  position: fixed;
+  top: 0;
+  width: 100%;
+  z-index: 1000;
+  border-bottom: 1px solid #333;
+}
+
+.nav-container {
+  max-width: 1000px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.nav-logo {
+  color: #66b2ff;
+  font-weight: bold;
+  font-size: 1.1rem;
+}
+
+.nav-links {
+  display: flex;
+  gap: 12px;
+}
+
+.nav-links a {
+  color: #66b2ff;
+  text-decoration: none;
+  padding: 8px 12px;
+  border-radius: 4px;
+  font-size: 0.95rem;
+  transition: background 0.3s;
+}
+
+.nav-links a:hover {
+  background: #333;
+  color: #fff;
+}
+
+/* 햄버거 메뉴 버튼 */
+.nav-toggle {
+  display: none;
+  font-size: 1.5rem;
+  color: #66b2ff;
+  cursor: pointer;
 }
