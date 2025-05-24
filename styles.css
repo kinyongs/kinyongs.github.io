@@ -168,7 +168,7 @@ body {
   max-width: 600px;
   margin: 0 auto;
   border-collapse: separate;
-  border-spacing: 0 10px;
+  border-spacing: 0 0px;
   color: #f8f9fa;
 }
 
@@ -186,7 +186,7 @@ body {
 }
 
 .inputs input {
-  width: 160px;
+  width: 100px;
   padding: 8px;
   background-color: #2a2a2a;
   color: #f8f9fa;
@@ -197,7 +197,7 @@ body {
 
 .inputs td input[type="number"],
 .inputs td input[type="text"] {
-  text-align: right;
+  text-align: center;
 }
 
 button {
@@ -329,11 +329,12 @@ section table td, section table th {
 .inputs td label {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  margin-right: 16px;
+  gap: 0px;
+  margin-right: 0px;
   font-size: 0.95rem;
   color: #f8f9fa;
   cursor: pointer;
+  justify-content:flex-start;
 }
 
 .inputs td input[type="radio"] {
