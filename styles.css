@@ -89,24 +89,19 @@ body {
 
   .hero-content h1 {
     font-size: 1.8rem;
-    line-height: 1.3;
+    line-height: 1.4;
     word-break: keep-all;
-    padding: 0 12px;
-  }
-
-  .hero-content p {
-    font-size: 1rem;
-    line-height: 1.5;
-    padding: 0 12px;
     white-space: normal;
   }
 
+  .hero-content p,
   .typing-container {
     font-size: 1rem;
-    max-width: 90%;
+    line-height: 1.5;
     white-space: normal;
     word-break: break-word;
-  }
+    padding: 0 10px;
+  }  
 
 }
 
