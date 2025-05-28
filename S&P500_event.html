@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>S&P500 주요 이벤트 차트</title>
+  <link rel="stylesheet" href="styles.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="price_daily.js"></script>
+  <style>
+    .insight-box {
+      background: #222;
+      color: #f0f0f0;
+      padding: 15px;
+      margin: 20px auto;
+      max-width: 800px;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
+    }
+    .insight-box h3 {
+      margin-top: 0;
+      color: #ffcc00;
+      font-size: 1.2rem;
+    }
+    .insight-box ul {
+      list-style: none;
+      padding: 0;
+    }
+    .insight-box li {
+      margin: 5px 0;
+      border-bottom: 1px dashed #444;
+      padding-bottom: 5px;
+    }
+  </style>
+</head>
+<body>
+  <div id="nav-placeholder"></div>
+  <script>
+    fetch("includes/nav.html")
+      .then(response => response.text())
+      .then(data => {
+        document.getElementById("nav-placeholder").innerHTML = data;
+      });
+  </script>
+
+
+<div class="card">
+  <h1>📌 S&P500 주요 이벤트 시각화</h1>
+  <section class="inputs">
+    <table>
+      <tr><th>⏳ 시작 연도</th><td><input type="number" id="startYear" /></td></tr>
+      <tr><th>⏱️ 종료 연도</th><td><input type="number" id="endYear" /></td></tr>
+      <tr><th>Y축 스케일</th>
+        <td>
+          <label><input type="radio" name="scaleType" value="linear" checked /> 선형</label>
+          <label><input type="radio" name="scaleType" value="logarithmic" /> 로그</label>
+        </td>
+      </tr>
+      <tr><th>📂 카테고리 선택</th><td><div class="category-filter" id="categoryFilters"></div></td></tr>
+      <tr><th>📉 급변 감지 임계치 (%)</th><td><input type="number" id="changeThreshold" value="10" min="1" max="50" step="0.1" /></td></tr>
+    </table>
+    <div style="text-align: center; margin-top: 15px;">
+      <button onclick="drawChart()">📊 이벤트 차트 그리기</button>
+    </div>
+  </section>
+
+  <div class="chart-wrapper">
+    <canvas id="eventChart"></canvas>
+  </div>
+  <div class="insight-box" id="insight"></div>
+</div>
+
+<script>
+let eventData = [];
+const categoryColors = {};
+
+fetch("historical_events.json")
+  .then(res => res.json())
+  .then(data => {
+    eventData = data.map(e => ({
+      ...e,
+      date: new Date(e.date)
+    }));
+    renderCategoryFilters();
+    drawChart();
+  });
+
+function renderCategoryFilters() {
+  const container = document.getElementById("categoryFilters");
+  const categories = [...new Set(eventData.map(e => e.category))];
+  container.innerHTML = categories.map((cat, idx) => {
+    const color = `hsl(${idx * 30 % 360}, 70%, 50%)`;
+    categoryColors[cat] = color;
+    return `<label><input type="checkbox" value="${cat}" checked /> <span style="color:${color}">■</span> ${cat}</label>`;
+  }).join("\n");
+}
+
+function drawChart() {
+  const startYear = parseInt(document.getElementById("startYear").value);
+  const endYear = parseInt(document.getElementById("endYear").value);
+  const scaleType = document.querySelector('input[name="scaleType"]:checked').value;
+  const threshold = parseFloat(document.getElementById("changeThreshold").value);
+  const selectedCategories = Array.from(document.querySelectorAll('#categoryFilters input:checked'))
+    .map(cb => cb.value);
+
+  const allDates = Object.keys(priceData)
+    .filter(d => {
+      const y = parseInt(d.split('-')[0]);
+      return y >= startYear && y <= endYear;
+    })
+    .sort();
+
+  const combinedData = allDates.map(date => {
+    const event = eventData.find(e => e.date.toISOString().split('T')[0] === date && selectedCategories.includes(e.category));
+    return {
+      x: date,
+      y: priceData[date],
+      eventTitle: event ? event.title : null,
+      eventCategory: event ? event.category : null,
+      eventColor: event ? (categoryColors[event.category] || '#ffcc00') : null
+    };
+  });
+
+  const ctx = document.getElementById("eventChart").getContext("2d");
+  if (window.eventChartInstance) window.eventChartInstance.destroy();
+
+  window.eventChartInstance = new Chart(ctx, {
+    type: 'line',
+    data: {
+      datasets: [{
+        label: 'S&P500 지수',
+        data: combinedData,
+        parsing: {
+          xAxisKey: 'x',
+          yAxisKey: 'y'
+        },
+        borderColor: '#66b2ff',
+        pointRadius: combinedData.map(d => d.eventTitle ? 5 : 0),
+        pointBackgroundColor: combinedData.map(d => d.eventColor || 'transparent'),
+        pointHoverRadius: combinedData.map(d => d.eventTitle ? 8 : 0),
+        tension: 0.3
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        tooltip: {
+          callbacks: {
+            label: ctx => {
+              const d = ctx.raw;
+              const text = [`지수: ${d.y.toFixed(2)}`];
+              if (d.eventTitle) text.push(`${d.eventTitle}`, `카테고리: ${d.eventCategory}`);
+              return text;
+            }
+          },
+          displayColors: false,
+          backgroundColor: 'rgba(255,255,255,0.95)',
+          titleColor: '#111',
+          bodyColor: '#111',
+          borderColor: '#aaa',
+          borderWidth: 1,
+          titleFont: { size: 16, weight: 'bold' },
+          bodyFont: { size: 14 }
+        },
+        title: {
+          display: true,
+          text: `${startYear}년 ~ ${endYear}년 S&P500 주요 이벤트`
+        },
+        legend: { display: false }
+      },
+      scales: {
+        x: { title: { display: true, text: '날짜' } },
+        y: { title: { display: true, text: 'S&P500 지수' }, type: scaleType, beginAtZero: false }
+      }
+    }
+  });
+
+  // 급격한 변화 탐지 설명 추가
+  const insightList = [];
+  combinedData.forEach((d, i) => {
+    if (!d.eventTitle || i < 3 || i > combinedData.length - 4) return;
+    const before = combinedData[i - 3].y;
+    const after = combinedData[i + 3].y;
+    const change = ((after - before) / before) * 100;
+    if (Math.abs(change) >= threshold) {
+      insightList.push(`<li><strong>${d.x}</strong> - ${d.eventTitle} → <span style="color:${change > 0 ? 'lightgreen' : 'salmon'}">${change > 0 ? '급등' : '급락'} (${change.toFixed(1)}%)</span></li>`);
+    }
+  });
+  document.getElementById("insight").innerHTML = insightList.length ? `
+    <h3>📌 이벤트 전후 급격한 변화</h3>
+    <ul>${insightList.join('')}</ul>` : '';
+}
+
+window.onload = () => {
+  document.getElementById('startYear').value = 2000;
+  document.getElementById('endYear').value = 2024;
+};
+</script>
+</body>
+<script>
+  fetch("includes/nav.html")
+    .then(res => res.text())
+    .then(data => {
+      document.getElementById("nav-placeholder").innerHTML = data;
+
+      // ⬇️ 주입 후 toggle 이벤트 연결
+      const toggle = document.getElementById('navToggle');
+      const links = document.getElementById('navLinks');
+      toggle?.addEventListener('click', () => {
+        links?.classList.toggle('active');
+      });
+    });
+</script>
+</html>

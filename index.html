@@ -3,9 +3,28 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>S&P 500 투자 분석 플랫폼</title>
+  <title>데이터로 읽는 S&P 500: 투자 분석과 시각화 도구</title>
+  <meta name="description" content="S&P 500 실제 데이터를 기반으로 시장 흐름을 분석하고, 다양한 시각화 도구를 통해 전략 인사이트를 얻어보세요.">
+
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
+  <style>
+    .typing-container {
+      font-size: 1.25rem;
+      white-space: nowrap;
+      overflow: hidden;
+      border-right: 2px solid #fff;
+      animation: blink-caret 0.8s step-end infinite;
+      width: 100%;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    @keyframes blink-caret {
+      from, to { border-color: transparent }
+      50% { border-color: white; }
+    }
+  </style>
 </head>
 
 <body>
@@ -20,22 +39,35 @@
 
   <section class="hero" id="home">
     <div class="hero-content">
-      <h1>S&P 500 투자 분석 플랫폼</h1>
-      <p>실제 데이터를 바탕으로 투자 전략을 검토하고 시각화하세요</p>
+      <h1>데이터로 읽는 S&P 500</h1>
+      <p class="typing-container" id="typing-text"></p>
       <a href="#simulation" class="button">시작하기</a>
     </div>
   </section>
+
+  <script>
+    const fullText = "S&P 500 지표를 시각화하고, 투자 전략을 분석해보세요.";
+    let i = 0;
+    function typeWriter() {
+      if (i <= fullText.length) {
+        document.getElementById("typing-text").textContent = fullText.substring(0, i);
+        i++;
+        setTimeout(typeWriter, 80);
+      }
+    }
+    window.addEventListener("DOMContentLoaded", typeWriter);
+  </script>
 
   <section class="section" id="simulation">
     <h2>적립식 투자 시뮬레이션</h2>
     <p class="lead">정기적인 투자 전략이 장기적인 수익에 어떤 영향을 미치는지 다양한 방식으로 시뮬레이션할 수 있습니다.</p>
     <div class="cards">
-      <a class="card" href="DCA_general.html">
+      <a class="card" href="DCA_general.html" target="_blank">
         <div class="icon">🎯</div>
         <h3>일반 투자 시뮬레이션</h3>
         <p>사용자 지정 수익률 기반 분석</p>
       </a>
-      <a class="card" href="DCA_general_S&P500.html">
+      <a class="card" href="DCA_general_S&P500.html" target="_blank">
         <div class="icon">🎯</div>
         <h3>S&P500 기반 시뮬레이션</h3>
         <p>지수 기반 성장 전략 검토</p>
@@ -47,10 +79,11 @@
     <h2>시장 지표 및 패턴 분석</h2>
     <p class="lead">시장의 장기 추세, 계절성, 수익률 패턴을 정량적으로 분석하여 통찰을 제공합니다.</p>
     <div class="cards">
-      <a class="card" href="DCA_S&P500.html"><div class="icon">📈</div><h3>Rolling Returns</h3><p>월간 수익률 분석</p></a>
-      <a class="card" href="S&P500_trend.html"><div class="icon">📊</div><h3>CAGR 추세</h3><p>복리 성장 시각화</p></a>
-      <a class="card" href="S&P500EPS.html"><div class="icon">📉</div><h3>지수 상승 요인</h3><p>EPS vs PER</p></a>
-      <a class="card" href="S&P500_seasonality.html"><div class="icon">🌤️</div><h3>계절성 분석</h3><p>월별 수익 흐름</p></a>
+      <a class="card" href="S&P500_event.html" target="_blank"><div class="icon">📌</div><h3>주요 이벤트 시점 정리</h3><p>주요 사건이 지수에 미친 영향 분석</p></a>
+      <a class="card" href="DCA_S&P500.html" target="_blank"><div class="icon">📈</div><h3>Rolling Returns</h3><p>월간 수익률 분석</p></a>
+      <a class="card" href="S&P500_trend.html" target="_blank"><div class="icon">📊</div><h3>CAGR 추세</h3><p>복리 성장 시각화</p></a>
+      <a class="card" href="S&P500EPS.html" target="_blank"><div class="icon">📉</div><h3>지수 상승 요인</h3><p>EPS vs PER</p></a>
+      <a class="card" href="S&P500_seasonality.html" target="_blank"><div class="icon">🌤️</div><h3>계절성 분석</h3><p>월별 수익 흐름</p></a>
     </div>
   </section>
 
@@ -58,16 +91,16 @@
     <h2>리스크 및 투자 심리 분석</h2>
     <p class="lead">시장의 불확실성과 투자자의 심리 요인이 수익률에 미치는 영향을 다양한 지표로 해석합니다.</p>
     <div class="cards">
-      <a class="card" href="S&P500_missingReturn.html"><div class="icon">📌</div><h3>놓친 날의 영향</h3><p>수익률 민감도</p></a>
-      <a class="card" href="S&P500_Streak_Stats.html"><div class="icon">🔁</div><h3>연속 상승/하락</h3><p>다음날 수익률 예측</p></a>
-      <a class="card" href="S&P500_TUW.html"><div class="icon">🕳️</div><h3>Time Under Water</h3><p>손실 지속 분석</p></a>
-      <a class="card" href="S&P500_fear_and_greed.html"><div class="icon">😨</div><h3>공포탐욕지수</h3><p>심리 vs Drawdown</p></a>
+      <a class="card" href="S&P500_missingReturn.html" target="_blank"><div class="icon">📌</div><h3>놓친 날의 영향</h3><p>수익률 민감도</p></a>
+      <a class="card" href="S&P500_Streak_Stats.html" target="_blank"><div class="icon">🔁</div><h3>연속 상승/하락</h3><p>다음날 수익률 예측</p></a>
+      <a class="card" href="S&P500_TUW.html" target="_blank"><div class="icon">🕳️</div><h3>Time Under Water</h3><p>손실 지속 분석</p></a>
+      <a class="card" href="S&P500_fear_and_greed.html" target="_blank"><div class="icon">😨</div><h3>공포탐욕지수</h3><p>심리 vs Drawdown</p></a>
     </div>
   </section>
 
   <section class="section" id="reports">
     <h2>심화 분석 리포트</h2>
-    <p class="lead">SS&P500의 수익률, 계절성, 추세 등을 분석한 리포트를 확인해보세요.
+    <p class="lead">S&P500의 수익률, 계절성, 추세 등을 분석한 리포트를 확인해보세요.
 
 </p>
     <div class="cards">
@@ -96,6 +129,7 @@
     <p>© 2025 kinyongs | 이 사이트는 개인 투자 분석 및 학습 목적의 자료를 제공합니다.</p>
     <p><a href="about.html">About</a> | <a href="privacy.html">Privacy Policy</a> | <a href="mailto:kinyongs@naver.com">Contact</a></p>
   </footer>
+
 </body>
 <script>
   fetch("includes/nav.html")
@@ -111,5 +145,4 @@
       });
     });
 </script>
-
 </html>
