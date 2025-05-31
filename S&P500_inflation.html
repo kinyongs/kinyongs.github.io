@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>S&P500 vs 물가상승률 분석</title>
+  <link rel="stylesheet" href="styles.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="price_daily.js"></script>
+  <script src="CPI.js"></script>
+  <style>
+    .summary-box {
+      margin-top: 30px;
+      background: #f0f4f8;
+      padding: 15px;
+      border-radius: 8px;
+      font-size: 1rem;
+      color: #333;
+      line-height: 1.6;
+    }
+  </style>
+</head>
+<body>
+  
+<div id="nav-placeholder"></div>
+<script>
+  fetch("includes/nav.html")
+    .then(response => response.text())
+    .then(data => document.getElementById("nav-placeholder").innerHTML = data);
+</script>
+
+<div class="card">
+  <h1>💰 1달러 가치와 S&P500 투자 성과 비교</h1>
+  <p class="note">
+    S&P500에 투자한 결과와 인플레이션을 고려한 1달러 가치 변화를 함께 확인해보세요.
+  </p>
+
+  <section class="inputs">
+    <table>
+      <tr>
+        <th>⏳ 시작 연도</th>
+        <td><input type="number" id="startYear" value="1928" /></td>
+      </tr>
+      <tr>
+        <th>⏱️ 종료 연도</th>
+        <td><input type="number" id="endYear" value="2024" /></td>
+      </tr>
+      <tr>
+        <th>📈 물가 상승률 조정</th>
+        <td>
+          <label><input type="radio" name="adjustCPI" value="false" checked /> 고려하지 않음</label>
+          <label><input type="radio" name="adjustCPI" value="true" /> 고려함</label>
+        </td>
+      </tr>
+      <tr>
+        <th>📐 Y축 스케일</th>
+        <td>
+          <label><input type="radio" name="scaleType" value="linear" checked /> 선형</label>
+          <label><input type="radio" name="scaleType" value="logarithmic" /> 로그</label>
+        </td>
+      </tr>
+    </table>
+    <div style="text-align: center; margin-top: 15px;">
+      <button onclick="drawComparison()">📊 그래프 그리기</button>
+    </div>
+  </section>
+
+  <div class="chart-wrapper">
+    <canvas id="valueChart"></canvas>
+  </div>
+  <section id="summaryText" class="note" style="max-width: 800px; margin: 2rem auto;"></section>
+</div>
+
+<script>
+function drawComparison() {
+  const startYear = parseInt(document.getElementById('startYear').value);
+  const endYear = parseInt(document.getElementById('endYear').value);
+  const adjustCPI = document.querySelector('input[name="adjustCPI"]:checked').value === 'true';
+  const scaleType = document.querySelector('input[name="scaleType"]:checked').value;
+
+  if (startYear < 1928 || endYear > 2024 || startYear >= endYear) {
+    alert("⚠️ 시작 연도는 1928년 이상, 종료 연도는 2024년 이하여야 하며, 시작 연도는 종료 연도보다 작아야 합니다.");
+    return;
+  }
+
+  const entries = Object.entries(priceData)
+    .map(([dateStr, price]) => ({ date: new Date(dateStr), price }))
+    .filter(d => {
+      const y = d.date.getFullYear();
+      return y >= startYear && y <= endYear;
+    })
+    .sort((a, b) => a.date - b.date);
+
+  if (entries.length < 3) return;
+
+  entries.pop(); // 마지막 데이터 제거
+
+  const firstDate = entries[0].date.toISOString().slice(0, 10);
+  const lastDate = entries[entries.length - 1].date.toISOString().slice(0, 10);
+  const firstPrice = entries[0].price;
+  const firstCPI = const_CPI[firstDate.slice(0, 7) + '-01'] || 100;
+
+  const labels = [];
+  const sp500Values = [];
+  const dollarValues = [];
+
+  for (const entry of entries) {
+    const dateStr = entry.date.toISOString().slice(0, 10);
+    const cpiKey = dateStr.slice(0, 7) + '-01';
+    const cpiNow = const_CPI[cpiKey] || firstCPI;
+    const relativeCPI = cpiNow / firstCPI;
+
+    const growth = entry.price / firstPrice;
+    labels.push(dateStr);
+    sp500Values.push((adjustCPI ? growth / relativeCPI : growth).toFixed(4));
+    dollarValues.push((adjustCPI ? 1 / relativeCPI : 1).toFixed(4));
+  }
+
+  if (window.valueChartInstance) window.valueChartInstance.destroy();
+
+  const ctx = document.getElementById("valueChart").getContext("2d");
+  window.valueChartInstance = new Chart(ctx, {
+    type: "line",
+    data: {
+      labels,
+      datasets: [
+        {
+          label: adjustCPI ? "S&P500 실질 가치" : "S&P500 명목 가치",
+          data: sp500Values,
+          borderColor: "#4e79a7",
+          fill: false,
+          tension: 0.1,
+          pointRadius: 0
+        },
+        {
+          label: "1달러 가치",
+          data: dollarValues,
+          borderColor: "#e15759",
+          fill: false,
+          tension: 0.1,
+          pointRadius: 0
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        title: {
+          display: true,
+          text: "💹 S&P500 수익률과 1달러 가치 변화"
+        },
+        legend: {
+          position: 'bottom'
+        }
+      },
+      scales: {
+        y: {
+          type: scaleType,
+          title: {
+            display: true,
+            text: '배수 (기준 = 1)'
+          }
+        },
+        x: {
+          title: {
+            display: true,
+            text: '날짜'
+          },
+          ticks: {
+            maxTicksLimit: 10
+          }
+        }
+      }
+    }
+  });
+
+  // 텍스트 요약 출력
+  const sp500Final = sp500Values[sp500Values.length - 1];
+  const dollarFinal = dollarValues[dollarValues.length - 1];
+
+  document.getElementById("summaryText").innerHTML = `
+    <p>
+      ${firstDate}부터 ${lastDate}까지의 기간 동안 
+      S&P500에 <strong>장기 투자</strong>했을 경우의 ${adjustCPI ? '실질' : '명목'} 수익률은 
+      약 <strong>${parseFloat(sp500Final).toFixed(2)}배</strong>에 달합니다.
+    </p>
+    <p>
+      같은 기간 동안 1달러의 ${adjustCPI ? '실질 가치' : '명목 가치'}는 
+      <strong>${parseFloat(dollarFinal).toFixed(3)}배</strong>로 변화하였습니다.
+    </p>
+    ${
+      adjustCPI
+        ? `<p>
+            물가 상승률을 반영하면, ${firstDate}의 1달러는 
+            ${lastDate} 기준으로 약 <strong>${(parseFloat(dollarFinal) * 100).toFixed(1)}센트</strong>의 
+            구매력을 가지게 됩니다.
+          </p>`
+        : ''
+    }
+  `;
+
+}
+
+window.addEventListener("DOMContentLoaded", drawComparison);
+</script>
+</body>
+<script>
+  fetch("includes/nav.html")
+    .then(res => res.text())
+    .then(data => {
+      document.getElementById("nav-placeholder").innerHTML = data;
+
+      // ⬇️ 주입 후 toggle 이벤트 연결
+      const toggle = document.getElementById('navToggle');
+      const links = document.getElementById('navLinks');
+      toggle?.addEventListener('click', () => {
+        links?.classList.toggle('active');
+      });
+    });
+</script>
+</html>

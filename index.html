@@ -11,14 +11,15 @@
   <style>
     .typing-container {
       font-size: 1.25rem;
-      white-space: normal;
-      word-break: break-word;
-      overflow-wrap: break-word;
-      border-right: 2px solid #fff;
+      display: inline-block;
+      white-space: pre;
+      font-family: 'Noto Sans KR', sans-serif;
+    }
+
+    .cursor {
+      display: inline-block;
+      margin-left: 2px;
       animation: blink-caret 0.8s step-end infinite;
-      width: 100%;
-      max-width: 600px;
-      margin: 0 auto;
     }
 
     @keyframes blink-caret {
@@ -41,14 +42,18 @@
   <section class="hero" id="home">
     <div class="hero-content">
       <h1>데이터로 읽는 S&P 500</h1>
-      <p class="typing-container" id="typing-text"></p>
-      <a href="#simulation" class="button">시작하기</a>
+      <p class="typing-container">
+        <span id="typing-text"></span><span class="cursor">|</span>
+      </p>
+      <div><a href="#simulation" class="button">시작하기</a></div>
+      
     </div>
   </section>
 
   <script>
     const fullText = "S&P 500 지표를 시각화하고, 투자 전략을 분석해보세요.";
     let i = 0;
+
     function typeWriter() {
       if (i <= fullText.length) {
         document.getElementById("typing-text").textContent = fullText.substring(0, i);
@@ -56,11 +61,13 @@
         setTimeout(typeWriter, 80);
       }
     }
+
     window.addEventListener("DOMContentLoaded", typeWriter);
   </script>
 
+
   <section class="section" id="simulation">
-    <h2>적립식 투자 시뮬레이션</h2>
+    <h2>투자 시뮬레이션</h2>
     <p class="lead">정기적인 투자 전략이 장기적인 수익에 어떤 영향을 미치는지 다양한 방식으로 시뮬레이션할 수 있습니다.</p>
     <div class="cards">
       <a class="card" href="DCA_general.html" target="_blank">
@@ -70,8 +77,13 @@
       </a>
       <a class="card" href="DCA_general_S&P500.html" target="_blank">
         <div class="icon">🎯</div>
-        <h3>S&P500 기반 시뮬레이션</h3>
+        <h3>S&P500 기반 투자 시뮬레이션</h3>
         <p>지수 기반 성장 전략 검토</p>
+      </a>
+      <a class="card" href="S&P500_inflation.html" target="_blank">
+        <div class="icon">💰</div>
+        <h3>물가 반영 수익률 시뮬레이션</h3>
+        <p>인플레이션이 자산가치에 미치는 영향</p>
       </a>
     </div>
   </section>
@@ -105,6 +117,7 @@
 
 </p>
     <div class="cards">
+      <a class="card" href="./docs/Inflation-analysis.html" target="_blank"><div class="icon">📘</div><h3>S&P500 vs 1달러 구매력</h3><p>1928~2024년 실질 수익률과 물가 변화 비교</p></a>
       <a class="card" href="./docs/missing-return-analysis.html" target="_blank"><div class="icon">📌</div><h3>놓친 날 분석</h3><p>수익률 손실 효과를 정량 분석합니다.</p></a>
       <a class="card" href="./docs/seasonality-analysis.html" target="_blank"><div class="icon">📅</div><h3>계절성 분석</h3><p>월별 패턴을 시대별로 비교합니다.</p></a>
       <a class="card" href="./docs/trend-analysis.html" target="_blank"><div class="icon">📊</div><h3>추세 분석</h3><p>추세 분석 기법 및 효과를 분석합니다.</p></a>

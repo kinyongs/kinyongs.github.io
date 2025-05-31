@@ -359,3 +359,12 @@ section table td, section table th {
   accent-color: #0d6efd;
 }
 
+.summary-box {
+  margin-top: 30px;
+  background: #f0f4f8;
+  padding: 15px;
+  border-radius: 8px;
+  font-size: 1rem;
+  color: #333;
+  line-height: 1.6;
+}
