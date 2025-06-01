@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>S&P500 vs M2 비교 시뮬레이션</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <div id="nav-placeholder"></div>
+  <script>
+    fetch("includes/nav.html")
+      .then(res => res.text())
+      .then(data => document.getElementById("nav-placeholder").innerHTML = data);
+  </script>
+
+  <div class="card">
+    <h1>📊 S&P500 vs M2 통화량 비교</h1>
+    <p class="note">S&P500 지수와 통화량(M2)의 흐름을 비교해보며 자산시장과 유동성의 관계를 살펴보세요.</p>
+
+    <section class="inputs">
+      <table>
+        <tr><th>시작 연도</th><td><input type="number" id="startYear"></td></tr>
+        <tr><th>종료 연도</th><td><input type="number" id="endYear"></td></tr>
+        <tr><th>Y축 스케일</th><td>
+          <label><input type="radio" name="scaleType" value="linear" checked> 선형</label>
+          <label><input type="radio" name="scaleType" value="log"> 로그</label>
+        </td></tr>
+      </table>
+      <div style="text-align: center; margin-top: 1rem;">
+        <button onclick="renderCharts()">📈 그래프 그리기</button>
+      </div>
+    </section>
+
+    <div class="chart-wrapper"><canvas id="lineChart"></canvas></div>
+
+    <section class="note" style="max-width: 800px; margin: 2rem auto;">
+      <div id="summaryBox"></div>
+    </section>
+  </div>
+
+  <script src="price_daily.js"></script>
+  <script src="m2.js"></script>
+  <script>
+    const getMonthlySP500 = () => {
+      const monthly = {};
+      for (const date in priceData) {
+        const ym = date.slice(0, 7) + "-01";
+        if (!monthly[ym]) monthly[ym] = [];
+        monthly[ym].push(priceData[date]);
+      }
+      const result = {};
+      for (const ym in monthly) {
+        const prices = monthly[ym];
+        result[ym] = prices.reduce((a, b) => a + b, 0) / prices.length;
+      }
+      return result;
+    };
+
+    const getDateRangeData = (start, end) => {
+      const sp500Monthly = getMonthlySP500();
+      const labels = [], sp500Vals = [], m2Vals = [];
+      for (const date in const_M2) {
+        const year = parseInt(date.split('-')[0]);
+        if (year >= start && year <= end && sp500Monthly[date]) {
+          labels.push(date);
+          sp500Vals.push(sp500Monthly[date]);
+          m2Vals.push(const_M2[date]);
+        }
+      }
+      return { labels, sp500Vals, m2Vals };
+    };
+
+    let chart;
+
+    function renderCharts() {
+      const start = parseInt(document.getElementById('startYear').value);
+      const end = parseInt(document.getElementById('endYear').value);
+      const scaleType = document.querySelector('input[name="scaleType"]:checked').value;
+
+      const { labels, sp500Vals, m2Vals } = getDateRangeData(start, end);
+
+      if (chart) chart.destroy();
+
+      chart = new Chart(document.getElementById('lineChart').getContext('2d'), {
+        type: 'line',
+        data: {
+          labels,
+          datasets: [
+            { label: 'S&P500', data: sp500Vals, borderColor: '#4e79a7', yAxisID: 'y1', pointRadius: 0, tension: 0.3 },
+            { label: 'M2 (Billions of Dollars)', data: m2Vals, borderColor: '#f28e2b', yAxisID: 'y2', pointRadius: 0, tension: 0.3 }
+          ]
+        },
+        options: {
+          responsive: true,
+          interaction: { mode: 'index', intersect: false },
+          stacked: false,
+          plugins: { legend: { position: 'bottom' } },
+          scales: {
+            y1: {
+              type: scaleType === 'log' ? 'logarithmic' : 'linear',
+              position: 'left',
+              title: { display: true, text: 'S&P500' },
+              ticks: {
+                callback: function(value) {
+                  return scaleType === 'log' ? value.toLocaleString() : value;
+                },
+                min: scaleType === 'log' ? 1 : undefined
+              }
+            },
+            y2: {
+              type: scaleType === 'log' ? 'logarithmic' : 'linear',
+              position: 'right',
+              title: { display: true, text: 'M2 (Billions of Dollars)' },
+              grid: { drawOnChartArea: false },
+              ticks: {
+                callback: function(value) {
+                  return scaleType === 'log' ? value.toLocaleString() : value;
+                },
+                min: scaleType === 'log' ? 1 : undefined
+              }
+            },
+            x: {
+              title: { display: true, text: '날짜' }
+            }
+          }
+        }
+      });
+
+      // 텍스트 요약 출력
+      const spStart = sp500Vals[0], spEnd = sp500Vals.at(-1);
+      const m2Start = m2Vals[0], m2End = m2Vals.at(-1);
+      const spGrowth = ((spEnd / spStart - 1) * 100).toFixed(2);
+      const m2Growth = ((m2End / m2Start - 1) * 100).toFixed(2);
+
+      document.getElementById('summaryBox').innerHTML = `
+        
+        <p>-${labels[0]}부터 ${labels.at(-1)}까지의 기간 동안,</p>
+        <p>-S&P500 지수는 ${spStart.toFixed(2)}에서 ${spEnd.toFixed(2)}로 상승하며 <strong>${spGrowth}%</strong> 증가했습니다.</p>
+        <p>-같은 기간 M2(통화량)는 ${m2Start.toFixed(2)}에서 ${m2End.toFixed(2)}로 증가하여 <strong>${m2Growth}%</strong> 늘어났습니다.</p>
+      `;
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      const years = Object.keys(const_M2).map(d => parseInt(d.split('-')[0]));
+      document.getElementById('startYear').value = Math.min(...years);
+      document.getElementById('endYear').value = Math.max(...years);
+      renderCharts();
+    });
+  </script>
+</body>
+</html>

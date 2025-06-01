@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>S&P500과 M2 통화량의 관계 분석</title>
+  <link rel="stylesheet" href="../styles.css">
+  <link rel="stylesheet" href="./styles2.css">
+</head>
+<body>
+  <div id="nav-placeholder"></div>
+  <script>
+    fetch("../includes/nav.html")
+      .then(res => res.text())
+      .then(data => document.getElementById("nav-placeholder").innerHTML = data);
+  </script>
+
+  <div class="container">
+    <h1>S&P500 지수와 M2 통화량의 관계 분석</h1>
+    <p>
+      미국의 주식시장은 과연 얼마나 ‘돈의 흐름’에 영향을 받을까?<br>
+      연방준비제도가 찍어낸 달러, 즉 <strong>M2 통화량</strong>의 증가는 단순한 숫자 이상의 의미를 가집니다.<br>
+      만약 <strong>유동성의 증가가 자산 가격 상승의 연료 역할</strong>을 한다면,<br>
+      수십 년에 걸친 <strong>S&P500 지수의 움직임</strong> 속에서도 그 흔적을 찾을 수 있지 않을까요?<br><br>
+      이에 따라 본 리포트는 미국의 대표 주가지수인 <strong>S&P500</strong>과 연방준비제도가 집계하는 <strong>M2 통화량</strong> 간의 관계를 분석합니다. 
+      유동성 공급이 자산시장에 미치는 영향을 장기 및 단기 시계열로 시각화하여, 통화량 증가가 주가에 어떤 구조적 영향을 미쳤는지를 탐색합니다.
+    </p>
+
+    <div class="divider"></div>
+
+    <h2>1. 전체 기간 분석 (1959 ~ 2025)</h2>
+    <p>
+      아래 차트는 1959년부터 2025년까지의 S&P500 지수와 M2 통화량의 추이를 함께 나타냅니다.
+      로그 스케일을 사용함으로써 두 지표의 <strong>비율 성장</strong>을 보다 직관적으로 비교할 수 있습니다.
+    </p>
+    <img src="./images/M2_1958_2025.png" alt="S&P500과 M2 전체 흐름">
+
+    <p>
+      해당 기간 동안:
+      <ul>
+        <li>S&P500 지수는 <strong>55.62에서 5369.50</strong>으로 상승하며 <strong>9553.81%</strong> 증가</li>
+        <li>M2 통화량은 <strong>286.60에서 21862.50</strong>으로 증가하며 <strong>7528.23%</strong> 증가</li>
+      </ul>
+      두 지표 모두 장기적으로 강한 우상향 흐름을 보이며, <strong>유동성과 자산시장 사이의 구조적 상관성</strong>이 드러납니다.
+    </p>
+
+    <div class="divider"></div>
+
+    <h2>2. 구간별 변화 비교 (2000 ~ 2025)</h2>
+    <p>
+      2000년 이후는 <strong>닷컴 버블, 금융위기, 팬데믹, 고금리기</strong> 등 다양한 거시 이벤트가 혼재된 시기로, 유동성과 주가 간의 관계가 더욱 복잡하게 나타납니다.
+    </p>
+    <img src="./images/M2_2000_2025.png" alt="2000~2025 기간의 S&P500과 M2">
+
+    <p>
+      분석 결과:
+      <ul>
+        <li>S&P500: <strong>1425.59 → 5369.50</strong> (+276.65%)</li>
+        <li>M2: <strong>4667.60 → 21862.50</strong> (+368.39%)</li>
+      </ul>
+      M2는 비교적 꾸준히 증가한 반면, S&P500은 <strong>금융위기와 팬데믹 당시 큰 변동성</strong>을 보이며 상승 곡선을 그렸습니다.
+      이로부터 <strong>유동성 외에도 금리, 심리, 정책 등이 주가에 미치는 복합적 영향</strong>을 유추할 수 있습니다.
+    </p>
+
+    <div class="divider"></div>
+
+    <h2>3. 팬데믹 시기 집중 분석 (2019 ~ 2023)</h2>
+    <p>
+      2020년 팬데믹 이후는 유례없는 유동성 공급기였습니다. 연준은 급격한 경기 둔화를 막기 위해 양적완화를 시행했고, M2는 폭발적으로 증가했습니다.
+    </p>
+    <img src="./images/M2_2019_2023.png" alt="팬데믹 기간 S&P500과 M2">
+
+    <ul>
+      <li><strong>2020~2021</strong>: M2는 가파르게 상승, S&P500도 빠르게 반등하며 강한 동행성</li>
+      <li><strong>2022</strong>: 금리 인상 전환 → M2 증가세 정체, 주가는 조정</li>
+      <li><strong>2023</strong>: 주가는 회복세, 반면 M2는 증가세가 크지 않음 → 유동성 외 요인의 작용 가능성 시사</li>
+    </ul>
+
+    <p>
+      팬데믹 시기의 분석은 단기 충격에 대한 정책 대응이 자산시장에 얼마나 빠르게 반영되는지를 보여주는 대표 사례입니다.
+    </p>
+
+    <div class="divider"></div>
+
+    <h2>4. 결론 및 시사점</h2>
+    <ul>
+      <li>장기적으로 S&P500과 M2는 모두 큰 폭의 상승세를 보여 <strong>동반 성장의 구조</strong>를 시사</li>
+      <li>단기적으로는 금리, 정책, 시장 심리 등의 요인이 주가에 <strong>더 큰 영향을 미치기도 함</strong></li>
+      <li>특히 팬데믹 기간은 <strong>유동성 증가와 주가 반등이 거의 동기화</strong>된 시기로, 통화정책의 직접적인 효과를 보여줌</li>
+    </ul>
+
+    <p>
+      이러한 분석은 투자자들에게 유동성 지표(M2)를 <strong>거시적 투자 판단의 참고 지표로 삼을 수 있는 근거</strong>를 제공합니다. 다만, <strong>단기적 대응에는 보다 복합적인 변수 고려가 필요</strong>함을 함께 시사합니다.
+    </p>
+  </div>
+</body>
+</html>
