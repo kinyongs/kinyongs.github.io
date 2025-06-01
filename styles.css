@@ -355,10 +355,13 @@ section table td, section table th {
 }
 
 .inputs td input[type="radio"] {
-  margin: 0;
-  accent-color: #0d6efd;
+  width: 16px;                /* 원하는 크기 */
+  height: 16px;
+  margin-right: 8px;
+  padding: 0;                 /* 안전하게 여백 제거 */
+  vertical-align: middle;     /* 텍스트와 정렬 */
+  accent-color: #0d6efd;      /* 파란색 강조 */
 }
-
 .summary-box {
   margin-top: 30px;
   background: #f0f4f8;
