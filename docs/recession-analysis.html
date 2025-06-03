@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="description" content="S&P500 지수는 역사적 경기침체 속에서도 꾸준히 회복해왔습니다. 대공황부터 팬데믹까지 주요 리세션과 주가 반응을 데이터 기반으로 분석하고, 장기투자자에게 시사점을 제공합니다.">
+
+  <title>경기침체와 S&P500의 관계 분석</title>
+  <link rel="stylesheet" href="../styles.css" />
+  <link rel="stylesheet" href="./styles2.css" />
+</head>
+<body>
+  <div id="nav-placeholder"></div>
+  <script>
+    fetch("../includes/nav.html")
+      .then(res => res.text())
+      .then(data => document.getElementById("nav-placeholder").innerHTML = data);
+  </script>
+
+  <div class="container">
+    <h1>경기침체와 S&P500의 관계 분석</h1>
+    <p>
+      미국 경제는 지난 100여 년 동안 반복적으로 경기침체(Recession)를 겪어왔습니다. 이러한 리세션은 실물 경제뿐 아니라 자산시장에도 심각한 영향을 끼쳤습니다.
+      특히 S&P500 지수는 경기침체기에 큰 낙폭을 기록하는 경우가 많았으며, 때로는 반토막 이상의 손실을 기록하기도 했습니다.<br><br>
+      본 보고서는 <strong>역사적 경기침체 사례</strong>를 통해 당시 <strong>S&P500의 반응</strong>을 정리하고, 
+      <strong>회복까지의 과정</strong>을 함께 살펴봄으로써 장기투자자의 시사점을 도출합니다.
+    </p>
+
+    <div class="divider"></div>
+
+    <h2>1. 리세션과 주가 낙폭: 시각적 분석</h2>
+    <p>
+      아래 차트는 미국 역사상 주요 경기침체 시기에 나타난 <strong>S&P500 지수의 최대 낙폭 (Drawdown)</strong>과 <strong>해당 지수의 흐름</strong>을 함께 보여줍니다.
+    </p>
+    <img src="./images/recession_index.png" alt="리세션 기간의 S&P500 지수 흐름" />
+    <img src="./images/recession_drawdown.png" alt="리세션 기간의 Drawdown 분석" />
+
+
+    <p>
+      주요 관찰점:
+      <ul>
+        <li>대공황(1929~1933): <strong>지수 -86.19% 하락</strong>, 역사상 가장 극심한 낙폭 기록</li>
+        <li>오일쇼크(1973~75): <strong>-42.17% 낙폭</strong>, 고물가와 저성장의 복합적 충격</li>
+        <li>글로벌 금융위기(2007~09): <strong>-55.37% 하락</strong>, 시스템 리스크의 대표적 사례</li>
+        <li>코로나 팬데믹(2020): <strong>-33.92% 하락</strong>, 그러나 빠른 반등으로 회복</li>
+      </ul>
+    </p>
+
+    <div class="divider"></div>
+
+    <h2>2. 리세션 발생 원인과 시장 반응</h2>
+    <p>
+      리세션은 각기 다른 원인으로 발생합니다. 아래는 주요 리세션 사례와 함께, 원인 및 시장 반응을 간략히 정리한 표입니다.
+    </p>
+
+    <table style="width: 100%; border-collapse: collapse; margin-top: 20px;">
+      <thead>
+        <tr style="background-color: #2a2a2a; color: #f1c40f;">
+          <th style="padding: 10px; border: 1px solid #444;">시기</th>
+          <th style="padding: 10px; border: 1px solid #444;">주요 원인</th>
+          <th style="padding: 10px; border: 1px solid #444;">S&P500 낙폭</th>
+          <th style="padding: 10px; border: 1px solid #444;">회복 특성</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td style="padding: 10px; border: 1px solid #444;">1929~1933</td>
+          <td style="padding: 10px; border: 1px solid #444;">대공황, 금융 붕괴</td>
+          <td style="padding: 10px; border: 1px solid #444;">-86.19%</td>
+          <td style="padding: 10px; border: 1px solid #444;">뉴딜 정책, 전쟁 수요로 장기 회복</td>
+        </tr>
+        <tr>
+          <td style="padding: 10px; border: 1px solid #444;">1973~1975</td>
+          <td style="padding: 10px; border: 1px solid #444;">오일쇼크, 스태그플레이션</td>
+          <td style="padding: 10px; border: 1px solid #444;">-42.17%</td>
+          <td style="padding: 10px; border: 1px solid #444;">인플레이션 통제와 성장 기반 회복</td>
+        </tr>
+        <tr>
+          <td style="padding: 10px; border: 1px solid #444;">2007~2009</td>
+          <td style="padding: 10px; border: 1px solid #444;">서브프라임, 금융위기</td>
+          <td style="padding: 10px; border: 1px solid #444;">-55.37%</td>
+          <td style="padding: 10px; border: 1px solid #444;">양적완화, 유동성 공급으로 회복</td>
+        </tr>
+        <tr>
+          <td style="padding: 10px; border: 1px solid #444;">2020</td>
+          <td style="padding: 10px; border: 1px solid #444;">코로나19 팬데믹</td>
+          <td style="padding: 10px; border: 1px solid #444;">-33.92%</td>
+          <td style="padding: 10px; border: 1px solid #444;">역사상 가장 빠른 회복 속도</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="divider"></div>
+
+    <h2>3. 장기투자자의 시사점</h2>
+    <ul>
+      <li><strong>리세션은 반복되지만, 시장은 항상 회복해왔다</strong></li>
+      <li>단기 하락을 피하기보다는 <strong>시간을 이기는 전략</strong>이 중요</li>
+      <li><strong>분산투자와 인내심</strong>이 장기적으로 가장 강력한 무기</li>
+    </ul>
+
+    <p>
+      경기침체는 두렵지만, 동시에 자산가격이 저평가되는 기회이기도 합니다. <br>
+      역사적 데이터를 통해 우리는 <strong>리세션 이후 더 큰 상승장이 열렸음</strong>을 알 수 있습니다.<br><br>
+      불확실성 속에서도 흔들리지 않는 투자자의 태도는 결국 시장의 보상으로 돌아옵니다.
+    </p>
+  </div>
+</body>
+<script>
+  fetch("../includes/nav.html")
+    .then(res => res.text())
+    .then(data => {
+      document.getElementById("nav-placeholder").innerHTML = data;
+
+      // ⬇️ 주입 후 toggle 이벤트 연결
+      const toggle = document.getElementById('navToggle');
+      const links = document.getElementById('navLinks');
+      toggle?.addEventListener('click', () => {
+        links?.classList.toggle('active');
+      });
+    });
+</script>
+</html>

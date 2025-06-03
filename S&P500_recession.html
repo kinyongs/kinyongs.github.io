@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="description" content="미국 경기침체 시기와 S&P500 지수의 변화를 비교 분석하는 인터랙티브 그래프 도구. 리세션별 지수 변화율과 최대 낙폭(MDD)을 한눈에 확인하세요.">
+  <title>S&P500 지수와 경기침체</title>
+  <link rel="stylesheet" href="styles.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@1.1.0"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
+  <script src="price_daily.js"></script>
+</head>
+<body>
+
+  <div id="nav-placeholder"></div>
+  <script>
+    fetch("includes/nav.html")
+      .then(res => res.text())
+      .then(data => document.getElementById("nav-placeholder").innerHTML = data);
+  </script>
+  
+  <div class="card">
+    <h1>📉 S&P500 지수와 미국 경기침체 시기</h1>
+  <p class="note">
+    미국 경기침체 시기와 S&P500 지수의 변화를 비교 분석합니다.
+  </p>
+    <section class="inputs">
+      <table>
+        <tr>
+          <th>⏳ 시작 연도</th>
+          <td><input type="number" id="startYear" value="2000" /></td>
+        </tr>
+        <tr>
+          <th>⏱️ 종료 연도</th>
+          <td><input type="number" id="endYear" value="2024" /></td>
+        </tr>
+        <tr>
+          <th>📐 Y축 스케일</th>
+          <td>
+            <label><input type="radio" name="scaleType" value="linear" checked /> 선형</label>
+            <label><input type="radio" name="scaleType" value="logarithmic" /> 로그</label>
+          </td>
+        </tr>
+      </table>
+      <div style="text-align:center; margin-top:15px;">
+        <button onclick="drawRecessionChart()">📊 그래프 그리기</button>
+      </div>
+    </section>
+
+    <div class="chart-wrapper">
+      <canvas id="spChart"></canvas>
+    </div>
+    <div class="chart-wrapper">
+      <canvas id="drawdownChart"></canvas>
+    </div>
+    <div id="summaryBox" class="card" style="margin-top: 20px;"></div>
+  </div>
+
+  <script>
+    const recessionPeriods = [
+      { xMin: '1929-08-01', xMax: '1933-03-01', label: "1929년 대공황", description: "미국 역사상 최악의 경기침체. 실업률 25%, GDP 40% 감소." },
+      { xMin: '1937-05-01', xMax: '1938-06-01', label: "1937~38 침체", description: "긴축 정책과 소비 둔화로 촉발된 침체." },
+      { xMin: '1945-02-01', xMax: '1945-10-01', label: "1945 전후 침체", description: "2차 세계대전 종료와 생산 감소로 인한 경기 둔화." },
+      { xMin: '1948-11-01', xMax: '1949-10-01', label: "1948~49 침체", description: "전후 재조정과 통화 긴축 정책 영향." },
+      { xMin: '1953-07-01', xMax: '1954-05-01', label: "1953~54 침체", description: "한국전쟁 종료 후 정부 지출 감소." },
+      { xMin: '1957-08-01', xMax: '1958-04-01', label: "1957~58 침체", description: "금리 인상과 투자 감소가 주요 원인." },
+      { xMin: '1960-04-01', xMax: '1961-02-01', label: "1960~61 침체", description: "재고 축소와 고용 둔화로 인한 경기후퇴." },
+      { xMin: '1969-12-01', xMax: '1970-11-01', label: "1969~70 침체", description: "인플레이션 억제 정책과 소비 위축." },
+      { xMin: '1973-11-01', xMax: '1975-03-01', label: "1973~75 오일쇼크", description: "오일쇼크와 스태그플레이션 발생." },
+      { xMin: '1980-01-01', xMax: '1980-07-01', label: "1980 침체", description: "고물가 대응을 위한 금리 인상, 침체 발생." },
+      { xMin: '1981-07-01', xMax: '1982-11-01', label: "1981~82 더블딥", description: "고금리 정책 지속으로 두 번째 침체 발생." },
+      { xMin: '1990-07-01', xMax: '1991-03-01', label: "1990 침체", description: "걸프전, 부동산 거품 붕괴 등 복합 요인." },
+      { xMin: '2001-03-01', xMax: '2001-11-01', label: "닷컴버블 붕괴", description: "IT 버블 붕괴 및 9.11 테러 여파." },
+      { xMin: '2007-12-01', xMax: '2009-06-01', label: "2008 금융위기", description: "부동산·금융시장 붕괴로 글로벌 침체." },
+      { xMin: '2020-02-01', xMax: '2020-04-01', label: "코로나 팬데믹", description: "팬데믹에 따른 급격한 경제 봉쇄." }
+    ];
+
+    function makeRecessionAnnotations() {
+      const anns = {};
+      recessionPeriods.forEach((r, i) => {
+        anns['box' + i] = {
+          type: 'box',
+          xMin: r.xMin,
+          xMax: r.xMax,
+          backgroundColor: 'rgba(200, 200, 200, 0.3)',
+          borderWidth: 0,
+          label: {
+            content: r.label,
+            display: true,
+            position: 'start',
+            color: '#333',
+            backgroundColor: 'rgba(255,255,255,0.8)'
+          }
+        };
+      });
+      return anns;
+    }
+
+    function drawRecessionChart() {
+      const startYear = parseInt(document.getElementById("startYear").value);
+      const endYear = parseInt(document.getElementById("endYear").value);
+      const scaleType = document.querySelector('input[name="scaleType"]:checked').value;
+
+      const entries = Object.entries(priceData)
+        .map(([date, value]) => ({ date, value: Number(value) }))
+        .filter(d => {
+          const year = new Date(d.date).getFullYear();
+          return year >= startYear && year <= endYear;
+        });
+
+      const chartData = entries.map(e => ({ x: e.date, y: e.value }));
+      let peak = -Infinity;
+      const drawdowns = entries.map(e => {
+        peak = Math.max(peak, e.value);
+        return { x: e.date, y: (e.value - peak) / peak };
+      });
+
+      if (window.spChart instanceof Chart) {
+        window.spChart.destroy();
+      }
+      if (window.drawdownChart instanceof Chart) {
+        window.drawdownChart.destroy();
+      }
+
+
+      const ctx1 = document.getElementById("spChart").getContext("2d");
+      const ctx2 = document.getElementById("drawdownChart").getContext("2d");
+
+      window.spChart = new Chart(ctx1, {
+        type: 'line',
+        data: {
+          datasets: [{
+            label: 'S&P500 지수',
+            data: chartData,
+            borderColor: '#007bff',
+            fill: false,
+            pointRadius: 0,
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            x: { type: 'time', time: { unit: 'year' }, min: `${startYear}-01-01`,max: `${endYear}-12-31` },
+            y: { type: scaleType, title: { display: true, text: '지수' } }
+          },
+          plugins: {
+            legend: { display: true },
+            annotation: { annotations: makeRecessionAnnotations() }
+          }
+        }
+      });
+
+      window.drawdownChart = new Chart(ctx2, {
+        type: 'line',
+        data: {
+          datasets: [{
+            label: 'S&P500 Drawdown',
+            data: drawdowns,
+            borderColor: '#dc3545',
+            fill: true,
+            backgroundColor: 'rgba(220,53,69,0.2)',
+            pointRadius: 0,
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,          
+          scales: {
+            x: { type: 'time', time: { unit: 'year' }, min: `${startYear}-01-01`,max: `${endYear}-12-31`  },
+            y: {
+              type: 'linear',
+              ticks: {
+                callback: value => (value * 100).toFixed(0) + '%'
+              },
+              title: { display: true, text: 'Drawdown (%)' }
+            }
+          },
+          plugins: {
+            legend: { display: true },
+            annotation: { annotations: makeRecessionAnnotations() }
+          }
+        }
+      });
+
+      // 👉 설명 포함 리세션 표 출력
+      let recessionDetails = '';
+      const includedRecessions = recessionPeriods.filter(r => {
+        const rStartYear = new Date(r.xMin).getFullYear();
+        const rEndYear = new Date(r.xMax).getFullYear();
+        return rStartYear <= endYear && rEndYear >= startYear;
+      });
+
+      includedRecessions.forEach(r => {
+        const rStart = new Date(r.xMin);
+        const rEnd = new Date(r.xMax);
+        const rEntries = entries.filter(e => {
+          const date = new Date(e.date);
+          return date >= rStart && date <= rEnd;
+        });
+        if (rEntries.length >= 2) {
+          const rStartVal = rEntries[0].value;
+          const rEndVal = rEntries.at(-1).value;
+          const rChange = ((rEndVal - rStartVal) / rStartVal * 100).toFixed(2);
+          const rMax = Math.max(...rEntries.map(e => e.value));
+          const rMin = Math.min(...rEntries.map(e => e.value));
+          const rMDD = (((rMin - rMax) / rMax) * 100).toFixed(2);
+
+          const changeColor = rChange < 0 ? 'color: #ffc107;' : 'color: #198754;';
+          const mddColor = 'color: #dc3545;';
+
+          recessionDetails += `
+            <tr>
+              <td>${r.label}</td>
+              <td>${r.xMin} ~ ${r.xMax}</td>
+              <td>${rStartVal.toFixed(2)}</td>
+              <td>${rEndVal.toFixed(2)}</td>
+              <td><span style="${changeColor}">${rChange}%</span></td>
+              <td><span style="${mddColor}">${rMDD}%</span></td>
+              <td>${r.description}</td>
+            </tr>
+          `;
+
+        }
+      });
+
+      document.getElementById('summaryBox').innerHTML = `
+        <h3 style="margin-top:1.5rem;">📉 리세션 기간별 지수 변화 및 최대 낙폭</h3>
+        <table border="1" cellpadding="6" style="border-collapse: collapse; font-size: 0.9rem; width: 100%;">
+          <thead style="background-color: #e9ecef; color: #212529;">
+            <tr>
+              <th>리세션 이름</th>
+              <th>기간</th>
+              <th>시작 지수</th>
+              <th>종료 지수</th>
+              <th>지수 변화율</th>
+              <th>최대 낙폭(MDD)</th>
+              <th>설명</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${recessionDetails}
+          </tbody>
+        </table>
+      `;
+
+    }
+
+    window.addEventListener("DOMContentLoaded", drawRecessionChart);
+  </script>
+</body>
+<script>
+  fetch("includes/nav.html")
+    .then(res => res.text())
+    .then(data => {
+      document.getElementById("nav-placeholder").innerHTML = data;
+
+      // ⬇️ 주입 후 toggle 이벤트 연결
+      const toggle = document.getElementById('navToggle');
+      const links = document.getElementById('navLinks');
+      toggle?.addEventListener('click', () => {
+        links?.classList.toggle('active');
+      });
+    });
+</script>
+</html>
