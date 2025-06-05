@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <title>S&P500 vs 반포자이 추세 비교</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="styles.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+<div id="nav-placeholder"></div>
+<script>
+  fetch("includes/nav.html")
+    .then(res => res.text())
+    .then(data => document.getElementById("nav-placeholder").innerHTML = data);
+</script> 
+
+<div class="card">
+  <h1>🏢 S&P500 vs 반포자이 아파트 (84A) 추세 비교</h1>
+  <p class="note">미국 대표 지수인 S&P500과 한국 부동산의 상징인 반포자이 아파트(84A형)의 장기 수익률을 비교해 보세요.</p>
+
+  <section class="inputs">
+    <table>
+      <tr><th>⏳ 시작 연도</th><td><input type="number" id="startYear" /></td></tr>
+      <tr><th>⏱️ 종료 연도</th><td><input type="number" id="endYear" /></td></tr>
+      <tr><th>📐 Y축 스케일</th>
+        <td>
+          <label><input type="radio" name="yScale" value="linear"> 선형</label>
+          <label><input type="radio" name="yScale" value="log" checked> 로그</label>
+        </td>
+      </tr>
+    </table>
+    <div style="text-align: center; margin-top: 15px;">
+      <button onclick="drawChart()">📊 차트 그리기</button>
+    </div>
+  </section>
+
+  <div class="chart-wrapper">
+    <canvas id="trendChart"></canvas>
+  </div>
+  <section id="cagrText" class="note" style="max-width: 800px; margin: 2rem auto;"></section>
+</div>
+
+<script src="price_daily.js"></script>
+<script src="banpo_prices.js"></script>
+<script>
+  Chart.register(Chart.registry.getScale('logarithmic'));
+
+  const banpoMap = new Map(banpoData.labels.map((d, i) => [d.slice(0, 7), banpoData.prices[i]]));
+  const allSPDates = Object.keys(priceData);
+  const years = allSPDates.map(d => parseInt(d.split('-')[0]));
+  document.getElementById('startYear').value = Math.max(2009, Math.min(...years));
+  document.getElementById('endYear').value = Math.max(...years);
+
+  let trendChart = null;
+
+  function computeDateBasedCAGR(series) {
+    if (series.length < 2) return { cagr: 0, trend: [] };
+
+    const x = series.map(d => d.date);
+    const y = series.map(d => Math.log(d.val));
+
+    const n = x.length;
+    const sumX = x.reduce((a, b) => a + b, 0);
+    const sumY = y.reduce((a, b) => a + b, 0);
+    const sumXY = x.reduce((acc, _, i) => acc + x[i] * y[i], 0);
+    const sumXX = x.reduce((acc, xi) => acc + xi * xi, 0);
+
+    const slope = (n * sumXY - sumX * sumY) / (n * sumXX - sumX * sumX);
+    const intercept = (sumY - slope * sumX) / n;
+
+    const msPerYear = 365.25 * 24 * 3600 * 1000;
+    const cagr = Math.exp(slope * msPerYear) - 1;
+
+    return { slope, intercept, cagr };
+  }
+
+  function drawChart() {
+    const startY = parseInt(document.getElementById("startYear").value);
+    const endY = parseInt(document.getElementById("endYear").value);
+    const yScaleType = document.querySelector('input[name="yScale"]:checked').value;
+
+    const filtered = allSPDates.filter(d => {
+      const y = parseInt(d.split("-")[0]);
+      return y >= startY && y <= endY;
+    });
+
+    const monthly = filtered.filter((d, i, arr) =>
+      i === 0 || d.slice(0, 7) !== arr[i - 1].slice(0, 7)
+    );
+
+    const labels = monthly.map(d => d.slice(0, 7));
+    const spValues = monthly.map(k => priceData[k]);
+    const aptValues = labels.map(l => banpoMap.get(l) || null);
+
+    // 추세선 계산 먼저 수행
+    const { cagr: spCagr, slope: spSlope, intercept: spIntercept } = computeDateBasedCAGR(
+      labels.map((l, i) => ({ date: new Date(l + "-01").getTime(), val: spValues[i] }))
+    );
+    const spTrend = labels.map(l => Math.exp(spIntercept + spSlope * new Date(l + "-01").getTime()));
+
+    const aptDated = labels.map((l, i) => ({ date: new Date(l + "-01").getTime(), val: aptValues[i] }))
+      .filter(d => d.val !== null);
+    const { cagr: aptCagr, slope: aptSlope, intercept: aptIntercept } = computeDateBasedCAGR(aptDated);
+    const aptTrend = labels.map(l => Math.exp(aptIntercept + aptSlope * new Date(l + "-01").getTime()));
+
+    // 비율 맞춘 min/max 계산
+    const spValid = spValues.filter(v => v !== null && v > 0);
+    const aptValid = aptValues.filter(v => v !== null && v > 0);
+
+    const spMin = Math.min(...spValid, ...spTrend);
+    const spMax = Math.max(...spValid, ...spTrend);
+    const aptMin = Math.min(...aptValid, ...aptTrend);
+    const aptMax = Math.max(...aptValid, ...aptTrend);
+
+    const spMid = Math.sqrt(spMin * spMax);
+    const aptMid = Math.sqrt(aptMin * aptMax);
+
+    const spRange = spMax / spMin;
+    const aptRange = aptMax / aptMin;
+    const unifiedRatio = Math.max(spRange, aptRange);
+    const scaleFactor = 1.01;
+
+    let y1min = spMid / unifiedRatio / scaleFactor;
+    let y1max = spMid * scaleFactor;
+    let y2min = aptMid / unifiedRatio / scaleFactor;
+    let y2max = aptMid * scaleFactor;
+
+    y1min = Math.min(y1min, spMin * 0.95);
+    y1max = Math.max(y1max, spMax * 1.05);
+    y2min = Math.min(y2min, aptMin * 0.95);
+    y2max = Math.max(y2max, aptMax * 1.05);
+
+    const adjust = arr => arr.map(v => (yScaleType === "log" && v <= 0) ? null : v);
+
+    if (trendChart) trendChart.destroy();
+    trendChart = new Chart(document.getElementById("trendChart").getContext("2d"), {
+      type: "line",
+      data: {
+        labels: labels,
+        datasets: [
+          {
+            label: "S&P500 데이터",
+            data: adjust(spValues),
+            pointStyle: "circle",
+            pointRadius: 4,
+            pointBackgroundColor: "transparent",
+            pointBorderColor: "#6a5acd",
+            pointBorderWidth: 1,
+            showLine: false,
+            fill: false,
+            yAxisID: "y1"
+          },
+          {
+            label: `S&P500 추세선 (${(spCagr * 100).toFixed(2)}%)`,
+            data: adjust(spTrend),
+            borderColor: "#6a5acd",
+            borderDash: [6, 3],
+            borderWidth: 3, 
+            tension: 0.3,
+            pointRadius: 0,
+            fill: false,
+            yAxisID: "y1"
+          },
+          {
+            label: "반포자이 데이터",
+            data: adjust(aptValues),
+            pointStyle: "circle",
+            pointRadius: 4,
+            pointBackgroundColor: "transparent",
+            pointBorderColor: "#f2c200 ",
+            pointBorderWidth: 1,
+            showLine: false,
+            fill: false,
+            yAxisID: "y2"
+          },
+          {
+            label: `반포자이 추세선 (${(aptCagr * 100).toFixed(2)}%)`,
+            data: adjust(aptTrend),
+            borderColor: "#f2c200 ",
+            borderDash: [3, 3],
+            borderWidth: 3, 
+            tension: 0.3,
+            pointRadius: 0,
+            fill: false,
+            yAxisID: "y2"
+          }
+
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            position: "bottom",
+            labels: {
+              usePointStyle: true
+            }
+          }
+        },
+        scales: {
+          y1: {
+            type: yScaleType === "log" ? "logarithmic" : "linear",
+            position: "left",
+            min: y1min,
+            max: y1max,
+            title: { display: true, text: "S&P500 지수" }
+          },
+          y2: {
+            type: yScaleType === "log" ? "logarithmic" : "linear",
+            position: "right",
+            min: y2min,
+            max: y2max,
+            title: { display: true, text: "반포자이 (만원)" },
+            grid: { drawOnChartArea: false }
+          }
+        }
+      }
+    });
+
+    document.getElementById("cagrText").innerHTML = `
+      <p>
+        <strong>${labels[0]}</strong>부터 <strong>${labels.at(-1)}</strong>까지의 기간 동안,<br>
+        S&P500 지수는 연평균 <strong style="color:#6a5acd;">${(spCagr * 100).toFixed(2)}%</strong>의 수익률을 기록하였고,<br>
+        반포자이 아파트는 연평균 <strong style="color:#f2c200;">${(aptCagr * 100).toFixed(2)}%</strong>의 상승률을 보였습니다.
+      </p>
+    `;
+  }
+
+
+  drawChart();
+</script>
+</body>
+<script>
+  fetch("includes/nav.html")
+    .then(res => res.text())
+    .then(data => {
+      document.getElementById("nav-placeholder").innerHTML = data;
+      const toggle = document.getElementById('navToggle');
+      const links = document.getElementById('navLinks');
+      toggle?.addEventListener('click', () => {
+        links?.classList.toggle('active');
+      });
+    });
+</script>
+</html>
