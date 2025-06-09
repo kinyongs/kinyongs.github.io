@@ -4,8 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>데이터로 읽는 S&P 500: 투자 분석과 시각화 도구</title>
-  <meta name="description" content="S&P 500 실제 데이터를 기반으로 시장 흐름을 분석하고, 다양한 시각화 도구를 통해 전략 인사이트를 얻어보세요.">
-
+  <meta name="description" content="S&P 500 실제 데이터를 기반으로 시장 흐름을 분석하고, 다양한 시각화 도구를 통해 전략 인사이트를 얻을 수 있는 투자 분석 웹사이트입니다.">
+  <meta name="robots" content="index, follow" />
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
   <style>
@@ -45,15 +45,13 @@
       <p class="typing-container">
         <span id="typing-text"></span><span class="cursor">|</span>
       </p>
-      <div><a href="#simulation" class="button">시작하기</a></div>
-      
+      <div><a href="#overview" class="button">사이트 소개</a></div>
     </div>
   </section>
 
   <script>
     const fullText = "S&P 500 지표를 시각화하고, 투자 전략을 분석해보세요.";
     let i = 0;
-
     function typeWriter() {
       if (i <= fullText.length) {
         document.getElementById("typing-text").textContent = fullText.substring(0, i);
@@ -61,36 +59,46 @@
         setTimeout(typeWriter, 80);
       }
     }
-
     window.addEventListener("DOMContentLoaded", typeWriter);
   </script>
 
+  <section class="section" id="overview">
+    <h2>사이트 개요 및 목적</h2>
+    <p class="lead">
+      <strong>데이터로 읽는 S&P 500</strong>은 누구나 쉽게 미국 주식시장 데이터를 활용하여 다양한 투자 전략을 분석하고 시각화할 수 있도록 돕는 웹사이트입니다.
+      단순한 그래프가 아닌, 장기 투자에 도움이 되는 실질적인 데이터 기반 인사이트를 제공합니다.
+    </p>
+    <p class="lead">
+      이 사이트는 비상업적 교육 및 연구 목적에서 출발했으며, 사용자의 이해를 돕기 위한 직관적인 인터페이스와 설명 중심 콘텐츠를 제공합니다.
+    </p>
+  </section>
 
   <section class="section" id="simulation">
     <h2>투자 시뮬레이션</h2>
-    <p class="lead">정기적인 투자 전략이 장기적인 수익에 어떤 영향을 미치는지 다양한 방식으로 시뮬레이션할 수 있습니다.</p>
+    <p class="lead">
+      투자 전략은 숫자와 데이터로 검증해야 신뢰할 수 있습니다. 본 시뮬레이션 도구는 '내가 그때 투자했다면 어땠을까?'라는 가정을 실험할 수 있게 해줍니다. 월 적립식 투자, 물가 조정 후 실질 수익률 계산, 특정 연도부터의 투자 시뮬레이션 등 다양한 방식으로 실전 투자 전략을 점검할 수 있습니다.
+    </p>
+    <p class="lead">
+      각 도구는 실제 S&P500 지수 데이터를 기반으로 하며, 초보 투자자도 쉽게 이해할 수 있는 인터페이스를 제공합니다. 특히, 인플레이션을 반영한 시뮬레이션은 단순 수익률이 아닌 <strong>자산의 실질 가치 변화</strong>를 보여줌으로써, 장기 투자에 대한 깊이 있는 통찰을 제공합니다.
+    </p>
+
     <div class="cards">
-      <a class="card" href="DCA_general.html" target="_blank">
-        <div class="icon">🎯</div>
-        <h3>일반 투자 시뮬레이션</h3>
-        <p>사용자 지정 수익률 기반 분석</p>
-      </a>
-      <a class="card" href="DCA_general_S&P500.html" target="_blank">
-        <div class="icon">🎯</div>
-        <h3>S&P500 기반 투자 시뮬레이션</h3>
-        <p>지수 기반 성장 전략 검토</p>
-      </a>
-      <a class="card" href="S&P500_inflation.html" target="_blank">
-        <div class="icon">💰</div>
-        <h3>물가 반영 수익률 시뮬레이션</h3>
-        <p>인플레이션이 자산가치에 미치는 영향</p>
-      </a>
+      <a class="card" href="DCA_general.html" target="_blank"><div class="icon">🎯</div><h3>일반 투자 시뮬레이션</h3><p>사용자 지정 수익률 기반 분석</p></a>
+      <a class="card" href="DCA_general_S&P500.html" target="_blank"><div class="icon">🎯</div><h3>S&P500 기반 투자 시뮬레이션</h3><p>지수 기반 성장 전략 검토</p></a>
+      <a class="card" href="S&P500_inflation.html" target="_blank"><div class="icon">💰</div><h3>물가 반영 수익률 시뮬레이션</h3><p>인플레이션이 자산가치에 미치는 영향</p></a>
     </div>
   </section>
 
   <section class="section" id="market">
     <h2>시장 지표 및 패턴 분석</h2>
-    <p class="lead">시장의 장기 추세, 계절성, 수익률 패턴을 정량적으로 분석하여 통찰을 제공합니다.</p>
+    <p class="lead">
+      시장은 단순히 가격의 흐름만으로 이해할 수 없습니다. 수십 년간의 데이터를 분석해 보면, S&P500 지수는 경제 지표와 밀접한 상관관계를 보입니다.
+      이 섹션에서는 EPS, PER, 통화량(M2), 계절성 같은 핵심 변수들이 주가에 어떻게 영향을 주었는지 시각적으로 분석합니다.
+    </p>
+    <p class="lead">
+      '언제 사야 하는가?', '경제 지표가 주가를 어떻게 움직이는가?', '반복되는 계절 패턴이 있는가?'와 같은 질문에 대한
+      명확한 데이터를 확인할 수 있으며, 각 분석 도구는 실전 투자 인사이트로 연결될 수 있는 구조로 설계되어 있습니다.
+    </p>
     <div class="cards">
       <a class="card" href="S&P500_recession.html" target="_blank"><div class="icon">📉</div><h3>경기침체와 지수 변화</h3><p>리세션 기간 중 S&P500 지수 및 낙폭 분석</p></a>
       <a class="card" href="S&P500_event.html" target="_blank"><div class="icon">📌</div><h3>주요 이벤트 시점 정리</h3><p>주요 사건이 지수에 미친 영향 분석</p></a>
@@ -105,7 +113,9 @@
 
   <section class="section" id="risk">
     <h2>리스크 및 투자 심리 분석</h2>
-    <p class="lead">시장의 불확실성과 투자자의 심리 요인이 수익률에 미치는 영향을 다양한 지표로 해석합니다.</p>
+    <p class="lead">
+      투자에서 중요한 것은 수익뿐 아니라 손실 리스크와 심리적 요소입니다. 공포탐욕지수, 놓친 날 효과, 손실 회복 시간 등 투자 심리를 분석합니다.
+    </p>
     <div class="cards">
       <a class="card" href="S&P500_missingReturn.html" target="_blank"><div class="icon">📌</div><h3>놓친 날의 영향</h3><p>수익률 민감도</p></a>
       <a class="card" href="S&P500_Streak_Stats.html" target="_blank"><div class="icon">🔁</div><h3>연속 상승/하락</h3><p>다음날 수익률 예측</p></a>
@@ -116,11 +126,17 @@
 
   <section class="section" id="reports">
     <h2>심화 분석 리포트</h2>
-    <p class="lead">S&P500의 수익률, 계절성, 추세 등을 분석한 리포트를 확인해보세요.
-
-</p>
+    <p class="lead">
+      이곳에서는 표면적인 수익률을 넘어, 자산 시장의 구조와 심리를 깊이 있게 파헤칩니다.
+      S&P500과 반포자이의 성과 비교, 인플레이션이 장기 수익률에 미친 영향, 경기침체 시기의 시장 반응 등 실제 투자 환경에서 부딪히는 질문에
+      데이터 기반으로 답하는 리포트들을 모았습니다.
+    </p>
+    <p class="lead">
+      단순한 요약이 아닌, 시계열 데이터와 시각화, 경제적 맥락을 담아낸 리포트들은 투자자뿐 아니라 금융을 공부하는 사람들에게도
+      유의미한 통찰을 제공합니다. 각 보고서는 실제 시뮬레이션 결과와 역사적 사건 분석을 포함하여 누구나 이해할 수 있도록 구성되어 있습니다.
+    </p>
     <div class="cards">
-      <a class="card" href="./docs/banpo-analysis.html" target="_blank"> <div class="icon">🏢</div><h3>반포자이 vs S&P500 리포트</h3><p>부동산과 주식 자산의 성과 비교</p></a>
+      <a class="card" href="./docs/banpo-analysis.html" target="_blank"><div class="icon">🏢</div><h3>반포자이 vs S&P500 리포트</h3><p>부동산과 주식 자산의 성과 비교</p></a>
       <a class="card" href="./docs/recession-analysis.html" target="_blank"><div class="icon">📉</div><h3>경기침체 리포트</h3><p>S&P500과 리세션의 역사적 상관관계 분석</p></a>
       <a class="card" href="./docs/Inflation-analysis.html" target="_blank"><div class="icon">📘</div><h3>S&P500 vs 1달러 구매력</h3><p>1928~2024년 실질 수익률과 물가 변화 비교</p></a>
       <a class="card" href="./docs/missing-return-analysis.html" target="_blank"><div class="icon">📌</div><h3>놓친 날 분석</h3><p>수익률 손실 효과를 정량 분석합니다.</p></a>
@@ -129,7 +145,6 @@
       <a class="card" href="./docs/DCA-analysis.html" target="_blank"><div class="icon">📘</div><h3>적립식 투자 성과 분석</h3><p>투자 시점에 따른 수익률의 편차를 해석합니다.</p></a>
       <a class="card" href="./docs/fear_greed-analysis.html" target="_blank"><div class="icon">🧠</div><h3>공포탐욕지수 & Drawdown 분석</h3><p>심리 지표와 S&P500 하락폭 간의 구조적 상관성 분석</p></a>
       <a class="card" href="./docs/M2-analysis.html" target="_blank"><div class="icon">💵</div><h3>S&P500 vs M2 통화량</h3><p>유동성과 자산시장의 구조적 상관성 분석</p></a>
-
     </div>
   </section>
 
@@ -137,7 +152,6 @@
     <p>© 2025 kinyongs | 이 사이트는 개인 투자 분석 및 학습 목적의 자료를 제공합니다.</p>
     <p><a href="about.html">About</a> | <a href="privacy.html">Privacy Policy</a> | <a href="mailto:kinyongs@naver.com">Contact</a></p>
   </footer>
-
 </body>
 <script>
   fetch("includes/nav.html")

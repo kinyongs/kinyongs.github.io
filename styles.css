@@ -11,6 +11,7 @@ body {
 /* Responsive Navigation Bar */
 .navbar {
   background-color: #1f1f1f;
+  justify-content: center; /* 가운데 정렬 */
   padding: 10px 16px;
   position: fixed;
   top: 0;
@@ -25,6 +26,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  justify-content: center; /* 내부 링크들도 가운데 정렬 */
 }
 
 .nav-logo {
