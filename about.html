@@ -2,105 +2,82 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
-  <title>About | S&P 500 투자 분석 도구</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="description" content="데이터로 읽는 S&P 500은 실제 시장 데이터를 바탕으로 다양한 투자 전략, 시장 지표, 투자 심리 등을 시각화하고 분석하는 웹사이트입니다. 장기 투자자를 위한 인사이트와 분석 리포트를 제공합니다.">
+  <title>About | 데이터로 읽는 S&P 500</title>
   <link rel="stylesheet" href="styles.css">
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
-  <style>
-    body {
-      font-family: 'Noto Sans KR', sans-serif;
-      background-color: #f9fbfd;
-      margin: 0;
-      padding-top: 50px;
-      color: #2c3e50;
-    }
-
-    .container {
-      max-width: 800px;
-      margin: 0 auto;
-      padding: 40px 20px;
-    }
-
-    h1 {
-      font-size: 2rem;
-      border-bottom: 2px solid #ccc;
-      padding-bottom: 10px;
-      margin-bottom: 24px;
-    }
-
-    h2 {
-      font-size: 1.4rem;
-      color: #34495e;
-      margin-top: 32px;
-    }
-
-    p {
-      font-size: 1rem;
-      line-height: 1.8;
-    }
-
-    footer {
-      text-align: center;
-      font-size: 0.85rem;
-      color: #888;
-      padding: 20px;
-      background-color: #f0f2f5;
-      margin-top: 40px;
-    }
-  </style>
 </head>
 <body>
 
   <div id="nav-placeholder"></div>
   <script>
     fetch("includes/nav.html")
-      .then(res => res.text())
-      .then(data => document.getElementById("nav-placeholder").innerHTML = data);
+      .then(response => response.text())
+      .then(data => {
+        document.getElementById("nav-placeholder").innerHTML = data;
+      });
   </script>
 
-  <div class="container">
-    <h1>사이트 소개</h1>
-
-    <p>
-      <strong>S&P 500 투자 분석 도구</strong>는 S&P500 지수를 기반으로 한 다양한 투자 전략을 시각화하고 분석할 수 있는 웹사이트입니다.
-      이 도구는 개인 투자자들이 데이터를 바탕으로 장기적인 투자 판단을 내릴 수 있도록 돕기 위해 제작되었습니다.
+  <section class="section">
+    <h2>사이트 개요</h2>
+    <p class="lead">
+      <strong>데이터로 읽는 S&P 500</strong>은 미국 주식시장 대표 지수인 S&P 500을 중심으로, 다양한 투자 전략과 시장 지표를
+      정량적으로 분석하고 시각화하는 웹사이트입니다.
+      실제 데이터를 바탕으로 만들어진 다양한 분석 도구를 통해, 장기 투자자들에게 더 나은 의사결정과 통찰을 제공합니다.
     </p>
+  </section>
 
-    <h2>제작 목적</h2>
-    <p>
-      금융 시장은 복잡하고 예측이 어렵지만, 장기적 데이터 분석을 통해 일정한 패턴과 흐름을 이해할 수 있습니다.
-      이 사이트는 다음과 같은 분석 도구들을 제공합니다.
-    </p>
-    <ul>
-      <li>📈 적립식 투자 시뮬레이션</li>
-      <li>📊 CAGR 성장 추세 분석</li>
-      <li>📉 EPS 대비 지수 흐름 시각화</li>
-      <li>🌤️ 월별 계절성 수익률 분석</li>
-      <li>🔁 연속 상승/하락 통계</li>
-      <li>🕳️ 고점 대비 손실 회복 기간 시각화 (Time Under Water)</li>
+  <section class="section">
+    <h2>주요 콘텐츠</h2>
+    <p class="lead">홈페이지는 다음과 같은 주요 영역으로 구성되어 있습니다.</p>
+    <ul class="lead" style="text-align: left; max-width: 800px; margin: 0 auto;">
+      <li>📈 <strong>투자 시뮬레이션</strong> – 정기 투자 전략의 수익률 분석 도구 (일반 수익률, S&P500 기반)</li>
+      <li>📊 <strong>시장 지표 및 패턴 분석</strong> – 경기침체, 지수 성장률(CAGR), EPS·PER, 계절성, 통화량(M2) 등</li>
+      <li>😨 <strong>리스크 및 심리 분석</strong> – 공포탐욕지수, 낙폭, Time Under Water, 놓친 날 효과 등</li>
+      <li>📘 <strong>심화 분석 리포트</strong> – 실제 분석 사례를 바탕으로 한 리포트 (부동산 vs 주식, 리세션 등)</li>
     </ul>
+  </section>
 
-    <h2>데이터 출처 및 신뢰성</h2>
-    <p>
-      대부분의 데이터는 Yahoo Finance, FRED(Federal Reserve Economic Data) 등에서 수집한 공개 자료를 바탕으로 작성되었으며, 
-      가공 및 시각화 과정은 투명하고 수작업으로 진행되었습니다. 모든 분석은 사용자의 자율 판단을 돕기 위한 목적으로 제공되며, 
-      투자 자문은 아닙니다.
+  <section class="section">
+    <h2>사이트의 특징</h2>
+    <p class="lead">
+      이 사이트는 단순한 그래프를 넘어서, 실제 투자자가 궁금해할 핵심 질문에 정량적 접근을 제공합니다.<br>
+      ▶ "놓친 날이 수익률에 얼마나 영향을 줄까?"<br>
+      ▶ "경기침체 기간에 지수는 어떻게 움직였을까?"<br>
+      ▶ "월별 수익률은 계절성 패턴을 보일까?"<br>
+      ▶ "S&P500의 상승은 실적(EPS) 때문일까, 밸류에이션(PER) 때문일까?"<br>
+      이러한 질문에 대해 데이터를 기반으로 답할 수 있는 다양한 콘텐츠가 준비되어 있습니다.
     </p>
+  </section>
 
-    <h2>제작자 소개</h2>
-    <p>
-      안녕하세요, 저는 이 사이트를 운영하는 개인 개발자 <strong>kinyongs</strong>입니다.<br>
-      데이터 시각화와 교육 기술에 관심이 많으며, 누구나 쉽게 투자 데이터를 분석하고 이해할 수 있도록 돕는 것을 목표로 하고 있습니다.
+  <section class="section">
+    <h2>데이터 및 기술적 기반</h2>
+    <p class="lead">
+      모든 데이터는 Yahoo Finance, FRED(Federal Reserve Economic Data) 등에서 수집된 공개 자료를 바탕으로 하며,
+      분석 결과는 자바스크립트 기반의 시각화 도구로 직접 렌더링됩니다. 사용자가 실제 데이터를 체험하고 비교하며 학습할 수 있도록
+      설계되었습니다.
     </p>
+  </section>
 
-    <h2>연락처</h2>
-    <p>
-      궁금한 점이나 제안하고 싶은 내용이 있다면 언제든지 아래 이메일로 연락 주세요:<br>
-      📧 <a href="mailto:kinyongs@naver.com">kinyongs@naver.com</a>
+  <section class="section">
+    <h2>운영 목적</h2>
+    <p class="lead">
+      금융 지식과 통계적 인사이트가 부족한 개인 투자자도 데이터를 통해 시장을 이해하고, 스스로 판단할 수 있도록 돕는 것이 이 사이트의 가장 큰 목적입니다.
     </p>
-  </div>
+  </section>
+
+  <section class="section">
+    <h2>운영자 소개 및 연락처</h2>
+    <p class="lead">
+      이 웹사이트는 데이터 분석과 시각화, 교육 기술에 관심이 많은 개인 개발자 <strong>kinyongs</strong>가 운영하고 있습니다.<br>
+      문의 및 제안: 📧 <a href="mailto:kinyongs@naver.com">kinyongs@naver.com</a>
+    </p>
+  </section>
 
   <footer>
-    © 2025 S&P 500 투자 분석 도구 | 운영자: kinyongs
+    <p>© 2025 kinyongs | 이 사이트는 개인 투자 분석 및 학습 목적의 자료를 제공합니다.</p>
+    <p><a href="about.html">About</a> | <a href="privacy.html">Privacy Policy</a> | <a href="mailto:kinyongs@naver.com">Contact</a></p>
   </footer>
 </body>
 <script>
