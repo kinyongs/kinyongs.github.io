@@ -17,13 +17,13 @@
     <changefreq>monthly</changefreq>
   </url>
   <url>
-    <loc>https://kinyongs.github.io/DCA_general_S%26P500.html</loc>
+    <loc>https://kinyongs.github.io/DCA_general_S&amp;P500.html</loc>
     <lastmod>2025-06-03</lastmod>
     <priority>0.8</priority>
     <changefreq>monthly</changefreq>
   </url>
   <url>
-    <loc>https://kinyongs.github.io/S%26P500_inflation.html</loc>
+    <loc>https://kinyongs.github.io/S&amp;P500_inflation.html</loc>
     <lastmod>2025-06-03</lastmod>
     <priority>0.8</priority>
     <changefreq>monthly</changefreq>
@@ -31,43 +31,43 @@
 
   <!-- 시장 지표 및 패턴 분석 -->
   <url>
-    <loc>https://kinyongs.github.io/S%26P500_recession.html</loc>
+    <loc>https://kinyongs.github.io/S&amp;P500_recession.html</loc>
     <lastmod>2025-06-03</lastmod>
     <priority>0.7</priority>
     <changefreq>monthly</changefreq>
   </url>
   <url>
-    <loc>https://kinyongs.github.io/S%26P500_event.html</loc>
+    <loc>https://kinyongs.github.io/S&amp;P500_event.html</loc>
     <lastmod>2025-06-03</lastmod>
     <priority>0.7</priority>
     <changefreq>monthly</changefreq>
   </url>
   <url>
-    <loc>https://kinyongs.github.io/DCA_S%26P500.html</loc>
+    <loc>https://kinyongs.github.io/DCA_S&amp;P500.html</loc>
     <lastmod>2025-06-03</lastmod>
     <priority>0.7</priority>
     <changefreq>monthly</changefreq>
   </url>
   <url>
-    <loc>https://kinyongs.github.io/S%26P500_trend.html</loc>
+    <loc>https://kinyongs.github.io/S&amp;P500_trend.html</loc>
     <lastmod>2025-06-03</lastmod>
     <priority>0.7</priority>
     <changefreq>monthly</changefreq>
   </url>
   <url>
-    <loc>https://kinyongs.github.io/S%26P500EPS.html</loc>
+    <loc>https://kinyongs.github.io/S&amp;P500EPS.html</loc>
     <lastmod>2025-06-03</lastmod>
     <priority>0.7</priority>
     <changefreq>monthly</changefreq>
   </url>
   <url>
-    <loc>https://kinyongs.github.io/S%26P500_seasonality.html</loc>
+    <loc>https://kinyongs.github.io/S&amp;P500_seasonality.html</loc>
     <lastmod>2025-06-03</lastmod>
     <priority>0.7</priority>
     <changefreq>monthly</changefreq>
   </url>
   <url>
-    <loc>https://kinyongs.github.io/S%26P500_M2.html</loc>
+    <loc>https://kinyongs.github.io/S&amp;P500_M2.html</loc>
     <lastmod>2025-06-03</lastmod>
     <priority>0.7</priority>
     <changefreq>monthly</changefreq>
@@ -75,25 +75,25 @@
 
   <!-- 리스크 및 심리 분석 -->
   <url>
-    <loc>https://kinyongs.github.io/S%26P500_missingReturn.html</loc>
+    <loc>https://kinyongs.github.io/S&amp;P500_missingReturn.html</loc>
     <lastmod>2025-06-03</lastmod>
     <priority>0.6</priority>
     <changefreq>monthly</changefreq>
   </url>
   <url>
-    <loc>https://kinyongs.github.io/S%26P500_Streak_Stats.html</loc>
+    <loc>https://kinyongs.github.io/S&amp;P500_Streak_Stats.html</loc>
     <lastmod>2025-06-03</lastmod>
     <priority>0.6</priority>
     <changefreq>monthly</changefreq>
   </url>
   <url>
-    <loc>https://kinyongs.github.io/S%26P500_TUW.html</loc>
+    <loc>https://kinyongs.github.io/S&amp;P500_TUW.html</loc>
     <lastmod>2025-06-03</lastmod>
     <priority>0.6</priority>
     <changefreq>monthly</changefreq>
   </url>
   <url>
-    <loc>https://kinyongs.github.io/S%26P500_fear_and_greed.html</loc>
+    <loc>https://kinyongs.github.io/S&amp;P500_fear_and_greed.html</loc>
     <lastmod>2025-06-03</lastmod>
     <priority>0.6</priority>
     <changefreq>monthly</changefreq>
