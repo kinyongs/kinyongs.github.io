@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <title>💾 미국 주식 주가 다운로드</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="미국 주식 주가 및 Drawdown 데이터를 시각화하고 CSV로 저장하세요. 종목 코드 입력만으로 SPY, MSFT 등 미국 주가 흐름을 분석할 수 있습니다.">
+  <link rel="stylesheet" href="styles.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    .summary-box {
+      margin-top: 20px;
+      background: #f0f4f8;
+      padding: 15px;
+      border-radius: 8px;
+      font-size: 1rem;
+      color: #333;
+      line-height: 1.6;
+    }
+
+    /* .chart-wrapper {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 40px;
+      margin-top: 40px;
+      margin-bottom: 40px;
+      max-width: 1000px;
+      margin-left: auto;
+      margin-right: auto;
+      overflow: visible;
+    } */
+
+    /* canvas {
+      max-width: 100%;
+    } */
+  </style>
+</head>
+<body>
+
+<div id="nav-placeholder"></div>
+<script>
+  fetch("includes/nav.html")
+    .then(response => response.text())
+    .then(data => document.getElementById("nav-placeholder").innerHTML = data);
+</script>
+
+<div class="card" style="overflow:visible; min-height:auto; height:auto;">
+  <h1>💾 미국 주식 주가 다운로드</h1>
+  <p class="note">종목 티커(Ticker)를 입력하면 일일 주가 데이터를 가져오고, Drawdown을 포함한 분석 그래프를 확인하며 CSV로 다운로드할 수 있습니다.</p>
+  <p class="note"><i><b>!! 참고 !!</b><br>주식 분할 효과가 보정되지 않습니다. <br>일일 사용량에 제한이 있을 수 있습니다. <br>S&P500 정보는 "SPY"를 이용하세요.</i></p>
+
+  <section class="inputs">
+    <table>
+      <tr>
+        <th>🔍 종목 심볼</th>
+        <td><input type="text" id="symbol" value="MSFT" /></td>
+      </tr>
+    </table>
+    <div style="text-align: center; margin-top: 15px;">
+      <button onclick="fetchStock()">📥 데이터 가져오기</button>
+    </div>
+  </section>
+
+  <div class="chart-wrapper" id="chartContainer" style="display: none;">
+    <canvas id="stockChart"></canvas>
+    <canvas id="drawdownChart"></canvas>
+
+    <div id="downloadContainer" style="text-align: center; margin-top: 20px;">
+      <button onclick="downloadCSV()">⬇️ CSV 다운로드</button>
+    </div>
+  </div>
+</div>
+
+<script>
+let stockData = [];
+
+async function fetchAPIKey() {
+  const response = await fetch("key.dat");
+  return (await response.text()).trim();
+}
+
+async function fetchStock() {
+  const symbol = document.getElementById("symbol").value.toUpperCase();
+  const apiKey = await fetchAPIKey();
+  const url = `https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol=${symbol}&outputsize=full&apikey=${apiKey}`;
+
+  const res = await fetch(url);
+  const json = await res.json();
+
+  if (!json["Time Series (Daily)"]) {
+    alert("데이터를 불러오지 못했습니다. 종목 코드 또는 API 호출 제한을 확인하세요.");
+    return;
+  }
+
+  const timeSeries = json["Time Series (Daily)"];
+  stockData = Object.entries(timeSeries).map(([date, value]) => ({
+    date,
+    open: parseFloat(value["1. open"]),
+    high: parseFloat(value["2. high"]),
+    low: parseFloat(value["3. low"]),
+    close: parseFloat(value["4. close"]),
+  })).sort((a, b) => new Date(a.date) - new Date(b.date));
+
+  // Drawdown 계산
+  let peak = -Infinity;
+  stockData.forEach(d => {
+    if (d.close > peak) peak = d.close;
+    d.drawdown = ((d.close - peak) / peak) * 100;
+  });
+
+  drawChart();
+  document.getElementById("chartContainer").style.display = "block";
+}
+
+function drawChart() {
+  const labels = stockData.map(d => d.date);
+  const closes = stockData.map(d => d.close);
+  const drawdowns = stockData.map(d => d.drawdown);
+
+  // 기존 주가 차트 제거
+  if (window.stockChartInstance) window.stockChartInstance.destroy();
+
+  const stockCtx = document.getElementById("stockChart").getContext("2d");
+  window.stockChartInstance = new Chart(stockCtx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{
+        label: '종가 (Close)',
+        data: closes,
+        borderColor: '#4e79a7',
+        borderWidth: 2,
+        fill: false,
+        pointRadius: 0,
+        tension: 0.1,
+        yAxisID: 'y1'
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        title: { display: true, text: '주가 흐름' },
+        legend: { position: 'bottom' }
+      },
+      scales: {
+        x: { title: { display: true, text: '날짜' } },
+        y1: { title: { display: true, text: '가격 ($)' }, position: 'left' }
+      }
+    }
+  });
+
+  // 기존 드로우다운 차트 제거
+  if (window.drawdownChartInstance) window.drawdownChartInstance.destroy();
+
+  const ddCtx = document.getElementById("drawdownChart").getContext("2d");
+  window.drawdownChartInstance = new Chart(ddCtx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{
+        label: 'Drawdown (%)',
+        data: drawdowns,
+        borderColor: '#e15759',
+        backgroundColor: 'rgba(225, 87, 89, 0.2)',
+        borderWidth: 1.5,
+        fill: true,
+        pointRadius: 0,
+        tension: 0.1
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        title: { display: true, text: 'Drawdown' },
+        legend: { position: 'bottom' }
+      },
+      scales: {
+        x: { title: { display: true, text: '날짜' } },
+        y: {
+          title: { display: true, text: 'Drawdown (%)' },
+          ticks: {
+            callback: value => `${value.toFixed(0)}%`
+          }
+        }
+      }
+    }
+  });
+}
+
+function downloadCSV() {
+  if (stockData.length === 0) {
+    alert("데이터가 없습니다. 먼저 종목을 조회하세요.");
+    return;
+  }
+
+  let csv = "Date,Open,High,Low,Close,Drawdown (%)\n";
+  csv += stockData.map(d =>
+    `${d.date},${d.open},${d.high},${d.low},${d.close},${d.drawdown.toFixed(2)}`
+  ).join("\n");
+
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.setAttribute("href", url);
+  const symbol = document.getElementById("symbol").value.toUpperCase();
+  link.setAttribute("download", `${symbol}.csv`);
+  link.style.visibility = 'hidden';
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+}
+</script>
+
+</body>
+<script>
+  fetch("includes/nav.html")
+    .then(res => res.text())
+    .then(data => {
+      document.getElementById("nav-placeholder").innerHTML = data;
+      const toggle = document.getElementById('navToggle');
+      const links = document.getElementById('navLinks');
+      toggle?.addEventListener('click', () => {
+        links?.classList.toggle('active');
+      });
+    });
+</script>
+</html>

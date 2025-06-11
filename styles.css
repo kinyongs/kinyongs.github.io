@@ -316,6 +316,7 @@ footer a {
   max-width: 800px;
   margin-left: auto;
   margin-right: auto;
+  overflow: visible;
 }
 
 .chart-wrapper canvas {
@@ -372,4 +373,11 @@ section table td, section table th {
   font-size: 1rem;
   color: #333;
   line-height: 1.6;
+}
+.card img.card-image {
+  width: 100%;
+  height: auto;
+  margin-top: 1rem;
+  border-radius: 0.75rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
