@@ -277,6 +277,7 @@ footer a {
   position: relative;
   z-index: 2;
   color: #fff;
+  transform: translateY(-30%);
 }
 
 .hero-content h1 {

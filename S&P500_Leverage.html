@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="S&P500 지수를 기반으로 1배, 2배, 3배 레버리지 ETF의 수익률을 연도별로 시뮬레이션하고, 수수료 반영 및 Y축 스케일 설정을 통해 다양한 투자 조건을 비교할 수 있는 시각화 도구입니다.">
+  <title>🧨 레버리지 ETF 투자 시뮬레이션</title>
+  <link rel="stylesheet" href="styles.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/luxon@3/build/global/luxon.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-luxon@1"></script>
+  <script src="price_daily.js"></script>
+</head>
+<body>
+<div id="nav-placeholder"></div>
+<script>
+  fetch("includes/nav.html")
+    .then(response => response.text())
+    .then(data => document.getElementById("nav-placeholder").innerHTML = data);
+</script>
+    
+<div class="card">
+  <h1>🧨 S&P500 레버리지 ETF 시뮬레이션</h1>
+  <p class="note">
+    선택한 연도 구간 동안 S&P500 지수를 기반으로<br />
+    1배, 2배, 3배 레버리지 ETF의 누적 수익률을 시뮬레이션합니다.<br />
+    수수료 반영 여부와 Y축 스케일도 설정할 수 있습니다.
+  </p>
+  <section class="inputs">
+    <table>
+      <tr>
+        <th>시작 연도</th>
+        <td><input type="number" id="startYear" value="1928" /></td>
+      </tr>
+      <tr>
+        <th>종료 연도</th>
+        <td><input type="number" id="endYear" value="2024" /></td>
+      </tr>
+      <tr>
+        <th>레버리지 선택</th>
+        <td>
+          <label><input type="checkbox" class="leverage-check" value="1" checked /> 1배</label><br>
+          <label><input type="checkbox" class="leverage-check" value="2" /> 2배</label><br>
+          <label><input type="checkbox" class="leverage-check" value="3" /> 3배</label>
+        </td>
+      </tr>
+      <tr>
+        <th>수수료 반영</th>
+        <td>
+          <label><input type="radio" name="feeOption" value="no" checked /> 반영 안함</label>
+          <label><input type="radio" name="feeOption" value="yes" /> 반영함</label>
+        </td>
+      </tr>
+      <tr id="feeInputs" style="display: none;">
+        <th>연간 수수료 (%)</th>
+        <td>
+          1배: <input type="number" id="fee1x" value="0.03" step="0.01" style="width:60px;" />%, VOO 기준 <br>
+          2배: <input type="number" id="fee2x" value="0.89" step="0.01" style="width:60px;" />%, SSO 기준 <br>
+          3배: <input type="number" id="fee3x" value="0.91" step="0.01" style="width:60px;" />%, UPRO 기준
+        </td>
+      </tr>
+      <tr>
+        <th>Y축 스케일</th>
+        <td>
+          <label><input type="radio" name="scaleType" value="linear" checked /> 선형</label>
+          <label><input type="radio" name="scaleType" value="log" /> 로그</label>
+        </td>
+      </tr>
+    </table>
+    <div style="text-align: center; margin-top: 15px;">
+      <button onclick="runSimulation()">🚀 시뮬레이션 실행</button>
+    </div>
+  </section>
+  <div class="chart-wrapper">
+    <canvas id="leverageChart"></canvas>
+  </div>
+  <section id="analysisText" class="note" style="max-width: 800px; margin: 2rem auto;"></section>
+</div>
+
+<script>
+  document.querySelectorAll('input[name="feeOption"]').forEach(radio => {
+    radio.addEventListener('change', () => {
+      document.getElementById('feeInputs').style.display =
+        document.querySelector('input[name="feeOption"]:checked').value === 'yes' ? 'table-row' : 'none';
+    });
+  });
+
+  function runSimulation() {
+    const startYear = +document.getElementById('startYear').value;
+    const endYear = +document.getElementById('endYear').value;
+    const scaleType = document.querySelector('input[name="scaleType"]:checked').value;
+    const applyFee = document.querySelector('input[name="feeOption"]:checked').value === 'yes';
+
+    const fees = {
+      1: +document.getElementById('fee1x').value / 100,
+      2: +document.getElementById('fee2x').value / 100,
+      3: +document.getElementById('fee3x').value / 100,
+    };
+
+    const leverages = [...document.querySelectorAll('.leverage-check:checked')].map(e => +e.value);
+
+    const rawData = Object.entries(priceData)
+      .map(([date, price]) => ({ date: new Date(date), price }))
+      .filter(d => d.date.getFullYear() >= startYear && d.date.getFullYear() <= endYear)
+      .sort((a, b) => a.date - b.date);
+
+    const labels = rawData.map(d => d.date.toISOString().slice(0, 10));
+
+    const results = {};
+    leverages.forEach(lv => {
+      const feeDaily = applyFee ? Math.pow(1 - fees[lv], 1 / 252) : 1;
+      const values = [1];
+      for (let i = 1; i < rawData.length; i++) {
+        const r = (rawData[i].price / rawData[i - 1].price - 1) * lv;
+        values.push(values[i - 1] * (1 + r) * feeDaily);
+      }
+      results[lv] = values;
+    });
+
+    const datasets = leverages.map(lv => ({
+      label: `${lv}배 레버리지`,
+      data: results[lv],
+      borderWidth: 2,
+      pointRadius: 0
+    }));
+
+    if (window.leverageChartInstance) window.leverageChartInstance.destroy();
+    const ctx = document.getElementById('leverageChart').getContext('2d');
+    window.leverageChartInstance = new Chart(ctx, {
+      type: 'line',
+      data: { labels, datasets },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          x: { type: 'time', time: { unit: 'year' } },
+          y: {
+            type: scaleType === 'log' ? 'logarithmic' : 'linear',
+            beginAtZero: false,
+            title: { display: true, text: '누적 가치 (기준 = 1)' }
+          }
+        },
+        plugins: {
+          title: { display: false, text: '📈 레버리지 ETF 누적 수익률 비교' }
+        }
+      }
+    });
+
+    const summaries = leverages.map(lv => {
+      const end = results[lv].at(-1);
+      const ratio = ((end - 1) * 100).toFixed(2);
+      return `<p><strong>${lv}배 레버리지</strong> 상품은 해당 기간 동안 누적 수익률이 <strong style="color: #f2c200;">${ratio}%</strong>를 기록했습니다.</p>`;
+    }).join('');
+    document.getElementById('analysisText').innerHTML = summaries;
+  }
+
+  runSimulation();
+</script>
+</body>
+<script>
+  fetch("includes/nav.html")
+    .then(res => res.text())
+    .then(data => {
+      document.getElementById("nav-placeholder").innerHTML = data;
+
+      // ⬇️ 주입 후 toggle 이벤트 연결
+      const toggle = document.getElementById('navToggle');
+      const links = document.getElementById('navLinks');
+      toggle?.addEventListener('click', () => {
+        links?.classList.toggle('active');
+      });
+    });
+</script>
+</html>
