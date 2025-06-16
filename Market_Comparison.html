@@ -1,0 +1,186 @@
+
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="미국, 선진국, 신흥국 시장의 성과를 비교하는 시각화 도구입니다.">
+  <title>🌍 글로벌 시장 성과 비교</title>
+  <link rel="stylesheet" href="styles.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/luxon@3/build/global/luxon.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-luxon@1"></script>
+</head>
+<body>
+<div id="nav-placeholder"></div>
+<script>
+  fetch("includes/nav.html")
+    .then(response => response.text())
+    .then(data => document.getElementById("nav-placeholder").innerHTML = data);
+</script>
+
+<div class="card">
+  <h1>🌍 미국 · 선진국 · 신흥국 시장 비교</h1>
+  <p class="note">
+    ETF를 기준으로 미국(SPY), 선진국(EFA), 신흥국(EEM) 시장의 누적 성과를 시각화합니다.<br />
+  </p>
+
+  <section class="inputs">
+    <table>
+      <tr>
+        <th>시작 연도</th>
+        <td><input type="number" id="startYear" value="2003" /></td>
+      </tr>
+      <tr>
+        <th>종료 연도</th>
+        <td><input type="number" id="endYear" value="2025" /></td>
+      </tr>
+      <tr>
+        <th>Y축 스케일</th>
+        <td>
+          <label><input type="radio" name="scaleType" value="linear" checked /> 선형</label>
+          <label><input type="radio" name="scaleType" value="log" /> 로그</label>
+        </td>
+      </tr>
+    </table>
+    <div style="text-align: center; margin-top: 15px;">
+      <button onclick="runMarketComparison()">📊 시뮬레이션 실행</button>
+    </div>
+  </section>
+
+  <div class="chart-wrapper">
+    <canvas id="leverageChart"></canvas>
+  </div>
+  <section id="analysisText" class="note" style="max-width: 800px; margin: 2rem auto;"></section>
+</div>
+
+<script>
+let marketData = {};
+
+fetch("adjusted_etf_prices.json")
+  .then(response => response.json())
+  .then(data => {
+    marketData = data.map(d => ({
+      date: new Date(d.date),
+      US: d.Adj_Close_SPY,
+      EAFE: d.Adj_Close_EFA,
+      EM: d.Adj_Close_EEM
+    }));
+    runMarketComparison();
+  });
+
+
+function getYearlyReturns(data, field) {
+  const grouped = {};
+  data.forEach(d => {
+    const y = d.date.getFullYear();
+    if (!grouped[y]) grouped[y] = [];
+    grouped[y].push(d[field]);
+  });
+
+  const result = {};
+  for (const year in grouped) {
+    const prices = grouped[year];
+    if (prices.length > 1) {
+      const start = prices[0];
+      const end = prices[prices.length - 1];
+      result[year] = ((end / start - 1) * 100).toFixed(2);
+    }
+  }
+  return result;
+}
+
+function updateReturnTable(usReturns, eafeReturns, emReturns) {
+  let html = '<section style="max-width:800px;margin:2rem auto;"><table><thead><tr><th>연도</th><th>미국</th><th>선진국</th><th>신흥국</th></tr></thead><tbody>';
+  const allYears = Object.keys(usReturns).concat(Object.keys(eafeReturns), Object.keys(emReturns));
+  const uniqueYears = Array.from(new Set(allYears)).sort();
+
+  uniqueYears.forEach(y => {
+    const us = parseFloat(usReturns[y]);
+    const eafe = parseFloat(eafeReturns[y]);
+    const em = parseFloat(emReturns[y]);
+
+    let max = -Infinity;
+    if (!isNaN(us)) max = Math.max(max, us);
+    if (!isNaN(eafe)) max = Math.max(max, eafe);
+    if (!isNaN(em)) max = Math.max(max, em);
+
+    const usCell = isNaN(us) ? '-' : (us === max ? `<strong style="color:#00c851">${us.toFixed(2)}%</strong>` : `${us.toFixed(2)}%`);
+    const eafeCell = isNaN(eafe) ? '-' : (eafe === max ? `<strong style="color:#00c851">${eafe.toFixed(2)}%</strong>` : `${eafe.toFixed(2)}%`);
+    const emCell = isNaN(em) ? '-' : (em === max ? `<strong style="color:#00c851">${em.toFixed(2)}%</strong>` : `${em.toFixed(2)}%`);
+
+    html += `<tr><td>${y}</td><td>${usCell}</td><td>${eafeCell}</td><td>${emCell}</td></tr>`;
+  });
+
+  html += '</tbody></table></section>';
+  document.getElementById("analysisText").innerHTML += html;
+}
+
+
+
+
+function runMarketComparison() {
+  const startInput = document.getElementById('startYear');
+  const endInput = document.getElementById('endYear');
+  const startYear = startInput ? +startInput.value : 2003;
+  const endYear = endInput ? +endInput.value : 2024;
+  const scaleType = document.querySelector('input[name="scaleType"]:checked').value;
+
+  const filtered = marketData.filter(d => d.date.getFullYear() >= startYear && d.date.getFullYear() <= endYear);
+  if (!filtered.length) return;
+
+  const labels = filtered.map(d => d.date.toISOString().split('T')[0]);
+  const base = { US: filtered[0].US, EAFE: filtered[0].EAFE, EM: filtered[0].EM };
+
+  const usData = filtered.map(d => d.US / base.US);
+  const eafeData = filtered.map(d => d.EAFE / base.EAFE);
+  const emData = filtered.map(d => d.EM / base.EM);
+
+  const datasets = [
+    { label: "미국 (SPY ETF)", data: usData, borderWidth: 2, pointRadius: 0 },
+    { label: "선진국 (EAFE ETF)", data: eafeData, borderWidth: 2, pointRadius: 0 },
+    { label: "신흥국 (EEM ETF)", data: emData, borderWidth: 2, pointRadius: 0 }
+  ];
+
+  if (window.marketChartInstance) window.marketChartInstance.destroy();
+  const ctx = document.getElementById("leverageChart").getContext("2d");
+  window.marketChartInstance = new Chart(ctx, {
+    type: "line",
+    data: { labels, datasets },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        x: { type: "time", time: { unit: "year" }},
+        y: {
+          type: scaleType === "log" ? "logarithmic" : "linear",
+          beginAtZero: false,
+          title: { display: true, text: "누적 가치 (기준 = 1)" }
+        }
+      },
+      plugins: {
+        title: { display: false }
+      }
+    }
+  });
+
+  const numYears = endYear - startYear + 1;
+
+  const summaries = datasets.map(ds => {
+    const last = ds.data.at(-1);
+    const totalReturn = ((last - 1) * 100).toFixed(2);
+    const cagr = ((Math.pow(last, 1 / numYears) - 1) * 100).toFixed(2);
+    return `<p><strong>${ds.label}</strong>의 누적 수익률은 <strong style="color:#f2c200">${totalReturn}%</strong> (연평균 <strong>${cagr}%</strong>)입니다.</p>`;
+  }).join('');
+
+  document.getElementById("analysisText").innerHTML = summaries;
+
+  const usReturns = getYearlyReturns(filtered, "US");
+  const eafeReturns = getYearlyReturns(filtered, "EAFE");
+  const emReturns = getYearlyReturns(filtered, "EM");
+  updateReturnTable(usReturns, eafeReturns, emReturns);
+}
+
+</script>
+</body>
+</html>
