@@ -1,0 +1,589 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>은퇴 이후 자금 변화 시뮬레이션</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <style>
+    :root { --bg:#0b0c10; --card:#11131a; --line:#23263a; --text:#e9e9f0; --muted:#aab; }
+    body { margin:0; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Noto Sans KR", Arial; background:var(--bg); color:var(--text); }
+    .wrap { max-width: 1100px; margin: 22px auto 60px; padding: 0 14px; }
+    h1 { font-size: 20px; margin: 0 0 14px; font-weight: 800; }
+    .stack { display:flex; flex-direction:column; gap: 12px; }
+    .card { background:var(--card); border:1px solid var(--line); border-radius: 14px; padding: 14px; }
+    .row { display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end; }
+    label { font-size: 12px; color:var(--muted); display:block; margin: 0 0 6px; }
+    input, select { background:#0e1017; border:1px solid var(--line); color:var(--text); border-radius: 10px; padding: 10px 10px; outline:none; }
+    input[type="number"]{ width: 160px; }
+    input.money { width: 170px; }
+    select { height: 40px; }
+    .btn { border:1px solid var(--line); background:#0e1017; color:var(--text); padding:10px 12px; border-radius: 10px; cursor:pointer; }
+    .btn:hover { border-color:#3a3f5a; }
+    .btn.primary { background: #0e1b24; border-color:#2b5d73; }
+    .btn.danger { background:#1b0f14; border-color:#6a2333; }
+    .accounts { display:flex; flex-direction:column; gap: 10px; margin-top: 10px; }
+    .accRow { border:1px solid var(--line); border-radius: 12px; padding: 10px; }
+    .accRowHead { display:flex; gap:8px; justify-content:space-between; align-items:center; margin-bottom: 8px; }
+    .accTitle { font-weight: 700; font-size: 13px; color:#dfe6ff; }
+    .small { font-size: 12px; color:var(--muted); }
+    .accFields { display:flex; gap:10px; flex-wrap:wrap; }
+    .accFields input { width: 170px; }
+    .accFields input.w120 { width: 120px; }
+    .hr { height:1px; background:var(--line); margin: 12px 0; }
+
+    /* 차트: 크기에 따른 폰트/레이아웃 변형을 최소화 */
+    .chartBox { width:100%; height: 360px; }
+    canvas { width:100% !important; height:100% !important; }
+
+    table { width:100%; border-collapse: collapse; overflow:hidden; border-radius: 12px; }
+    th, td { border-bottom: 1px solid var(--line); padding: 10px; font-size: 13px; text-align:right; white-space: nowrap; }
+    th { color:#cbd3ff; font-weight: 700; background:#0e1017; }
+    td:first-child, th:first-child { text-align:left; }
+    .note { font-size: 12px; color: var(--muted); line-height: 1.5; }
+    .pill { display:inline-block; padding: 4px 8px; border-radius: 999px; border:1px solid var(--line); background:#0e1017; font-size:12px; color:var(--muted); }
+    .footerBtns { display:flex; gap:10px; flex-wrap:wrap; margin-top: 10px; }
+
+    @media (max-width: 640px){
+      .wrap { padding: 0 12px; }
+      input[type="number"], input.money { width: 100%; }
+      select { width: 100%; }
+      .btn { width: 100%; }
+      .chartBox { height: 320px; }
+    }
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <h1>은퇴 이후 자금 변화 시뮬레이션</h1>
+
+  <div class="stack">
+    <!-- 입력 -->
+    <div class="card">
+      <div class="row">
+        <div>
+          <label>시뮬레이션 시작 연도</label>
+          <input id="startYear" type="number" min="1900" step="1" />
+        </div>
+        <div>
+          <label>현재 나이(만)</label>
+          <input id="currentAge" type="number" min="0" step="1" value="40" />
+        </div>
+        <div>
+          <label>은퇴 시작 연도</label>
+          <input id="retireYear" type="number" min="1900" step="1" />
+        </div>
+        <div>
+          <label>은퇴 후 기간(년)</label>
+          <input id="postYears" type="number" min="1" step="1" value="35" />
+        </div>
+      </div>
+
+      <div class="hr"></div>
+
+      <div class="row">
+        <div>
+          <label>연 인출액(현재가치 기준, 원)</label>
+          <input id="annualWithdraw" class="money" type="text" inputmode="numeric" autocomplete="off" value="40000000" />
+        </div>
+        <div>
+          <label>물가상승률(연 %)</label>
+          <input id="inflation" type="number" step="0.1" value="2.5" />
+        </div>
+        <div>
+          <label>인출액 물가연동</label>
+          <select id="withdrawInflAdj">
+            <option value="yes" selected>예 (매년 물가만큼 인상)</option>
+            <option value="no">아니오 (첫 인출금액 명목 고정)</option>
+          </select>
+        </div>
+        <div>
+          <label>표/차트 표시</label>
+          <select id="displayMode">
+            <option value="nominal" selected>명목(미래가치)</option>
+            <option value="real">실질(현재가치, 물가로 할인)</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="row" style="margin-top:10px;">
+        <div>
+          <label>적립금 물가연동(선택)</label>
+          <select id="contribInflAdj">
+            <option value="no" selected>아니오</option>
+            <option value="yes">예 (매년 물가만큼 월적립 인상)</option>
+          </select>
+        </div>
+        <div>
+          <label>인출 방식</label>
+          <select id="withdrawMode">
+            <option value="proportional" selected>잔액 비례로 각 계좌에서 인출</option>
+            <option value="order">위에서부터 순서대로 인출</option>
+          </select>
+        </div>
+        <div class="footerBtns">
+          <button class="btn" id="addAcc">+ 계좌 추가</button>
+          <button class="btn primary" id="run">시뮬레이션 실행</button>
+          <button class="btn" id="exportCsv">테이블 CSV 내보내기</button>
+        </div>
+      </div>
+
+      <div class="accounts" id="accounts"></div>
+
+      <div class="hr"></div>
+      <div class="note">
+        <span class="pill">연도 기준 가정</span><br/>
+        • 결과는 <b>연도 단위</b>로 표시합니다(연도별 1행).<br/>
+        • 은퇴 이후 <b>매년 연초에 인출</b>합니다.<br/>
+        • <b>첫 인출 금액</b> = “현재가치 기준 연 인출액”을 <b>은퇴 시작 연도</b>까지 물가상승률로 올린 금액입니다.<br/>
+        • 차트의 x축은 <b>나이(만)</b>, y축은 <b>억 원</b>입니다.
+      </div>
+    </div>
+
+    <!-- 결과: 그래프 먼저 -->
+    <div class="card">
+      <div class="row" style="justify-content:space-between; align-items:center;">
+        <div>
+          <div class="small">총자산 추이</div>
+          <div id="summary" style="font-weight:800; margin-top:4px;">-</div>
+        </div>
+        <div class="small" id="depleteMsg"></div>
+      </div>
+      <div style="margin-top:10px;" class="chartBox">
+        <canvas id="chart"></canvas>
+      </div>
+    </div>
+
+    <!-- 테이블은 아래 -->
+    <div class="card">
+      <div class="row" style="justify-content:space-between; align-items:center;">
+        <div style="font-weight:800;">연도별 테이블</div>
+        <div class="small">연초 인출 / 연말 잔고</div>
+      </div>
+      <div style="margin-top:10px; overflow:auto;">
+        <table id="tbl">
+          <thead>
+            <tr>
+              <th>연도</th>
+              <th>나이</th>
+              <th>연초 총자산</th>
+              <th>연간 적립</th>
+              <th>연초 인출</th>
+              <th>연말 총자산</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const $ = (id) => document.getElementById(id);
+
+  // 1,000단위 콤마(입력칸 포함)
+  const moneyFmt = new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 });
+  function formatWithCommas(num){
+    if (!isFinite(num)) return "";
+    const sign = num < 0 ? "-" : "";
+    const v = Math.abs(Math.round(num));
+    return sign + moneyFmt.format(v);
+  }
+  function parseMoney(str){
+    if (str == null) return 0;
+    const cleaned = String(str).split(",").join("").replace(/[^0-9-]/g, "");
+    const n = parseFloat(cleaned);
+    return isFinite(n) ? n : 0;
+  }
+  function fmtKRW(x){
+    if (!isFinite(x)) return "-";
+    return formatWithCommas(x);
+  }
+  function fmtEok(won){
+    const v = (won || 0) / 100000000;
+    return v.toLocaleString("ko-KR", { maximumFractionDigits: 1 });
+  }
+  function clampNonNeg(n){ return isFinite(n) ? Math.max(0, n) : 0; }
+
+  function attachMoneyInput(el){
+    if (!el || el.dataset.moneyBound === "1") return;
+    el.dataset.moneyBound = "1";
+
+    const apply = () => {
+      const n = parseMoney(el.value);
+      el.value = formatWithCommas(n);
+    };
+
+    el.addEventListener("blur", apply);
+    el.addEventListener("change", apply);
+
+    // 입력 중에도 콤마 유지(커서는 끝으로 이동)
+    el.addEventListener("input", () => {
+      const n = parseMoney(el.value);
+      el.value = formatWithCommas(n);
+    });
+
+    apply();
+  }
+
+  function applyMoneyFormatting(root=document){
+    root.querySelectorAll("input.money").forEach(attachMoneyInput);
+  }
+
+  function initYears(){
+    const now = new Date();
+    const y = now.getFullYear();
+    $("startYear").value = y;
+    $("retireYear").value = y + 15;
+  }
+
+  function makeAccountRow(idx, preset={}){
+    const row = document.createElement("div");
+    row.className = "accRow";
+    row.dataset.idx = idx;
+
+    row.innerHTML = `
+      <div class="accRowHead">
+        <div class="accTitle">계좌 ${idx+1}</div>
+        <button class="btn danger btnDel" type="button">- 삭제</button>
+      </div>
+      <div class="accFields">
+        <div>
+          <label>계좌명</label>
+          <input class="name" type="text" value="${preset.name ?? `계좌 ${idx+1}`}" />
+        </div>
+        <div>
+          <label>현재 금액(원)</label>
+          <input class="bal money" type="text" inputmode="numeric" autocomplete="off" value="${preset.balance ?? 30000000}" />
+        </div>
+        <div>
+          <label>예상 연간 수익률(%)</label>
+          <input class="ret w120" type="number" step="0.1" value="${preset.annualReturn ?? 6.0}" />
+        </div>
+        <div>
+          <label>은퇴까지 월적립(원)</label>
+          <input class="contrib money" type="text" inputmode="numeric" autocomplete="off" value="${preset.monthlyContrib ?? 800000}" />
+        </div>
+      </div>
+    `;
+
+    row.querySelector(".btnDel").addEventListener("click", () => {
+      row.remove();
+      renumberAccounts();
+    });
+
+    applyMoneyFormatting(row);
+    return row;
+  }
+
+  function renumberAccounts(){
+    const accWrap = $("accounts");
+    [...accWrap.children].forEach((r, i) => {
+      r.dataset.idx = i;
+      r.querySelector(".accTitle").textContent = `계좌 ${i+1}`;
+    });
+  }
+
+  function readAccounts(){
+    const rows = [...$("accounts").children];
+    return rows.map((r) => {
+      const name = r.querySelector(".name").value.trim() || "계좌";
+      const balance = clampNonNeg(parseMoney(r.querySelector(".bal").value));
+      const annualReturn = parseFloat(r.querySelector(".ret").value);
+      const monthlyContrib = clampNonNeg(parseMoney(r.querySelector(".contrib").value));
+      return { name, balance, annualReturnPct: (isFinite(annualReturn)?annualReturn:0), monthlyContrib };
+    });
+  }
+
+  function simulate(){
+    const startYear = Math.round(parseFloat($("startYear").value));
+    const retireYear = Math.round(parseFloat($("retireYear").value));
+    const postYears = Math.max(1, Math.round(parseFloat($("postYears").value || "35")));
+    const currentAge = Math.max(0, Math.round(parseFloat($("currentAge").value || "0")));
+
+    if (!isFinite(startYear) || !isFinite(retireYear)) {
+      alert("시작 연도와 은퇴 시작 연도를 입력해 주세요.");
+      return null;
+    }
+    if (retireYear < startYear) {
+      alert("은퇴 시작 연도는 시작 연도보다 같거나 뒤여야 합니다.");
+      return null;
+    }
+
+    const annualWithdraw0 = clampNonNeg(parseMoney($("annualWithdraw").value));
+    const inflPct = parseFloat($("inflation").value);
+    const infl = (isFinite(inflPct)? inflPct : 0)/100;
+
+    const withdrawInflAdj = $("withdrawInflAdj").value === "yes";
+    const contribInflAdj = $("contribInflAdj").value === "yes";
+    const withdrawMode = $("withdrawMode").value;
+    const displayMode = $("displayMode").value;
+
+    const accounts = readAccounts();
+    if (accounts.length === 0){
+      alert("계좌를 최소 1개 이상 추가해 주세요.");
+      return null;
+    }
+
+    const endYear = retireYear + postYears - 1;
+
+    // state
+    const balances = accounts.map(a => a.balance);
+    const monthlyRates = accounts.map(a => Math.pow(1 + (a.annualReturnPct/100), 1/12) - 1);
+
+    // 첫 인출액: 현재가치 기준 인출액을 은퇴연도까지 물가로 상승
+    const yearsUntilRetire = retireYear - startYear;
+    const firstWithdrawNominal = annualWithdraw0 * Math.pow(1 + infl, yearsUntilRetire);
+
+    function applyWithdrawal(amount){
+      let total = balances.reduce((s,v)=>s+v,0);
+      if (total <= 0) return { withdrawn: 0 };
+      const w = Math.min(amount, total);
+
+      if (withdrawMode === "proportional"){
+        total = balances.reduce((s,v)=>s+v,0);
+        if (total > 0){
+          for (let i=0;i<balances.length;i++){
+            const share = balances[i] / total;
+            balances[i] = Math.max(0, balances[i] - w * share);
+          }
+        }
+      } else {
+        let rem = w;
+        for (let i=0;i<balances.length;i++){
+          if (rem <= 0) break;
+          const take = Math.min(balances[i], rem);
+          balances[i] -= take;
+          rem -= take;
+        }
+      }
+      return { withdrawn: w };
+    }
+
+    // helper for display mode (실질은 startYear 기준으로 할인)
+    function toDisplay(value, yearIndex){
+      if (displayMode !== "real") return value;
+      const def = Math.pow(1 + infl, yearIndex);
+      return def > 0 ? value / def : value;
+    }
+
+    const labelsAge = [];
+    const seriesYearEnd = [];
+    const tblRows = [];
+
+    let depletedYear = null;
+
+    for (let y = startYear; y <= endYear; y++){
+      const yearIndex = y - startYear;
+      const age = currentAge + yearIndex;
+
+      const yearStartNominal = balances.reduce((s,v)=>s+v,0);
+
+      // withdrawal at beginning of each retirement year
+      let withdrawThisYear = 0;
+      if (y >= retireYear && firstWithdrawNominal > 0){
+        const k = y - retireYear;
+        const want = withdrawInflAdj ? firstWithdrawNominal * Math.pow(1+infl, k) : firstWithdrawNominal;
+        withdrawThisYear = applyWithdrawal(want).withdrawn;
+      }
+
+      // yearly accumulation with monthly contributions before retirement
+      let contribThisYear = 0;
+      if (y < retireYear){
+        for (let i=0;i<accounts.length;i++){
+          const baseMonthly = accounts[i].monthlyContrib;
+          const adjMonthly = contribInflAdj ? baseMonthly * Math.pow(1+infl, yearIndex) : baseMonthly;
+          for (let m=0; m<12; m++){
+            balances[i] += adjMonthly;
+            contribThisYear += adjMonthly;
+            balances[i] *= (1 + monthlyRates[i]);
+            if (!isFinite(balances[i])) balances[i] = 0;
+          }
+        }
+      } else {
+        for (let i=0;i<accounts.length;i++){
+          for (let m=0; m<12; m++){
+            balances[i] *= (1 + monthlyRates[i]);
+            if (!isFinite(balances[i])) balances[i] = 0;
+          }
+        }
+      }
+
+      const yearEndNominal = balances.reduce((s,v)=>s+v,0);
+
+      if (depletedYear === null && yearEndNominal <= 0) {
+        depletedYear = y;
+      }
+
+      labelsAge.push(String(age));
+      seriesYearEnd.push(toDisplay(yearEndNominal, yearIndex));
+
+      tblRows.push({
+        year: y,
+        age,
+        yearStart: toDisplay(yearStartNominal, yearIndex),
+        contrib: toDisplay(contribThisYear, yearIndex),
+        withdraw: toDisplay(withdrawThisYear, yearIndex),
+        yearEnd: toDisplay(yearEndNominal, yearIndex),
+      });
+
+      if (depletedYear !== null) break;
+    }
+
+    const modeLabel = (displayMode === "real" ? "실질" : "명목");
+
+    return {
+      labelsAge,
+      seriesYearEnd,
+      tblRows,
+      depletedYear,
+      depletedAge: depletedYear ? (currentAge + (depletedYear - startYear)) : null,
+      modeLabel
+    };
+  }
+
+  let chart;
+  function render(sim){
+    if (!sim) return;
+
+    const start = sim.tblRows.length ? sim.tblRows[0].yearStart : 0;
+    const end = sim.tblRows.length ? sim.tblRows[sim.tblRows.length-1].yearEnd : 0;
+
+    $("summary").textContent = `${sim.modeLabel} 기준: 시작 ${fmtKRW(start)}원 → 종료 ${fmtKRW(end)}원`;
+    $("depleteMsg").textContent = sim.depletedYear ? `자산 소진: ${sim.depletedYear}년 (만 ${sim.depletedAge}세)` : "";
+
+    const ctx = $("chart");
+    if (chart) chart.destroy();
+
+    chart = new Chart(ctx, {
+      type: "line",
+      data: {
+        labels: sim.labelsAge,
+        datasets: [{
+          label: "총자산(연말)",
+          data: sim.seriesYearEnd,
+          tension: 0.25,
+          pointRadius: 0,
+          borderWidth: 2
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            labels: {
+              color: "#cfd6ff",
+              font: { size: 12 }
+            }
+          },
+          tooltip: {
+            callbacks: {
+              label: (c) => ` ${fmtEok(c.parsed.y)} 억원 (${fmtKRW(c.parsed.y)}원)`
+            },
+            bodyFont: { size: 12 },
+            titleFont: { size: 12 }
+          }
+        },
+        scales: {
+          x: {
+            title: { display: true, text: "나이(만)", color: "#cfd6ff", font: { size: 12, weight: "700" } },
+            ticks: {
+              color: "#9aa3c7",
+              autoSkip: true,
+              maxTicksLimit: 10,
+              maxRotation: 0,
+              minRotation: 0,
+              font: { size: 12 }
+            },
+            grid: { color: "rgba(255,255,255,0.06)" }
+          },
+          y: {
+            title: { display: true, text: "억 원", color: "#cfd6ff", font: { size: 12, weight: "700" } },
+            ticks: {
+              color: "#9aa3c7",
+              callback: (v) => (v/100000000).toLocaleString("ko-KR", { maximumFractionDigits: 1 }),
+              font: { size: 12 }
+            },
+            grid: { color: "rgba(255,255,255,0.06)" }
+          }
+        }
+      }
+    });
+
+    // table
+    const tb = $("tbl").querySelector("tbody");
+    tb.innerHTML = "";
+    sim.tblRows.forEach(r => {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>${r.year}</td>
+        <td>${r.age}</td>
+        <td>${fmtKRW(r.yearStart)}</td>
+        <td>${fmtKRW(r.contrib)}</td>
+        <td>${fmtKRW(r.withdraw)}</td>
+        <td>${fmtKRW(r.yearEnd)}</td>
+      `;
+      tb.appendChild(tr);
+    });
+
+    window.__lastSim = sim;
+  }
+
+  function exportCSV(){
+    const sim = window.__lastSim;
+    if (!sim || !sim.tblRows || sim.tblRows.length === 0){
+      alert("먼저 시뮬레이션을 실행해 주세요.");
+      return;
+    }
+
+    const headers = ["year","age","yearStart","contrib","withdraw","yearEnd"];
+    const lines = [headers.join(",")];
+    sim.tblRows.forEach(r => {
+      const row = [
+        r.year,
+        r.age,
+        Math.round(r.yearStart),
+        Math.round(r.contrib),
+        Math.round(r.withdraw),
+        Math.round(r.yearEnd),
+      ];
+      lines.push(row.join(","));
+    });
+
+    const blob = new Blob([lines.join("")], { type:"text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "retirement_sim_yearly_table.csv";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  }
+
+  // init
+  initYears();
+
+  $("addAcc").addEventListener("click", () => {
+    const accWrap = $("accounts");
+    const idx = accWrap.children.length;
+    accWrap.appendChild(makeAccountRow(idx));
+  });
+  $("run").addEventListener("click", () => render(simulate()));
+  $("exportCsv").addEventListener("click", exportCSV);
+
+  // defaults
+  const accWrap = $("accounts");
+  accWrap.appendChild(makeAccountRow(0, { name:"해외주식계좌", balance: 50000000, annualReturn: 6.5, monthlyContrib: 1200000 }));
+  accWrap.appendChild(makeAccountRow(1, { name:"연금/IRP", balance: 30000000, annualReturn: 5.5, monthlyContrib: 700000 }));
+
+  // money formatting for static inputs
+  applyMoneyFormatting(document);
+
+  // first render
+  render(simulate());
+</script>
+</body>
+</html>
