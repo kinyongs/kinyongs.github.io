@@ -6,8 +6,25 @@ const DATA = {
   m2: 'assets/data/m2.js',
   banpo: 'assets/data/banpo_prices.js',
   market: 'assets/data/adjusted_etf_prices.json',
-  events: 'assets/data/historical_events.json',
 };
+
+const RECESSION_PERIODS = [
+  { start: '1929-08', end: '1933-03', label: '1929년 대공황', description: '미국 역사상 최악의 경기침체. 실업률 25%, GDP 40% 감소.' },
+  { start: '1937-05', end: '1938-06', label: '1937~38 침체', description: '긴축 정책과 소비 둔화로 촉발된 침체.' },
+  { start: '1945-02', end: '1945-10', label: '1945 전후 침체', description: '2차 세계대전 종료와 생산 감소로 인한 경기 둔화.' },
+  { start: '1948-11', end: '1949-10', label: '1948~49 침체', description: '전후 재조정과 통화 긴축 정책 영향.' },
+  { start: '1953-07', end: '1954-05', label: '1953~54 침체', description: '한국전쟁 종료 후 정부 지출 감소.' },
+  { start: '1957-08', end: '1958-04', label: '1957~58 침체', description: '금리 인상과 투자 감소가 주요 원인.' },
+  { start: '1960-04', end: '1961-02', label: '1960~61 침체', description: '재고 축소와 고용 둔화로 인한 경기후퇴.' },
+  { start: '1969-12', end: '1970-11', label: '1969~70 침체', description: '인플레이션 억제 정책과 소비 위축.' },
+  { start: '1973-11', end: '1975-03', label: '1973~75 오일쇼크', description: '오일쇼크와 스태그플레이션 발생.' },
+  { start: '1980-01', end: '1980-07', label: '1980 침체', description: '고물가 대응을 위한 금리 인상, 침체 발생.' },
+  { start: '1981-07', end: '1982-11', label: '1981~82 더블딥', description: '고금리 정책 지속으로 두 번째 침체 발생.' },
+  { start: '1990-07', end: '1991-03', label: '1990 침체', description: '걸프전, 부동산 거품 붕괴 등 복합 요인.' },
+  { start: '2001-03', end: '2001-11', label: '닷컴버블 붕괴', description: 'IT 버블 붕괴 및 9.11 테러 여파.' },
+  { start: '2007-12', end: '2009-06', label: '2008 금융위기', description: '부동산 및 금융시장 붕괴로 글로벌 침체.' },
+  { start: '2020-02', end: '2020-04', label: '코로나 팬데믹', description: '팬데믹에 따른 급격한 경제 봉쇄.' },
+];
 
 const groups = [
   {
@@ -16,7 +33,7 @@ const groups = [
   },
   {
     title: '시장 분석',
-    tools: ['trend', 'eps-per', 'recession', 'seasonality', 'm2', 'market', 'events'],
+    tools: ['trend', 'eps-per', 'recession', 'seasonality', 'm2', 'market'],
   },
   {
     title: '리스크 & 심리',
@@ -70,7 +87,7 @@ const tools = {
   'eps-per': {
     title: 'EPS & PER 분석',
     icon: 'E',
-    desc: '지수 상승을 가격, 이익(EPS), 밸류에이션(PER)으로 나눠 봅니다.',
+    desc: '일별 S&P 500 가격과 월간 이익(EPS)을 연결해 PER 흐름을 봅니다.',
     render: renderEpsPer,
   },
   recession: {
@@ -96,12 +113,6 @@ const tools = {
     icon: 'G',
     desc: '미국, 선진국, 신흥국 ETF의 누적 성과를 비교합니다.',
     render: renderMarketComparison,
-  },
-  events: {
-    title: '주요 이벤트',
-    icon: '!',
-    desc: '역사적 이벤트 시점과 지수 흐름을 함께 살펴봅니다.',
-    render: renderEvents,
   },
   'missing-return': {
     title: '놓친 날의 영향',
@@ -138,6 +149,32 @@ const tools = {
 const app = document.getElementById('app');
 const cache = new Map();
 const charts = new Map();
+
+const recessionBandPlugin = {
+  id: 'recessionBands',
+  beforeDatasetsDraw(chartInstance, args, options) {
+    const bands = options?.bands || [];
+    const labels = chartInstance.data.labels || [];
+    const xScale = chartInstance.scales.x;
+    const area = chartInstance.chartArea;
+    if (!bands.length || !labels.length || !xScale || !area) return;
+
+    const { ctx } = chartInstance;
+    ctx.save();
+    bands.forEach((band) => {
+      const startIndex = labels.findIndex((label) => label >= band.start);
+      const endIndex = labels.findLastIndex((label) => label <= band.end);
+      if (startIndex < 0 || endIndex < 0 || endIndex < startIndex) return;
+      const left = xScale.getPixelForValue(startIndex);
+      const right = xScale.getPixelForValue(endIndex);
+      ctx.fillStyle = 'rgba(148, 163, 184, 0.22)';
+      ctx.fillRect(left, area.top, Math.max(1, right - left), area.bottom - area.top);
+    });
+    ctx.restore();
+  },
+};
+
+Chart.register(recessionBandPlugin);
 
 function route() {
   return location.hash.replace(/^#\/?/, '') || 'home';
@@ -258,6 +295,13 @@ function annualFromSeries(series) {
 
 function monthKey(date) {
   return String(date).slice(0, 7);
+}
+
+function weekOfYear(dateString) {
+  const date = new Date(`${dateString}T00:00:00`);
+  const start = new Date(date.getFullYear(), 0, 1);
+  const day = Math.floor((date - start) / 86400000) + 1;
+  return Math.min(53, Math.floor((day - 1) / 7) + 1);
 }
 
 function filterByMonthRange(series, start, end) {
@@ -476,8 +520,8 @@ async function renderDcaSp500() {
   renderShell(`${pageHeader(tool)}${panel([
     input('startYear', '시작 연도', Math.max(1990, minYear), 'number', `min="${minYear}" max="${maxYear}"`),
     input('endYear', '종료 연도', maxYear, 'number', `min="${minYear}" max="${maxYear}"`),
-    moneyInput('monthly', '월 투자금(KRW)', 500),
-    moneyInput('initial', '초기 투자금(KRW)', 10000),
+    moneyInput('monthly', '월 투자금(KRW)', 500000),
+    moneyInput('initial', '초기 투자금(KRW)', 10000000),
   ], '실제 데이터로 계산')}<div id="result"></div><div class="chart-panel"><canvas id="mainChart"></canvas></div>`);
   const run = () => {
     const startYear = field('startYear', 1990);
@@ -684,17 +728,21 @@ async function renderRetirement() {
 }
 
 async function renderEpsPer() {
-  const prices = toSeries(await loadJsConst(DATA.eps, 'priceData'));
+  const prices = monthEndFromDaily(toSeries(await loadJsConst(DATA.daily, 'priceData')));
   const eps = toSeries(await loadJsConst(DATA.eps, 'EPSData'));
+  const priceMap = new Map(prices.map((d) => [d.date, d.value]));
   const epsMap = new Map(eps.map((d) => [d.date.slice(0, 7), d.value]));
-  const allRows = prices.filter((d) => epsMap.has(d.date.slice(0, 7))).map((d) => ({ date: monthKey(d.date), price: d.value, eps: epsMap.get(d.date.slice(0, 7)) }));
+  const allRows = [...epsMap.entries()]
+    .filter(([date]) => priceMap.has(date))
+    .map(([date, epsValue]) => ({ date, price: priceMap.get(date), eps: epsValue }))
+    .sort((a, b) => a.date.localeCompare(b.date));
   allRows.forEach((r) => { r.per = r.eps ? r.price / r.eps : null; });
   const tool = tools['eps-per'];
   renderShell(`${pageHeader(tool)}${panel([
     input('startMonth', '시작 월', allRows[0].date, 'month'),
     input('endMonth', '종료 월', allRows.at(-1).date, 'month'),
     select('priceScale', 'S&P500 축', [{ value: 'linear', label: '선형' }, { value: 'logarithmic', label: '로그' }], 'logarithmic'),
-    select('epsScale', 'EPS 축', [{ value: 'linear', label: '선형' }, { value: 'logarithmic', label: '로그' }], 'linear'),
+    select('epsScale', 'EPS 축', [{ value: 'linear', label: '선형' }, { value: 'logarithmic', label: '로그' }], 'logarithmic'),
   ], '그래프 업데이트')}<div id="result"></div><div class="chart-panel"><canvas id="priceChart"></canvas></div><div class="chart-panel"><canvas id="perChart"></canvas></div>`);
   const run = () => {
     const rows = filterByMonthRange(allRows, field('startMonth', allRows[0].date), field('endMonth', allRows.at(-1).date));
@@ -815,22 +863,6 @@ async function renderMarketComparison() {
   run();
 }
 
-async function renderEvents() {
-  const series = monthlyFromDaily(toSeries(await loadJsConst(DATA.daily, 'priceData'))).map((row) => ({ date: monthKey(row.date), value: row.value }));
-  const draw = maxDrawdown(series.map((r) => r.value));
-  const events = await loadJson(DATA.events);
-  const rows = Array.isArray(events) ? events : Object.values(events).flat();
-  const tableRows = rows.slice(0, 24).map((event) => {
-    const date = event.date || event.Date || event.year || '';
-    const title = event.title || event.event || event.name || JSON.stringify(event).slice(0, 60);
-    return `<tr><td>${date}</td><td>${title}</td></tr>`;
-  }).join('');
-  const tool = tools.events;
-  renderShell(`${pageHeader(tool)}<div class="chart-panel"><canvas id="mainChart"></canvas></div><div class="chart-panel"><canvas id="drawdownChart"></canvas></div><div class="table-wrap"><table><thead><tr><th>시점</th><th>이벤트</th></tr></thead><tbody>${tableRows}</tbody></table></div>`);
-  chart('mainChart', { type: 'line', data: { labels: series.map((r) => r.date), datasets: [{ label: 'S&P 500', data: series.map((r) => r.value), borderColor: '#2563eb', pointRadius: 0 }] }, options: { scales: { y: { type: 'logarithmic' } } } });
-  chart('drawdownChart', { type: 'line', data: { labels: series.map((r) => r.date), datasets: [{ label: 'Drawdown (%)', data: draw.map((d) => d.dd * 100), borderColor: '#dc2626', pointRadius: 0, fill: true, backgroundColor: 'rgba(220,38,38,.12)' }] } });
-}
-
 async function renderFearGreed() {
   const prices = toSeries(await loadJsConst(DATA.fearGreed, 'priceData'));
   const fg = toSeries(await loadJsConst(DATA.fearGreed, 'fearGreedData'));
@@ -889,31 +921,106 @@ async function renderMissingReturn() {
 async function renderRecession() {
   const series = monthlyFromDaily(toSeries(await loadJsConst(DATA.daily, 'priceData'))).map((row) => ({ date: monthKey(row.date), value: row.value }));
   const draw = maxDrawdown(series.map((r) => r.value));
+  const visibleRecessions = RECESSION_PERIODS.filter((period) => period.start <= series.at(-1).date && period.end >= series[0].date);
+  const tableRows = visibleRecessions.map((period) => {
+    const rows = series.filter((row) => row.date >= period.start && row.date <= period.end);
+    if (rows.length < 2) return '';
+    let peak = rows[0].value;
+    let mdd = 0;
+    rows.forEach((row) => {
+      peak = Math.max(peak, row.value);
+      mdd = Math.min(mdd, row.value / peak - 1);
+    });
+    const startValue = rows[0].value;
+    const endValue = rows.at(-1).value;
+    return `<tr>
+      <td>${period.label}</td>
+      <td>${period.start}~${period.end}</td>
+      <td>${number(startValue, 1)}</td>
+      <td>${number(endValue, 1)}</td>
+      <td>${percent(endValue / startValue - 1)}</td>
+      <td>${percent(mdd)}</td>
+      <td>${period.description}</td>
+    </tr>`;
+  }).join('');
   const tool = tools.recession;
   renderShell(`${pageHeader(tool)}${stats([
     { label: '최대 낙폭', value: percent(draw.at(-1).max) },
     { label: '월 데이터', value: `${series.length}개월` },
     { label: '기간', value: `${series[0].date}~${series.at(-1).date}` },
-  ])}<div class="chart-panel"><canvas id="mainChart"></canvas></div><div class="chart-panel"><canvas id="ddChart"></canvas></div>`);
-  chart('mainChart', { type: 'line', data: { labels: series.map((r) => r.date), datasets: [{ label: 'S&P 500', data: series.map((r) => r.value), borderColor: '#2563eb', pointRadius: 0 }] }, options: { scales: { y: { type: 'logarithmic' } } } });
-  chart('ddChart', { type: 'line', data: { labels: series.map((r) => r.date), datasets: [{ label: 'Drawdown (%)', data: draw.map((d) => d.dd * 100), borderColor: '#dc2626', backgroundColor: 'rgba(220,38,38,.12)', fill: true, pointRadius: 0 }] } });
+    { label: '경기침체 구간', value: `${visibleRecessions.length}개` },
+  ])}<div class="chart-panel"><canvas id="mainChart"></canvas></div><div class="chart-panel"><canvas id="ddChart"></canvas></div><div class="table-wrap"><table><thead><tr><th>리세션</th><th>기간</th><th>시작 지수</th><th>종료 지수</th><th>변화율</th><th>최대 낙폭</th><th>설명</th></tr></thead><tbody>${tableRows}</tbody></table></div>`);
+  chart('mainChart', {
+    type: 'line',
+    data: { labels: series.map((r) => r.date), datasets: [{ label: 'S&P 500', data: series.map((r) => r.value), borderColor: '#2563eb', pointRadius: 0 }] },
+    options: { scales: { y: { type: 'logarithmic' } }, plugins: { recessionBands: { bands: visibleRecessions } } },
+  });
+  chart('ddChart', {
+    type: 'line',
+    data: { labels: series.map((r) => r.date), datasets: [{ label: 'Drawdown (%)', data: draw.map((d) => d.dd * 100), borderColor: '#dc2626', backgroundColor: 'rgba(220,38,38,.12)', fill: true, pointRadius: 0 }] },
+    options: { plugins: { recessionBands: { bands: visibleRecessions } } },
+  });
 }
 
 async function renderSeasonality() {
   const series = toSeries(await loadJsConst(DATA.daily, 'priceData'));
-  const monthly = monthlyFromDaily(series);
-  const buckets = Array.from({ length: 12 }, () => []);
-  for (let i = 1; i < monthly.length; i += 1) {
-    const month = Number(monthly[i].date.slice(5, 7)) - 1;
-    buckets[month].push(monthly[i].value / monthly[i - 1].value - 1);
-  }
+  const minYear = Number(series[0].date.slice(0, 4));
+  const maxYear = Number(series.at(-1).date.slice(0, 4));
   const labels = ['1월', '2월', '3월', '4월', '5월', '6월', '7월', '8월', '9월', '10월', '11월', '12월'];
-  const avg = buckets.map((b) => b.reduce((a, c) => a + c, 0) / b.length);
-  const win = buckets.map((b) => b.filter((v) => v > 0).length / b.length);
   const tool = tools.seasonality;
-  renderShell(`${pageHeader(tool)}<div class="chart-panel"><canvas id="avgChart"></canvas></div><div class="chart-panel"><canvas id="winChart"></canvas></div>`);
-  chart('avgChart', { type: 'bar', data: { labels, datasets: [{ label: '월별 평균 수익률', data: avg.map((v) => v * 100), backgroundColor: '#60a5fa' }] } });
-  chart('winChart', { type: 'bar', data: { labels, datasets: [{ label: '상승 확률', data: win.map((v) => v * 100), backgroundColor: '#34d399' }] } });
+  renderShell(`${pageHeader(tool)}${panel([
+    input('startYear', '시작 연도', Math.max(1928, minYear), 'number', `min="${minYear}" max="${maxYear}"`),
+    input('endYear', '종료 연도', maxYear, 'number', `min="${minYear}" max="${maxYear}"`),
+  ], '계절성 업데이트')}<div id="result"></div><div class="chart-panel"><canvas id="weeklyChart"></canvas></div><div class="chart-panel"><canvas id="avgChart"></canvas></div><div class="chart-panel"><canvas id="winChart"></canvas></div>`);
+  const run = () => {
+    const startYear = Math.max(minYear, Number(field('startYear', minYear)));
+    const endYear = Math.min(maxYear, Number(field('endYear', maxYear)));
+    if (startYear > endYear) {
+      byId('result').innerHTML = '<div class="notice">시작 연도는 종료 연도보다 작거나 같아야 합니다.</div>';
+      return;
+    }
+
+    const years = Array.from({ length: endYear - startYear + 1 }, (_, index) => startYear + index);
+    const weeklyBuckets = Array.from({ length: 53 }, () => []);
+    const monthlyBuckets = Array.from({ length: 12 }, () => []);
+
+    years.forEach((year) => {
+      const rows = series.filter((row) => Number(row.date.slice(0, 4)) === year);
+      if (rows.length < 2) return;
+
+      const firstPrice = rows[0].value;
+      const weekEndPrices = new Map();
+      rows.forEach((row) => weekEndPrices.set(weekOfYear(row.date), row.value));
+      let latestPrice = firstPrice;
+      for (let week = 1; week <= 53; week += 1) {
+        if (weekEndPrices.has(week)) latestPrice = weekEndPrices.get(week);
+        weeklyBuckets[week - 1].push(latestPrice / firstPrice - 1);
+      }
+
+      for (let month = 0; month < 12; month += 1) {
+        const monthRows = rows.filter((row) => Number(row.date.slice(5, 7)) === month + 1);
+        if (monthRows.length >= 2) monthlyBuckets[month].push(monthRows.at(-1).value / monthRows[0].value - 1);
+      }
+    });
+
+    const weeklyAvg = weeklyBuckets.map((bucket) => (bucket.length ? bucket.reduce((a, b) => a + b, 0) / bucket.length : 0));
+    const avg = monthlyBuckets.map((bucket) => (bucket.length ? bucket.reduce((a, b) => a + b, 0) / bucket.length : 0));
+    const win = monthlyBuckets.map((bucket) => (bucket.length ? bucket.filter((value) => value > 0).length / bucket.length : 0));
+    const bestIndex = avg.indexOf(Math.max(...avg));
+    const worstIndex = avg.indexOf(Math.min(...avg));
+
+    byId('result').innerHTML = stats([
+      { label: '분석 기간', value: `${startYear}~${endYear}` },
+      { label: '가장 강한 월', value: `${labels[bestIndex]} ${percent(avg[bestIndex])}` },
+      { label: '가장 약한 월', value: `${labels[worstIndex]} ${percent(avg[worstIndex])}` },
+      { label: '연말 평균 누적', value: percent(weeklyAvg.at(-1)) },
+    ]);
+    chart('weeklyChart', { type: 'line', data: { labels: weeklyAvg.map((_, index) => `${index + 1}주`), datasets: [{ label: '주간 평균 누적 수익률(%)', data: weeklyAvg.map((value) => value * 100), borderColor: '#2563eb', backgroundColor: 'rgba(37,99,235,.12)', fill: true, pointRadius: 0, tension: 0.25 }] } });
+    chart('avgChart', { type: 'bar', data: { labels, datasets: [{ label: '월별 평균 수익률(%)', data: avg.map((v) => v * 100), backgroundColor: '#60a5fa' }] } });
+    chart('winChart', { type: 'bar', data: { labels, datasets: [{ label: '상승 확률(%)', data: win.map((v) => v * 100), backgroundColor: '#34d399' }] } });
+  };
+  byId('runTool').addEventListener('click', run);
+  run();
 }
 
 async function renderStreak() {
