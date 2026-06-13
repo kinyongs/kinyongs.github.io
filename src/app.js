@@ -39,6 +39,10 @@ const groups = [
     title: '리스크 & 심리',
     tools: ['missing-return', 'streak', 'tuw', 'fear-greed', 'banpo'],
   },
+  {
+    title: '게임',
+    tools: ['pinball'],
+  },
 ];
 
 const tools = {
@@ -143,6 +147,12 @@ const tools = {
     icon: 'B',
     desc: '주식 지수와 부동산 가격 흐름을 같은 시작점에서 비교합니다.',
     render: renderBanpo,
+  },
+  pinball: {
+    title: 'Neon Drop Race',
+    icon: 'P',
+    desc: '핀볼 스타일의 standalone 게임을 웹앱 안에서 바로 실행합니다.',
+    render: renderPinball,
   },
 };
 
@@ -470,6 +480,18 @@ async function renderTool(id) {
   } catch (error) {
     renderShell(`${pageHeader(tool)}<div class="notice">도구를 불러오지 못했습니다: ${error.message}</div>`);
   }
+}
+
+function renderPinball() {
+  const tool = tools.pinball;
+  const gameUrl = 'src/game_pinball/pinball_standalone.html';
+  renderShell(`${pageHeader(tool)}
+    <div class="toolbar game-toolbar">
+      <a class="button" href="${gameUrl}" target="_blank" rel="noopener">새 탭에서 열기</a>
+    </div>
+    <div class="game-frame-panel">
+      <iframe class="game-frame" src="${gameUrl}" title="Neon Drop Race" allow="fullscreen; gamepad" allowfullscreen></iframe>
+    </div>`);
 }
 
 async function renderDcaGeneral() {
