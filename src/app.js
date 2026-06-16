@@ -41,7 +41,7 @@ const groups = [
   },
   {
     title: '게임',
-    tools: ['pinball'],
+    tools: ['pinball', 'galton-board'],
   },
 ];
 
@@ -61,7 +61,7 @@ const tools = {
   'rolling-returns': {
     title: 'Rolling Returns',
     icon: 'R',
-    desc: 'S&P 500 일별 데이터를 월말 기준으로 기간별 롤링 수익률과 분포를 확인합니다.',
+    desc: '투자 시작 월을 기준으로 일정 기간 보유했을 때의 롤링 수익률과 분포를 확인합니다.',
     render: renderRollingReturns,
   },
   inflation: {
@@ -153,6 +153,12 @@ const tools = {
     icon: 'P',
     desc: '핀볼 스타일의 standalone 게임을 웹앱 안에서 바로 실행합니다.',
     render: renderPinball,
+  },
+  'galton-board': {
+    title: 'Galton Board Simulation',
+    icon: 'G',
+    desc: '갈톤 보드 확률 시뮬레이션을 웹앱 안에서 바로 실행합니다.',
+    render: renderGaltonBoard,
   },
 };
 
@@ -482,16 +488,23 @@ async function renderTool(id) {
   }
 }
 
-function renderPinball() {
-  const tool = tools.pinball;
-  const gameUrl = 'src/game_pinball/pinball_standalone.html';
+function renderStandaloneGame(toolId, gameUrl) {
+  const tool = tools[toolId];
   renderShell(`${pageHeader(tool)}
     <div class="toolbar game-toolbar">
       <a class="button" href="${gameUrl}" target="_blank" rel="noopener">새 탭에서 열기</a>
     </div>
     <div class="game-frame-panel">
-      <iframe class="game-frame" src="${gameUrl}" title="Neon Drop Race" allow="fullscreen; gamepad" allowfullscreen></iframe>
+      <iframe class="game-frame" src="${gameUrl}" title="${tool.title}" allow="fullscreen; gamepad" allowfullscreen></iframe>
     </div>`);
+}
+
+function renderPinball() {
+  renderStandaloneGame('pinball', 'src/game_pinball/pinball_standalone.html');
+}
+
+function renderGaltonBoard() {
+  renderStandaloneGame('galton-board', 'src/galton_board/galtonboard.html');
 }
 
 async function renderDcaGeneral() {
@@ -626,8 +639,14 @@ async function renderRollingReturns() {
   const run = () => {
     const months = field('years', 10) * 12;
     const returns = [];
-    for (let i = months; i < series.length; i += 1) {
-      returns.push({ date: series[i].date, value: (series[i].value / series[i - months].value) ** (12 / months) - 1 });
+    for (let i = 0; i + months < series.length; i += 1) {
+      const start = series[i];
+      const end = series[i + months];
+      returns.push({
+        date: start.date,
+        endDate: end.date,
+        value: (end.value / start.value) ** (12 / months) - 1,
+      });
     }
     const values = returns.map((r) => r.value);
     if (!values.length) {
@@ -639,9 +658,10 @@ async function renderRollingReturns() {
       { label: '최고', value: percent(Math.max(...values)) },
       { label: '최저', value: percent(Math.min(...values)) },
       { label: '샘플 수', value: `${values.length}` },
-      { label: '데이터 범위', value: `${series[0].date}~${series.at(-1).date}` },
+      { label: '투자 시작 범위', value: `${returns[0].date}~${returns.at(-1).date}` },
+      { label: '마지막 종료 월', value: returns.at(-1).endDate },
     ]);
-    chart('mainChart', { type: 'line', data: { labels: returns.map((r) => r.date), datasets: [{ label: '롤링 CAGR', data: values, borderColor: '#2563eb', pointRadius: 0 }] } });
+    chart('mainChart', { type: 'line', data: { labels: returns.map((r) => r.date), datasets: [{ label: '투자 시작 월 기준 롤링 CAGR', data: values, borderColor: '#2563eb', pointRadius: 0 }] } });
     const bins = Array.from({ length: 12 }, (_, i) => ({ label: `${-10 + i * 5}%`, count: 0 }));
     values.forEach((v) => {
       const index = Math.max(0, Math.min(bins.length - 1, Math.floor(((v * 100) + 10) / 5)));

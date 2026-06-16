@@ -1,0 +1,1348 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Galton Board Simulation</title>
+  <style>
+    :root {
+      --bg: #080b11;
+      --panel: rgba(13, 18, 28, 0.78);
+      --panel-strong: rgba(14, 21, 33, 0.94);
+      --line: rgba(216, 229, 245, 0.16);
+      --line-strong: rgba(232, 239, 250, 0.3);
+      --text: #eef3f8;
+      --muted: #9daabd;
+      --gold: #f3d28a;
+      --blue: #84b8ff;
+      --green: #90e1c2;
+      --shadow: rgba(0, 0, 0, 0.36);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      width: 100%;
+      min-height: 100%;
+      margin: 0;
+      background:
+        radial-gradient(circle at 30% 0%, rgba(83, 117, 155, 0.18), transparent 34rem),
+        linear-gradient(135deg, #07090f 0%, #111016 38%, #16110c 100%);
+      color: var(--text);
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      letter-spacing: 0;
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background-image:
+        linear-gradient(rgba(255, 255, 255, 0.024) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.018) 1px, transparent 1px);
+      background-size: 34px 34px;
+      mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.9), transparent 78%);
+    }
+
+    .app {
+      width: min(1180px, 100%);
+      min-height: 100svh;
+      margin: 0 auto;
+      padding: max(14px, env(safe-area-inset-top)) 14px max(16px, env(safe-area-inset-bottom));
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      gap: 12px;
+    }
+
+    header {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 0 2px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(1.1rem, 3.8vw, 1.9rem);
+      font-weight: 760;
+      line-height: 1.12;
+    }
+
+    .subtitle {
+      margin: 5px 0 0;
+      color: var(--muted);
+      font-size: 0.86rem;
+    }
+
+    .status-pill {
+      min-width: 74px;
+      padding: 9px 12px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: rgba(7, 10, 16, 0.72);
+      color: var(--green);
+      font-size: 0.82rem;
+      text-align: center;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.09), 0 12px 32px var(--shadow);
+      white-space: nowrap;
+    }
+
+    .board-shell {
+      position: relative;
+      width: 100%;
+      min-height: 0;
+      border: 1px solid rgba(237, 245, 255, 0.18);
+      border-radius: 8px;
+      overflow: hidden;
+      background:
+        linear-gradient(90deg, rgba(255, 255, 255, 0.05), transparent 8%, transparent 92%, rgba(255, 255, 255, 0.05)),
+        linear-gradient(145deg, rgba(9, 14, 22, 0.94), rgba(21, 18, 15, 0.98));
+      box-shadow:
+        inset 0 0 0 1px rgba(255, 255, 255, 0.05),
+        inset 0 24px 80px rgba(255, 255, 255, 0.035),
+        0 26px 70px rgba(0, 0, 0, 0.42);
+    }
+
+    .board-shell::before {
+      content: "";
+      position: absolute;
+      inset: 10px;
+      border: 1px solid rgba(214, 236, 255, 0.18);
+      border-radius: 6px;
+      pointer-events: none;
+      background:
+        linear-gradient(107deg, transparent 0%, rgba(255, 255, 255, 0.07) 13%, transparent 24%),
+        linear-gradient(287deg, transparent 0%, rgba(133, 196, 255, 0.06) 22%, transparent 38%);
+      box-shadow:
+        inset 0 0 28px rgba(164, 213, 255, 0.09),
+        inset 0 0 4px rgba(255, 255, 255, 0.12);
+      z-index: 4;
+    }
+
+    .board-shell::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.06), transparent 18%, transparent 75%, rgba(0, 0, 0, 0.15));
+      z-index: 5;
+    }
+
+    canvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    #boardCanvas {
+      z-index: 1;
+    }
+
+    #reservoirCanvas {
+      z-index: 2;
+    }
+
+    #pileCanvas {
+      z-index: 3;
+    }
+
+    #motionCanvas {
+      z-index: 4;
+    }
+
+    .stats-panel {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      padding: 0 2px;
+    }
+
+    .metric {
+      padding: 8px 10px;
+      border: 1px solid rgba(225, 240, 255, 0.13);
+      border-radius: 8px;
+      background: rgba(6, 10, 16, 0.66);
+      backdrop-filter: blur(10px);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+      min-width: 0;
+    }
+
+    .metric span {
+      display: block;
+      color: var(--muted);
+      font-size: 0.68rem;
+      white-space: nowrap;
+    }
+
+    .metric strong {
+      display: block;
+      margin-top: 2px;
+      font-size: clamp(0.83rem, 2.4vw, 1rem);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .controls {
+      border: 1px solid rgba(230, 240, 255, 0.14);
+      border-radius: 8px;
+      background: var(--panel);
+      backdrop-filter: blur(16px);
+      box-shadow: 0 16px 46px rgba(0, 0, 0, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+      overflow: hidden;
+    }
+
+    details {
+      display: block;
+    }
+
+    summary {
+      min-height: 48px;
+      padding: 0 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      color: var(--text);
+      cursor: pointer;
+      list-style: none;
+      user-select: none;
+      font-weight: 700;
+    }
+
+    summary::-webkit-details-marker {
+      display: none;
+    }
+
+    summary::after {
+      content: "⌄";
+      color: var(--muted);
+      font-size: 1.15rem;
+      transform: translateY(-1px);
+    }
+
+    details[open] summary::after {
+      transform: rotate(180deg);
+    }
+
+    .control-grid {
+      padding: 0 12px 12px;
+      display: grid;
+      grid-template-columns: 1.1fr 1fr 1fr;
+      gap: 10px;
+      align-items: stretch;
+    }
+
+    .button-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+    }
+
+    button,
+    .toggle {
+      min-height: 44px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.035));
+      color: var(--text);
+      font: inherit;
+      font-weight: 750;
+      cursor: pointer;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.09), 0 8px 18px rgba(0, 0, 0, 0.18);
+      transition: transform 140ms ease, border-color 140ms ease, background 140ms ease;
+    }
+
+    button:active,
+    .toggle:active {
+      transform: translateY(1px);
+    }
+
+    button.primary {
+      border-color: rgba(243, 210, 138, 0.42);
+      background: linear-gradient(180deg, rgba(243, 210, 138, 0.26), rgba(181, 126, 40, 0.16));
+    }
+
+    button:disabled {
+      opacity: 0.48;
+      cursor: not-allowed;
+    }
+
+    .field {
+      min-width: 0;
+      padding: 9px 10px;
+      border: 1px solid rgba(222, 236, 255, 0.12);
+      border-radius: 8px;
+      background: rgba(4, 8, 14, 0.38);
+    }
+
+    label,
+    .toggle span {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      color: var(--muted);
+      font-size: 0.78rem;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    output {
+      color: var(--text);
+      font-variant-numeric: tabular-nums;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      margin: 10px 0 0;
+      accent-color: var(--gold);
+    }
+
+    .toggle {
+      display: flex;
+      align-items: center;
+      padding: 0 12px;
+      gap: 9px;
+      font-weight: 700;
+    }
+
+    .toggle input {
+      width: 18px;
+      height: 18px;
+      margin: 0;
+      accent-color: var(--gold);
+    }
+
+    @media (orientation: portrait) {
+      .board-shell {
+        height: min(63svh, calc(100svh - 250px));
+        min-height: 440px;
+      }
+    }
+
+    @media (orientation: landscape) {
+      .app {
+        grid-template-columns: minmax(0, 1fr) 340px;
+        grid-template-rows: auto auto auto;
+        align-content: start;
+      }
+
+      header {
+        grid-column: 1 / -1;
+      }
+
+      .board-shell {
+        grid-row: 2 / span 2;
+        height: calc(100svh - 92px);
+        min-height: 460px;
+      }
+
+      .stats-panel {
+        grid-column: 2;
+        grid-row: 2;
+      }
+
+      .controls {
+        grid-column: 2;
+        grid-row: 3;
+      }
+
+      .controls {
+        align-self: start;
+      }
+
+      .control-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 760px) {
+      .app {
+        padding-left: 10px;
+        padding-right: 10px;
+      }
+
+      .control-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .button-row,
+      .wide {
+        grid-column: 1 / -1;
+      }
+
+      .stats-panel {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 430px) {
+      header {
+        align-items: start;
+      }
+
+      .subtitle {
+        display: none;
+      }
+
+      .board-shell {
+        min-height: 430px;
+      }
+
+      .control-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .button-row,
+      .wide {
+        grid-column: auto;
+      }
+
+      .stats-panel {
+        gap: 5px;
+      }
+
+      .metric {
+        padding: 7px 7px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header>
+      <div>
+        <h1>Galton Board</h1>
+        <p class="subtitle">무작위 좌우 선택이 반복될 때 이항분포가 정규분포에 가까워지는 과정을 관찰하는 확률 실험 장치</p>
+      </div>
+      <div class="status-pill" id="statusText">대기</div>
+    </header>
+
+    <section class="board-shell" id="boardShell" aria-label="갈톤보드 시뮬레이션">
+      <canvas id="boardCanvas"></canvas>
+      <canvas id="reservoirCanvas"></canvas>
+      <canvas id="pileCanvas"></canvas>
+      <canvas id="motionCanvas"></canvas>
+    </section>
+
+    <section class="stats-panel" aria-live="polite">
+      <div class="metric">
+        <span>떨어진 구슬</span>
+        <strong id="droppedText">0 / 4000</strong>
+      </div>
+      <div class="metric">
+        <span>평균</span>
+        <strong id="meanText">0.00</strong>
+      </div>
+      <div class="metric">
+        <span>표준편차</span>
+        <strong id="stdText">0.00</strong>
+      </div>
+    </section>
+
+    <section class="controls" aria-label="시뮬레이션 컨트롤">
+      <details open>
+        <summary>컨트롤</summary>
+        <div class="control-grid">
+          <div class="button-row wide">
+            <button class="primary" id="startBtn" type="button">시작</button>
+            <button id="pauseBtn" type="button" disabled>일시정지</button>
+            <button id="resetBtn" type="button">초기화</button>
+          </div>
+
+          <div class="field">
+            <label for="ballCount">구슬 수 <output id="ballCountOut">4000</output></label>
+            <input id="ballCount" type="range" min="3000" max="5000" step="100" value="4000" />
+          </div>
+
+          <div class="field">
+            <label for="speed">낙하 속도 <output id="speedOut">1.4x</output></label>
+            <input id="speed" type="range" min="0.7" max="3.2" step="0.1" value="1.4" />
+          </div>
+
+          <div class="field">
+            <label for="rows">장애물 줄 <output id="rowsOut">16</output></label>
+            <input id="rows" type="range" min="10" max="24" step="1" value="16" />
+          </div>
+
+          <label class="toggle" for="fastMode">
+            <input id="fastMode" type="checkbox" checked />
+            <span>Fast mode</span>
+          </label>
+
+          <label class="toggle" for="soundToggle">
+            <input id="soundToggle" type="checkbox" />
+            <span>Sound off</span>
+          </label>
+        </div>
+      </details>
+    </section>
+  </main>
+
+  <script>
+    "use strict";
+
+    const CONFIG = {
+      initialBalls: 4000,
+      rows: 16,
+      extraPinsPerRow: 4,
+      maxActiveDesktop: 72,
+      maxActiveMobile: 42,
+      spawnBaseMs: 150,
+      burstMin: 3,
+      burstMax: 6,
+      burstStaggerMs: 24,
+      fastHiddenPerSecondDesktop: 620,
+      fastHiddenPerSecondMobile: 360,
+      ballRadiusMin: 0.62,
+      ballRadiusMax: 3.8,
+      pileRedrawEvery: 96,
+      fastBatchMobile: 10,
+      fastBatchDesktop: 18
+    };
+
+    const state = {
+      running: false,
+      paused: false,
+      completed: false,
+      totalBalls: CONFIG.initialBalls,
+      droppedCount: 0,
+      createdCount: 0,
+      activeBalls: [],
+      bins: [],
+      settledBalls: [],
+      recentImpacts: [],
+      rows: CONFIG.rows,
+      speed: 1.4,
+      fastMode: true,
+      soundEnabled: false,
+      spawnAccumulator: 0,
+      fastAccumulator: 0,
+      lastFastBatch: 0,
+      lastTime: 0,
+      layout: null,
+      pileDirty: true,
+      reservoirDirty: true,
+      statsDirty: true,
+      audio: null
+    };
+
+    const els = {
+      shell: document.getElementById("boardShell"),
+      board: document.getElementById("boardCanvas"),
+      reservoir: document.getElementById("reservoirCanvas"),
+      pile: document.getElementById("pileCanvas"),
+      motion: document.getElementById("motionCanvas"),
+      start: document.getElementById("startBtn"),
+      pause: document.getElementById("pauseBtn"),
+      reset: document.getElementById("resetBtn"),
+      ballCount: document.getElementById("ballCount"),
+      speed: document.getElementById("speed"),
+      rows: document.getElementById("rows"),
+      fastMode: document.getElementById("fastMode"),
+      soundToggle: document.getElementById("soundToggle"),
+      ballCountOut: document.getElementById("ballCountOut"),
+      speedOut: document.getElementById("speedOut"),
+      rowsOut: document.getElementById("rowsOut"),
+      droppedText: document.getElementById("droppedText"),
+      meanText: document.getElementById("meanText"),
+      stdText: document.getElementById("stdText"),
+      statusText: document.getElementById("statusText")
+    };
+
+    const ctx = {
+      board: els.board.getContext("2d"),
+      reservoir: els.reservoir.getContext("2d"),
+      pile: els.pile.getContext("2d"),
+      motion: els.motion.getContext("2d")
+    };
+
+    function clamp(value, min, max) {
+      return Math.max(min, Math.min(max, value));
+    }
+
+    function easeInOut(t) {
+      return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+    }
+
+    function resizeCanvas(canvas, context, width, height, dpr) {
+      canvas.width = Math.round(width * dpr);
+      canvas.height = Math.round(height * dpr);
+      context.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
+
+    function buildLayout() {
+      const rect = els.shell.getBoundingClientRect();
+      const width = Math.max(320, rect.width);
+      const height = Math.max(460, rect.height);
+      const marginX = clamp(width * 0.105, 30, 88);
+      const top = clamp(height * 0.105, 50, 86);
+      const pegTop = clamp(height * 0.245, 118, 172);
+      const binTop = height - clamp(height * 0.335, 160, 245);
+      const bottom = height - 34;
+      const funnelY = top;
+      const holeY = pegTop - 46;
+      const holeX = width / 2;
+      const rows = state.rows;
+      const bins = rows + 1;
+      const usableWidth = width - marginX * 2;
+      const rowGap = (binTop - pegTop) / (rows + 0.35);
+      const pegGap = Math.min(usableWidth / (rows + CONFIG.extraPinsPerRow + 1.9), rowGap * 1.05);
+      const boardCenter = width / 2;
+      const binWidth = usableWidth / bins;
+      const binPeakEstimate = state.totalBalls * Math.sqrt(2 / (Math.PI * Math.max(1, rows))) * 1.16;
+      const stackHeight = Math.max(80, bottom - binTop - 12);
+      const visualRadius = clamp(width / (bins * 15.5), CONFIG.ballRadiusMin, CONFIG.ballRadiusMax);
+      const stackRadius = Math.sqrt((stackHeight * Math.max(8, binWidth - 4)) / (3.72 * binPeakEstimate));
+      const ballRadius = clamp(Math.min(visualRadius, stackRadius), CONFIG.ballRadiusMin, CONFIG.ballRadiusMax);
+      const motionRadius = clamp(ballRadius * 1.75, 2.2, 4.2);
+      const reservoirTopW = clamp(width * 0.44, 150, 360);
+      const reservoirBottomW = Math.max(22, motionRadius * 4);
+      const reservoirHeight = Math.max(18, holeY - 4 - (top - 8));
+      const reservoirArea = ((reservoirTopW + reservoirBottomW) / 2) * reservoirHeight;
+      const reservoirRadius = clamp(Math.sqrt(reservoirArea / (state.totalBalls * 4.15)), 0.26, 2.25);
+      const ballsPerLayer = Math.max(3, Math.floor((binWidth - 4) / (ballRadius * 2.05)));
+      const pileBase = bottom - 8;
+
+      return {
+        width,
+        height,
+        dpr: Math.min(window.devicePixelRatio || 1, 2),
+        marginX,
+        top,
+        pegTop,
+        binTop,
+        bottom,
+        rows,
+        bins,
+        usableWidth,
+        pegGap,
+        rowGap,
+        boardCenter,
+        ballRadius,
+        motionRadius,
+        reservoirRadius,
+        binWidth,
+        ballsPerLayer,
+        pileBase,
+        funnelY,
+        holeY,
+        holeX
+      };
+    }
+
+    function applyLayout() {
+      state.layout = buildLayout();
+      const l = state.layout;
+      resizeCanvas(els.board, ctx.board, l.width, l.height, l.dpr);
+      resizeCanvas(els.reservoir, ctx.reservoir, l.width, l.height, l.dpr);
+      resizeCanvas(els.pile, ctx.pile, l.width, l.height, l.dpr);
+      resizeCanvas(els.motion, ctx.motion, l.width, l.height, l.dpr);
+      drawBoard();
+      state.reservoirDirty = true;
+      state.pileDirty = true;
+      redrawReservoirLayer();
+      redrawPileLayer();
+    }
+
+    function drawBoard() {
+      const l = state.layout;
+      const c = ctx.board;
+      c.clearRect(0, 0, l.width, l.height);
+
+      const bg = c.createLinearGradient(0, 0, l.width, l.height);
+      bg.addColorStop(0, "#0b1019");
+      bg.addColorStop(0.45, "#13131a");
+      bg.addColorStop(1, "#1a130d");
+      c.fillStyle = bg;
+      c.fillRect(0, 0, l.width, l.height);
+
+      drawWoodPanel(c, l);
+      drawAcrylicPlate(c, l);
+      drawFunnel(c, l);
+      drawPegs(c, l);
+      drawBins(c, l);
+    }
+
+    function drawWoodPanel(c, l) {
+      c.save();
+      c.globalAlpha = 0.22;
+      for (let i = 0; i < 20; i++) {
+        const y = (i / 20) * l.height;
+        const grad = c.createLinearGradient(0, y, l.width, y + 18);
+        grad.addColorStop(0, "rgba(108, 77, 46, 0.12)");
+        grad.addColorStop(0.5, "rgba(255, 255, 255, 0.025)");
+        grad.addColorStop(1, "rgba(43, 24, 14, 0.14)");
+        c.fillStyle = grad;
+        c.fillRect(0, y, l.width, 12 + (i % 3) * 4);
+      }
+      c.restore();
+    }
+
+    function drawAcrylicPlate(c, l) {
+      c.save();
+      c.strokeStyle = "rgba(221, 242, 255, 0.18)";
+      c.lineWidth = 1.4;
+      roundedRect(c, 18, 18, l.width - 36, l.height - 36, 7);
+      c.stroke();
+      c.strokeStyle = "rgba(255, 255, 255, 0.06)";
+      roundedRect(c, 24, 24, l.width - 48, l.height - 48, 5);
+      c.stroke();
+      c.restore();
+    }
+
+    function drawFunnel(c, l) {
+      const topW = clamp(l.width * 0.42, 150, 330);
+      const neckW = Math.max(l.ballRadius * 3.1, 14);
+      const topY = l.top - 20;
+      const bottomY = l.holeY + 7;
+      const x = l.holeX;
+
+      c.save();
+      c.shadowColor = "rgba(0, 0, 0, 0.45)";
+      c.shadowBlur = 18;
+      c.shadowOffsetY = 8;
+      const glass = c.createLinearGradient(x - topW / 2, topY, x + topW / 2, bottomY);
+      glass.addColorStop(0, "rgba(240, 250, 255, 0.16)");
+      glass.addColorStop(0.45, "rgba(162, 205, 240, 0.055)");
+      glass.addColorStop(1, "rgba(255, 255, 255, 0.12)");
+      c.fillStyle = glass;
+      c.beginPath();
+      c.moveTo(x - topW / 2, topY);
+      c.lineTo(x + topW / 2, topY);
+      c.lineTo(x + neckW / 2, bottomY);
+      c.lineTo(x - neckW / 2, bottomY);
+      c.closePath();
+      c.fill();
+      c.shadowBlur = 0;
+      c.strokeStyle = "rgba(235, 248, 255, 0.32)";
+      c.lineWidth = 1.5;
+      c.stroke();
+
+      const metal = c.createLinearGradient(x - 26, bottomY - 2, x + 26, bottomY + 14);
+      metal.addColorStop(0, "rgba(95, 104, 116, 0.82)");
+      metal.addColorStop(0.5, "rgba(233, 239, 244, 0.74)");
+      metal.addColorStop(1, "rgba(70, 78, 90, 0.86)");
+      c.fillStyle = metal;
+      roundedRect(c, x - neckW * 1.05, bottomY - 4, neckW * 2.1, 12, 4);
+      c.fill();
+      c.fillStyle = "rgba(0, 0, 0, 0.68)";
+      c.beginPath();
+      c.ellipse(x, bottomY + 3, neckW * 0.38, 3.5, 0, 0, Math.PI * 2);
+      c.fill();
+      c.restore();
+    }
+
+    function drawWaitingMarbles(c, l) {
+      const remaining = clamp(state.totalBalls - state.createdCount, 0, state.totalBalls);
+      if (remaining <= 0) return;
+      const count = remaining;
+      const topW = clamp(l.width * 0.44, 150, 360);
+      const bottomW = Math.max(l.reservoirRadius * 7, 22);
+      const x = l.holeX;
+      const startY = l.top - 8;
+      const endY = l.holeY - 4;
+      const r = l.reservoirRadius;
+      const rowStep = r * 1.78;
+      const maxRows = Math.max(1, Math.floor((endY - startY) / rowStep));
+      let drawn = 0;
+
+      c.save();
+      c.globalCompositeOperation = "source-over";
+      for (let row = 0; row < maxRows && drawn < count; row++) {
+        const t = row / Math.max(1, maxRows - 1);
+        const spread = topW + (bottomW - topW) * t;
+        const cols = Math.max(1, Math.floor(spread / (r * 1.78)));
+        const y = startY + row * rowStep;
+        for (let col = 0; col < cols && drawn < count; col++) {
+          const jitter = Math.sin((drawn + 1) * 12.9898) * 0.5;
+          const px = x - spread / 2 + (col + 0.5) * (spread / cols) + jitter * r;
+          const py = y + Math.cos((drawn + 4) * 4.13) * r * 0.45;
+          if (drawn % 17 === 0 || r > 1.05) {
+            drawGlassBall(c, px, py, r, 0.82, drawn);
+          } else {
+            c.fillStyle = drawn % 7 === 0 ? "rgba(255, 244, 210, 0.78)" : "rgba(231, 215, 170, 0.62)";
+            c.beginPath();
+            c.arc(px, py, r * 0.88, 0, Math.PI * 2);
+            c.fill();
+          }
+          drawn += 1;
+        }
+      }
+
+      const label = `${remaining.toLocaleString("ko-KR")}`;
+      c.fillStyle = "rgba(5, 8, 12, 0.48)";
+      roundedRect(c, x - 38, startY - 22, 76, 18, 7);
+      c.fill();
+      c.fillStyle = "rgba(238, 243, 248, 0.82)";
+      c.font = "700 11px system-ui, sans-serif";
+      c.textAlign = "center";
+      c.textBaseline = "middle";
+      c.fillText(label, x, startY - 13);
+      c.restore();
+    }
+
+    function redrawReservoirLayer() {
+      if (!state.reservoirDirty || !state.layout) return;
+      const c = ctx.reservoir;
+      const l = state.layout;
+      c.clearRect(0, 0, l.width, l.height);
+      drawWaitingMarbles(c, l);
+      state.reservoirDirty = false;
+    }
+
+    function drawPegs(c, l) {
+      c.save();
+      for (let row = 0; row < l.rows; row++) {
+        const y = l.pegTop + row * l.rowGap;
+        const pinCount = row + 1 + CONFIG.extraPinsPerRow;
+        for (let i = 0; i < pinCount; i++) {
+          const x = l.boardCenter + (i - (pinCount - 1) / 2) * l.pegGap;
+          drawMetalPeg(c, x, y, clamp(l.pegGap * 0.105, 4.6, 7.6));
+        }
+      }
+      c.restore();
+    }
+
+    function drawMetalPeg(c, x, y, r) {
+      c.save();
+      c.shadowColor = "rgba(0, 0, 0, 0.5)";
+      c.shadowBlur = 7;
+      c.shadowOffsetY = 3;
+      const g = c.createRadialGradient(x - r * 0.35, y - r * 0.45, r * 0.2, x, y, r);
+      g.addColorStop(0, "#ffffff");
+      g.addColorStop(0.22, "#cdd6df");
+      g.addColorStop(0.64, "#697381");
+      g.addColorStop(1, "#2d333d");
+      c.fillStyle = g;
+      c.beginPath();
+      c.arc(x, y, r, 0, Math.PI * 2);
+      c.fill();
+      c.strokeStyle = "rgba(255, 255, 255, 0.34)";
+      c.lineWidth = 0.8;
+      c.stroke();
+      c.restore();
+    }
+
+    function drawBins(c, l) {
+      c.save();
+      const left = l.marginX;
+      const h = l.bottom - l.binTop;
+
+      const base = c.createLinearGradient(0, l.binTop, 0, l.bottom);
+      base.addColorStop(0, "rgba(164, 210, 255, 0.07)");
+      base.addColorStop(1, "rgba(255, 255, 255, 0.025)");
+      c.fillStyle = base;
+      c.fillRect(left, l.binTop, l.usableWidth, h);
+
+      for (let i = 0; i <= l.bins; i++) {
+        const x = left + i * l.binWidth;
+        const grad = c.createLinearGradient(x - 1, l.binTop, x + 3, l.bottom);
+        grad.addColorStop(0, "rgba(255, 255, 255, 0.43)");
+        grad.addColorStop(0.35, "rgba(151, 205, 247, 0.18)");
+        grad.addColorStop(1, "rgba(255, 255, 255, 0.26)");
+        c.strokeStyle = grad;
+        c.lineWidth = i === 0 || i === l.bins ? 2.4 : 1.25;
+        c.shadowColor = "rgba(128, 193, 255, 0.12)";
+        c.shadowBlur = 4;
+        c.beginPath();
+        c.moveTo(x, l.binTop);
+        c.lineTo(x, l.bottom);
+        c.stroke();
+      }
+
+      c.strokeStyle = "rgba(245, 250, 255, 0.34)";
+      c.lineWidth = 2;
+      c.beginPath();
+      c.moveTo(left, l.bottom);
+      c.lineTo(left + l.usableWidth, l.bottom);
+      c.stroke();
+      c.restore();
+    }
+
+    function roundedRect(c, x, y, w, h, r) {
+      c.beginPath();
+      c.moveTo(x + r, y);
+      c.lineTo(x + w - r, y);
+      c.quadraticCurveTo(x + w, y, x + w, y + r);
+      c.lineTo(x + w, y + h - r);
+      c.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+      c.lineTo(x + r, y + h);
+      c.quadraticCurveTo(x, y + h, x, y + h - r);
+      c.lineTo(x, y + r);
+      c.quadraticCurveTo(x, y, x + r, y);
+      c.closePath();
+    }
+
+    function maxActiveBalls() {
+      return window.matchMedia("(max-width: 700px)").matches ? CONFIG.maxActiveMobile : CONFIG.maxActiveDesktop;
+    }
+
+    function fastBatchSize() {
+      return window.matchMedia("(max-width: 700px)").matches ? CONFIG.fastBatchMobile : CONFIG.fastBatchDesktop;
+    }
+
+    function fastHiddenRate() {
+      const base = window.matchMedia("(max-width: 700px)").matches
+        ? CONFIG.fastHiddenPerSecondMobile
+        : CONFIG.fastHiddenPerSecondDesktop;
+      return base * state.speed;
+    }
+
+    function randomPath(mouthOffset) {
+      const l = state.layout;
+      const points = [{ x: l.holeX + (mouthOffset || 0), y: l.holeY, hit: false }];
+      let right = 0;
+      for (let row = 0; row < state.rows; row++) {
+        if (Math.random() < 0.5) right += 1;
+        const x = l.boardCenter + (right - (row + 1) / 2) * l.pegGap;
+        const y = l.pegTop + row * l.rowGap + l.rowGap * 0.45;
+        points.push({
+          x: x + (Math.random() - 0.5) * l.pegGap * 0.12,
+          y,
+          hit: true,
+          dir: right
+        });
+      }
+      const bin = right;
+      const finalX = binCenter(bin) + (Math.random() - 0.5) * l.binWidth * 0.34;
+      points.push({ x: finalX, y: l.binTop + 12, hit: false });
+      points.push({ x: finalX, y: l.pileBase, hit: false });
+      return { points, bin };
+    }
+
+    function binCenter(bin) {
+      const l = state.layout;
+      return l.marginX + bin * l.binWidth + l.binWidth / 2;
+    }
+
+    function spawnBall(visible, launchDelay, mouthOffset) {
+      if (state.createdCount >= state.totalBalls) return;
+      const path = randomPath(mouthOffset || 0);
+      state.createdCount += 1;
+      state.reservoirDirty = true;
+
+      if (!visible) {
+        settleBall(path.bin, true);
+        return;
+      }
+
+      state.activeBalls.push({
+        path: path.points,
+        bin: path.bin,
+        age: -(launchDelay || 0),
+        duration: clamp(1850 / state.speed, 590, 2300),
+        radius: state.layout.motionRadius * (0.94 + Math.random() * 0.18),
+        spin: Math.random() * Math.PI * 2,
+        wobble: 0.9 + Math.random() * 0.95,
+        drift: (Math.random() - 0.5) * state.layout.pegGap * 0.13,
+        hitIndex: 1
+      });
+    }
+
+    function settleBall(bin, silent) {
+      const l = state.layout;
+      const count = state.bins[bin] || 0;
+      const layer = Math.floor(count / l.ballsPerLayer);
+      const col = count % l.ballsPerLayer;
+      const usedWidth = (l.ballsPerLayer - 1) * l.ballRadius * 2.02;
+      const left = binCenter(bin) - usedWidth / 2;
+      const x = left + col * l.ballRadius * 2.02 + (Math.random() - 0.5) * l.ballRadius * 0.78;
+      const r = l.ballRadius * (0.86 + Math.random() * 0.22);
+      const y = Math.max(
+        l.binTop + r + 8,
+        l.pileBase - layer * l.ballRadius * 1.72 + (Math.random() - 0.5) * l.ballRadius * 0.52
+      );
+
+      state.bins[bin] = count + 1;
+      state.droppedCount += 1;
+      state.settledBalls.push({
+        x: clamp(x, l.marginX + bin * l.binWidth + r + 1, l.marginX + (bin + 1) * l.binWidth - r - 1),
+        y,
+        r,
+        seed: Math.random() * 1000,
+        bin
+      });
+      state.recentImpacts.push({ x: binCenter(bin), y: l.pileBase - layer * l.ballRadius * 1.72, age: 0 });
+      if (state.recentImpacts.length > 18) state.recentImpacts.shift();
+
+      if (!silent) playTick(layer);
+      state.statsDirty = true;
+      if (state.droppedCount % CONFIG.pileRedrawEvery === 0 || !state.fastMode || state.completed) {
+        state.pileDirty = true;
+      } else {
+        drawSettledBall(ctx.pile, state.settledBalls[state.settledBalls.length - 1], 0.92);
+      }
+    }
+
+    function redrawPileLayer() {
+      if (!state.pileDirty || !state.layout) return;
+      const c = ctx.pile;
+      const l = state.layout;
+      c.clearRect(0, 0, l.width, l.height);
+
+      for (const ball of state.settledBalls) {
+        drawSettledBall(c, ball, 0.92);
+      }
+      drawDistributionOverlay(c, l);
+      state.pileDirty = false;
+    }
+
+    function drawDistributionOverlay(c, l) {
+      const max = Math.max(1, ...state.bins);
+      c.save();
+      for (let i = 0; i < state.bins.length; i++) {
+        const count = state.bins[i] || 0;
+        const h = (count / max) * (l.bottom - l.binTop) * 0.82;
+        const x = l.marginX + i * l.binWidth + l.binWidth * 0.16;
+        const y = l.bottom - h;
+        const grad = c.createLinearGradient(0, y, 0, l.bottom);
+        grad.addColorStop(0, "rgba(132, 184, 255, 0.22)");
+        grad.addColorStop(1, "rgba(132, 184, 255, 0.03)");
+        c.fillStyle = grad;
+        c.fillRect(x, y, l.binWidth * 0.68, h);
+      }
+
+      if (state.droppedCount > 10) {
+        const stats = computeStats();
+        const maxCurve = (l.bottom - l.binTop) * 0.72;
+        c.strokeStyle = "rgba(243, 210, 138, 0.56)";
+        c.lineWidth = 1.7;
+        c.beginPath();
+        for (let i = 0; i < state.bins.length; i++) {
+          const x = binCenter(i);
+          const sigma = Math.max(0.8, stats.std);
+          const value = Math.exp(-0.5 * Math.pow((i - stats.mean) / sigma, 2));
+          const y = l.bottom - value * maxCurve;
+          if (i === 0) c.moveTo(x, y);
+          else c.lineTo(x, y);
+        }
+        c.stroke();
+      }
+      c.restore();
+    }
+
+    function drawSettledBall(c, ball, alpha) {
+      drawGlassBall(c, ball.x, ball.y, ball.r, alpha, ball.seed);
+    }
+
+    function drawGlassBall(c, x, y, r, alpha, seed) {
+      c.save();
+      c.globalAlpha = alpha;
+      c.shadowColor = "rgba(0, 0, 0, 0.32)";
+      c.shadowBlur = Math.max(1, r * 1.2);
+      c.shadowOffsetY = r * 0.45;
+
+      const hueShift = Math.sin(seed || 0) * 8;
+      const g = c.createRadialGradient(x - r * 0.38, y - r * 0.45, r * 0.15, x, y, r);
+      g.addColorStop(0, "rgba(255, 255, 255, 0.98)");
+      g.addColorStop(0.22, `hsla(${44 + hueShift}, 82%, 86%, 0.96)`);
+      g.addColorStop(0.64, "rgba(224, 202, 150, 0.82)");
+      g.addColorStop(1, "rgba(122, 92, 42, 0.72)");
+      c.fillStyle = g;
+      c.beginPath();
+      c.arc(x, y, r, 0, Math.PI * 2);
+      c.fill();
+
+      c.shadowBlur = 0;
+      c.fillStyle = "rgba(255, 255, 255, 0.82)";
+      c.beginPath();
+      c.arc(x - r * 0.36, y - r * 0.42, r * 0.24, 0, Math.PI * 2);
+      c.fill();
+      c.strokeStyle = "rgba(255, 255, 255, 0.38)";
+      c.lineWidth = Math.max(0.6, r * 0.12);
+      c.beginPath();
+      c.arc(x, y, r * 0.92, -2.4, 0.5);
+      c.stroke();
+      c.restore();
+    }
+
+    function update(dt) {
+      if (!state.running || state.paused || state.completed) return;
+
+      state.spawnAccumulator += dt;
+      state.lastFastBatch = 0;
+      const interval = CONFIG.spawnBaseMs / state.speed;
+      while (
+        state.spawnAccumulator >= interval &&
+        state.createdCount < state.totalBalls &&
+        state.activeBalls.length < maxActiveBalls()
+      ) {
+        const room = maxActiveBalls() - state.activeBalls.length;
+        const burstSpan = CONFIG.burstMax - CONFIG.burstMin + 1;
+        const desired = CONFIG.burstMin + Math.floor(Math.random() * burstSpan);
+        const burstCount = Math.min(room, desired, state.totalBalls - state.createdCount);
+        for (let i = 0; i < burstCount; i++) {
+          const center = (burstCount - 1) / 2;
+          const mouthOffset = (i - center) * state.layout.motionRadius * 0.72 + (Math.random() - 0.5) * state.layout.motionRadius * 0.4;
+          const delay = i * CONFIG.burstStaggerMs / Math.max(0.8, state.speed);
+          spawnBall(true, delay, mouthOffset);
+        }
+        state.spawnAccumulator -= interval;
+      }
+
+      if (state.fastMode && state.createdCount < state.totalBalls) {
+        state.fastAccumulator += (dt / 1000) * fastHiddenRate();
+        const hardCap = fastBatchSize() * 5;
+        const batch = Math.min(Math.floor(state.fastAccumulator), hardCap, state.totalBalls - state.createdCount);
+        for (let i = 0; i < batch; i++) spawnBall(false);
+        state.fastAccumulator -= batch;
+        state.lastFastBatch = batch;
+      }
+
+      for (let i = state.activeBalls.length - 1; i >= 0; i--) {
+        const ball = state.activeBalls[i];
+        ball.age += dt;
+        if (ball.age >= ball.duration) {
+          state.activeBalls.splice(i, 1);
+          settleBall(ball.bin, false);
+        }
+      }
+
+      for (let i = state.recentImpacts.length - 1; i >= 0; i--) {
+        state.recentImpacts[i].age += dt;
+        if (state.recentImpacts[i].age > 460) state.recentImpacts.splice(i, 1);
+      }
+
+      if (state.droppedCount >= state.totalBalls && state.activeBalls.length === 0) {
+        state.completed = true;
+        state.running = false;
+        state.paused = false;
+        state.pileDirty = true;
+        updateUi();
+      }
+    }
+
+    function drawMotion() {
+      const c = ctx.motion;
+      const l = state.layout;
+      c.clearRect(0, 0, l.width, l.height);
+
+      for (const impact of state.recentImpacts) {
+        const t = impact.age / 460;
+        const r = l.ballRadius * (1 + t * 2.5);
+        c.save();
+        c.globalAlpha = (1 - t) * 0.32;
+        c.strokeStyle = "rgba(243, 210, 138, 0.75)";
+        c.lineWidth = 1.2;
+        c.beginPath();
+        c.ellipse(impact.x, impact.y, r * 1.7, r * 0.55, 0, 0, Math.PI * 2);
+        c.stroke();
+        c.restore();
+      }
+
+      for (const ball of state.activeBalls) {
+        const pos = positionOnPath(ball);
+        const prev = positionOnPath(ball, Math.max(0, ball.age - 28));
+        const blurAlpha = clamp(state.speed / 3.4, 0.18, 0.5);
+        drawGlassBall(c, prev.x, prev.y, ball.radius * 0.88, blurAlpha, ball.spin + ball.age * 0.009);
+        drawGlassBall(c, pos.x, pos.y, ball.radius, 1, ball.spin + ball.age * 0.012);
+      }
+    }
+
+    function positionOnPath(ball, ageOverride) {
+      const points = ball.path;
+      const age = ageOverride === undefined ? ball.age : ageOverride;
+      const raw = clamp(age / ball.duration, 0, 1);
+      const totalSegments = points.length - 1;
+      const scaled = raw * totalSegments;
+      const idx = Math.min(totalSegments - 1, Math.floor(scaled));
+      const local = scaled - idx;
+      const a = points[idx];
+      const b = points[idx + 1];
+      const xEase = easeInOut(local);
+      const yEase = local * local * (2.25 - 1.25 * local);
+      const side = Math.sign(b.x - a.x) || Math.sign(ball.drift) || 1;
+      const approach = Math.sin(local * Math.PI);
+      const deflect = b.hit ? side * approach * state.layout.pegGap * 0.055 : 0;
+      const wobble = Math.sin((Math.max(0, age) * 0.04) + ball.spin + idx * 1.7) * ball.radius * ball.wobble * (1 - raw * 0.18);
+      const bounce = b.hit ? -Math.pow(approach, 1.7) * ball.radius * 0.82 : Math.sin(local * Math.PI) * ball.radius * 0.16;
+      const settleDrop = raw > 0.86 ? Math.sin((raw - 0.86) / 0.14 * Math.PI) * ball.radius * 0.45 : 0;
+      return {
+        x: a.x + (b.x - a.x) * xEase + wobble + deflect + ball.drift * (1 - raw),
+        y: a.y + (b.y - a.y) * yEase + bounce + settleDrop
+      };
+    }
+
+    function computeStats() {
+      if (state.droppedCount === 0) return { mean: 0, std: 0 };
+      let sum = 0;
+      for (let i = 0; i < state.bins.length; i++) sum += i * (state.bins[i] || 0);
+      const mean = sum / state.droppedCount;
+      let variance = 0;
+      for (let i = 0; i < state.bins.length; i++) {
+        variance += Math.pow(i - mean, 2) * (state.bins[i] || 0);
+      }
+      return { mean, std: Math.sqrt(variance / state.droppedCount) };
+    }
+
+    function updateUi() {
+      els.ballCountOut.textContent = String(state.totalBalls);
+      els.speedOut.textContent = `${state.speed.toFixed(1)}x`;
+      els.rowsOut.textContent = String(state.rows);
+      els.droppedText.textContent = `${state.droppedCount.toLocaleString("ko-KR")} / ${state.totalBalls.toLocaleString("ko-KR")}`;
+
+      if (state.statsDirty) {
+        const stats = computeStats();
+        els.meanText.textContent = stats.mean.toFixed(2);
+        els.stdText.textContent = stats.std.toFixed(2);
+        state.statsDirty = false;
+      }
+
+      els.pause.disabled = !state.running && !state.paused;
+      els.pause.textContent = state.paused ? "계속" : "일시정지";
+      els.fastMode.nextElementSibling.textContent = state.fastMode
+        ? `Fast on · ${Math.round(fastHiddenRate())}/s`
+        : "Fast off";
+      els.soundToggle.nextElementSibling.textContent = state.soundEnabled ? "Sound on" : "Sound off";
+
+      if (state.completed) {
+        els.statusText.textContent = "완료";
+        els.statusText.style.color = "var(--gold)";
+      } else if (state.paused) {
+        els.statusText.textContent = "일시정지";
+        els.statusText.style.color = "var(--blue)";
+      } else if (state.running) {
+        els.statusText.textContent = "실험 중";
+        els.statusText.style.color = "var(--green)";
+      } else {
+        els.statusText.textContent = "대기";
+        els.statusText.style.color = "var(--muted)";
+      }
+    }
+
+    function resetSimulation(keepRunning) {
+      state.running = Boolean(keepRunning);
+      state.paused = false;
+      state.completed = false;
+      state.droppedCount = 0;
+      state.createdCount = 0;
+      state.activeBalls = [];
+      state.bins = Array.from({ length: state.rows + 1 }, () => 0);
+      state.settledBalls = [];
+      state.recentImpacts = [];
+      state.spawnAccumulator = 0;
+      state.fastAccumulator = 0;
+      state.lastFastBatch = 0;
+      state.pileDirty = true;
+      state.reservoirDirty = true;
+      state.statsDirty = true;
+      applyLayout();
+      updateUi();
+    }
+
+    function startSimulation() {
+      if (state.completed || state.droppedCount >= state.totalBalls) resetSimulation(true);
+      state.running = true;
+      state.paused = false;
+      state.completed = false;
+      updateUi();
+    }
+
+    function togglePause() {
+      if (!state.running && !state.paused) return;
+      state.paused = !state.paused;
+      state.running = !state.paused && !state.completed;
+      updateUi();
+    }
+
+    function initAudio() {
+      if (state.audio) return;
+      const AudioContext = window.AudioContext || window.webkitAudioContext;
+      if (!AudioContext) return;
+      const audioContext = new AudioContext();
+      const master = audioContext.createGain();
+      master.gain.value = 0.05;
+      master.connect(audioContext.destination);
+      state.audio = { audioContext, master };
+    }
+
+    function playTick(layer) {
+      if (!state.soundEnabled) return;
+      initAudio();
+      if (!state.audio) return;
+      const { audioContext, master } = state.audio;
+      if (audioContext.state === "suspended") audioContext.resume();
+      const now = audioContext.currentTime;
+      const osc = audioContext.createOscillator();
+      const gain = audioContext.createGain();
+      osc.type = "sine";
+      osc.frequency.value = 540 + Math.random() * 220 - Math.min(layer, 20) * 4;
+      gain.gain.setValueAtTime(0.0001, now);
+      gain.gain.exponentialRampToValueAtTime(0.035, now + 0.006);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.045);
+      osc.connect(gain);
+      gain.connect(master);
+      osc.start(now);
+      osc.stop(now + 0.05);
+    }
+
+    function frame(time) {
+      if (!state.lastTime) state.lastTime = time;
+      const dt = Math.min(48, time - state.lastTime);
+      state.lastTime = time;
+      update(dt);
+      redrawReservoirLayer();
+      redrawPileLayer();
+      drawMotion();
+      updateUi();
+      requestAnimationFrame(frame);
+    }
+
+    els.start.addEventListener("click", startSimulation);
+    els.pause.addEventListener("click", togglePause);
+    els.reset.addEventListener("click", () => resetSimulation(false));
+
+    els.ballCount.addEventListener("input", () => {
+      state.totalBalls = Number(els.ballCount.value);
+      if (!state.running && !state.paused) resetSimulation(false);
+      updateUi();
+    });
+
+    els.speed.addEventListener("input", () => {
+      state.speed = Number(els.speed.value);
+      updateUi();
+    });
+
+    els.rows.addEventListener("input", () => {
+      state.rows = Number(els.rows.value);
+      resetSimulation(false);
+    });
+
+    els.fastMode.addEventListener("change", () => {
+      state.fastMode = els.fastMode.checked;
+      state.fastAccumulator = 0;
+      updateUi();
+    });
+
+    els.soundToggle.addEventListener("change", () => {
+      state.soundEnabled = els.soundToggle.checked;
+      if (state.soundEnabled) initAudio();
+      updateUi();
+    });
+
+    let resizeTimer = 0;
+    window.addEventListener("resize", () => {
+      clearTimeout(resizeTimer);
+      resizeTimer = window.setTimeout(() => {
+        applyLayout();
+      }, 120);
+    });
+
+    state.totalBalls = Number(els.ballCount.value);
+    state.speed = Number(els.speed.value);
+    state.rows = Number(els.rows.value);
+    state.fastMode = els.fastMode.checked;
+    resetSimulation(false);
+    requestAnimationFrame(frame);
+  </script>
+</body>
+</html>
