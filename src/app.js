@@ -41,7 +41,7 @@ const groups = [
   },
   {
     title: '게임',
-    tools: ['pinball', 'galton-board'],
+    tools: ['pinball', 'galton-board', 'number-baseball'],
   },
 ];
 
@@ -159,6 +159,12 @@ const tools = {
     icon: 'G',
     desc: '갈톤 보드 확률 시뮬레이션을 웹앱 안에서 바로 실행합니다.',
     render: renderGaltonBoard,
+  },
+  'number-baseball': {
+    title: '숫자 야구 게임',
+    icon: 'N',
+    desc: '숫자를 추리하는 숫자 야구 게임을 웹앱 안에서 바로 실행합니다.',
+    render: renderNumberBaseball,
   },
 };
 
@@ -505,6 +511,10 @@ function renderPinball() {
 
 function renderGaltonBoard() {
   renderStandaloneGame('galton-board', 'src/galton_board/galtonboard.html');
+}
+
+function renderNumberBaseball() {
+  renderStandaloneGame('number-baseball', 'src/number_baseball/number_baseball_game.html');
 }
 
 async function renderDcaGeneral() {

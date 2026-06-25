@@ -1,0 +1,1344 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#101827" />
+  <title>숫자 야구 게임</title>
+  <style>
+    :root {
+      --bg: #eef2f7;
+      --card: #ffffff;
+      --text: #172033;
+      --muted: #64748b;
+      --line: #dbe3ee;
+      --primary: #315efb;
+      --primary-dark: #2347c7;
+      --primary-soft: #e9efff;
+      --success: #16835f;
+      --success-soft: #e8f7f1;
+      --warning: #b66b06;
+      --warning-soft: #fff4df;
+      --danger: #c23d4b;
+      --danger-soft: #ffedf0;
+      --hard: #7c3aed;
+      --hard-soft: #f1eafe;
+      --shadow: 0 18px 48px rgba(15, 23, 42, 0.11);
+      --radius: 20px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      -webkit-text-size-adjust: 100%;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      min-height: 100dvh;
+      background:
+        radial-gradient(circle at top left, rgba(49, 94, 251, 0.12), transparent 32rem),
+        linear-gradient(180deg, #f7f9fc 0%, var(--bg) 100%);
+      color: var(--text);
+      font-family: Pretendard, "Noto Sans KR", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    button,
+    input,
+    select {
+      font: inherit;
+    }
+
+    button {
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .app-shell {
+      width: min(100%, 520px);
+      margin: 0 auto;
+      padding: 18px 14px calc(28px + env(safe-area-inset-bottom));
+    }
+
+    .game-card {
+      background: rgba(255, 255, 255, 0.96);
+      border: 1px solid rgba(219, 227, 238, 0.9);
+      border-radius: 26px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .hero {
+      padding: 24px 22px 18px;
+      background: linear-gradient(145deg, #101827, #1b2c4b);
+      color: #fff;
+    }
+
+    .hero-top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .eyebrow {
+      margin: 0 0 6px;
+      color: #a9bfff;
+      font-size: 0.78rem;
+      font-weight: 800;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(1.7rem, 7vw, 2.3rem);
+      line-height: 1.15;
+    }
+
+    .subtitle {
+      margin: 9px 0 0;
+      color: #cfdaef;
+      font-size: 0.94rem;
+      line-height: 1.55;
+    }
+
+    .rules-toggle {
+      flex: none;
+      min-height: 44px;
+      padding: 0 14px;
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.1);
+      color: #fff;
+      cursor: pointer;
+      font-weight: 750;
+    }
+
+    .rules-toggle:focus-visible,
+    button:focus-visible,
+    input:focus-visible {
+      outline: 3px solid rgba(49, 94, 251, 0.35);
+      outline-offset: 2px;
+    }
+
+    .rules-panel {
+      display: none;
+      margin-top: 16px;
+      padding: 15px 16px;
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.08);
+      color: #e6edfb;
+      font-size: 0.9rem;
+      line-height: 1.65;
+    }
+
+    .rules-panel.open {
+      display: block;
+    }
+
+    .rules-panel ul {
+      margin: 0;
+      padding-left: 1.25rem;
+    }
+
+    .rules-example {
+      margin-top: 10px;
+      padding: 10px 12px;
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.09);
+      font-weight: 700;
+    }
+
+    .content {
+      padding: 20px;
+    }
+
+    .section {
+      margin-top: 20px;
+    }
+
+    .section:first-child {
+      margin-top: 0;
+    }
+
+    .section-heading {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 12px;
+      margin-bottom: 10px;
+    }
+
+    .section-heading h2 {
+      margin: 0;
+      font-size: 1rem;
+    }
+
+    .section-heading span {
+      color: var(--muted);
+      font-size: 0.78rem;
+    }
+
+    .segmented {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+      padding: 5px;
+      border: 1px solid var(--line);
+      border-radius: 15px;
+      background: #f7f9fc;
+    }
+
+    .segment-button {
+      min-height: 46px;
+      border: 0;
+      border-radius: 11px;
+      background: transparent;
+      color: var(--muted);
+      cursor: pointer;
+      font-weight: 800;
+      transition: transform 0.16s ease, background 0.16s ease, color 0.16s ease, box-shadow 0.16s ease;
+    }
+
+    .segment-button:active {
+      transform: scale(0.98);
+    }
+
+    .segment-button.active {
+      background: #fff;
+      color: var(--primary);
+      box-shadow: 0 5px 15px rgba(15, 23, 42, 0.08);
+    }
+
+    .segment-button[data-mode="hard"].active {
+      color: var(--hard);
+    }
+
+    .score-strip {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+    }
+
+    .score-box {
+      padding: 12px 8px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: #fbfcfe;
+      text-align: center;
+    }
+
+    .score-label {
+      display: block;
+      color: var(--muted);
+      font-size: 0.72rem;
+      font-weight: 700;
+    }
+
+    .score-value {
+      display: block;
+      margin-top: 4px;
+      font-size: 1.05rem;
+      font-weight: 900;
+    }
+
+    .input-display {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      min-height: 74px;
+      padding: 12px;
+      border: 2px solid var(--line);
+      border-radius: 18px;
+      background: #f9fbfe;
+      transition: border-color 0.18s ease, background 0.18s ease;
+    }
+
+    .input-display.ready {
+      border-color: var(--primary);
+      background: var(--primary-soft);
+    }
+
+    .digit-slot {
+      display: grid;
+      width: 54px;
+      height: 54px;
+      place-items: center;
+      border: 1px solid var(--line);
+      border-radius: 15px;
+      background: #fff;
+      font-size: 1.55rem;
+      font-weight: 950;
+      box-shadow: 0 5px 12px rgba(15, 23, 42, 0.05);
+    }
+
+    .digit-slot.empty {
+      color: #bec8d6;
+    }
+
+    .keypad {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 9px;
+      margin-top: 12px;
+    }
+
+    .key-button {
+      min-height: 52px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: #fff;
+      color: var(--text);
+      cursor: pointer;
+      font-size: 1.08rem;
+      font-weight: 900;
+      box-shadow: 0 4px 11px rgba(15, 23, 42, 0.05);
+      transition: transform 0.13s ease, background 0.13s ease, border-color 0.13s ease;
+    }
+
+    .key-button:active:not(:disabled) {
+      transform: scale(0.96);
+    }
+
+    .key-button.selected,
+    .key-button:disabled {
+      border-color: #ccd5e5;
+      background: #e9edf4;
+      color: #98a4b7;
+      cursor: not-allowed;
+      box-shadow: none;
+    }
+
+    .action-row {
+      display: grid;
+      grid-template-columns: 0.8fr 1.4fr;
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .action-button {
+      min-height: 52px;
+      border: 0;
+      border-radius: 15px;
+      cursor: pointer;
+      font-weight: 900;
+      transition: transform 0.14s ease, opacity 0.14s ease, background 0.14s ease;
+    }
+
+    .action-button:active:not(:disabled) {
+      transform: scale(0.98);
+    }
+
+    .action-button:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+
+    .delete-button {
+      border: 1px solid var(--line);
+      background: #f5f7fa;
+      color: #445169;
+    }
+
+    .submit-button {
+      background: var(--primary);
+      color: #fff;
+      box-shadow: 0 9px 20px rgba(49, 94, 251, 0.25);
+    }
+
+    .submit-button:hover:not(:disabled) {
+      background: var(--primary-dark);
+    }
+
+    .status-message {
+      min-height: 48px;
+      margin-top: 12px;
+      padding: 12px 14px;
+      border-radius: 14px;
+      background: #f4f7fb;
+      color: #4b5b73;
+      font-size: 0.88rem;
+      line-height: 1.5;
+    }
+
+    .status-message.info {
+      background: var(--primary-soft);
+      color: #2948a4;
+    }
+
+    .status-message.success {
+      background: var(--success-soft);
+      color: #11694d;
+    }
+
+    .status-message.warning {
+      background: var(--warning-soft);
+      color: #8f5405;
+    }
+
+    .status-message.error {
+      background: var(--danger-soft);
+      color: #a62f3c;
+    }
+
+    .history-box {
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+    }
+
+    .history-list {
+      max-height: 320px;
+      overflow-y: auto;
+      padding: 10px;
+      background: #f8fafc;
+      overscroll-behavior: contain;
+    }
+
+    .history-empty {
+      padding: 22px 12px;
+      color: var(--muted);
+      text-align: center;
+      font-size: 0.88rem;
+    }
+
+    .history-item {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      gap: 10px;
+      align-items: center;
+      margin-top: 8px;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: #fff;
+      animation: slideIn 0.22s ease;
+    }
+
+    .history-item:first-child {
+      margin-top: 0;
+    }
+
+    @keyframes slideIn {
+      from {
+        transform: translateY(-6px);
+        opacity: 0;
+      }
+      to {
+        transform: translateY(0);
+        opacity: 1;
+      }
+    }
+
+    .attempt-number {
+      display: grid;
+      width: 34px;
+      height: 34px;
+      place-items: center;
+      border-radius: 11px;
+      background: #eef2f8;
+      color: #536176;
+      font-size: 0.75rem;
+      font-weight: 900;
+    }
+
+    .guess-number {
+      font-size: 1.12rem;
+      font-weight: 950;
+      letter-spacing: 0.12em;
+    }
+
+    .result-badges {
+      display: flex;
+      justify-content: flex-end;
+      gap: 5px;
+      flex-wrap: wrap;
+    }
+
+    .badge {
+      min-width: 37px;
+      padding: 5px 8px;
+      border-radius: 999px;
+      text-align: center;
+      font-size: 0.72rem;
+      font-weight: 900;
+    }
+
+    .badge.strike {
+      background: var(--danger-soft);
+      color: var(--danger);
+    }
+
+    .badge.ball {
+      background: var(--warning-soft);
+      color: var(--warning);
+    }
+
+    .badge.out {
+      background: #e8edf4;
+      color: #506078;
+    }
+
+    .new-game-button {
+      width: 100%;
+      min-height: 52px;
+      margin-top: 18px;
+      border: 1px solid var(--line);
+      border-radius: 15px;
+      background: #fff;
+      color: #314057;
+      cursor: pointer;
+      font-weight: 900;
+    }
+
+    .new-game-button.highlight {
+      border-color: var(--success);
+      background: var(--success);
+      color: #fff;
+      animation: pulse 1.4s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% {
+        box-shadow: 0 0 0 0 rgba(22, 131, 95, 0.28);
+      }
+      50% {
+        box-shadow: 0 0 0 10px rgba(22, 131, 95, 0);
+      }
+    }
+
+    .win-banner {
+      display: none;
+      margin-top: 14px;
+      padding: 18px;
+      border: 1px solid #b9e7d7;
+      border-radius: 17px;
+      background: linear-gradient(135deg, #ecfbf5, #dff7ee);
+      text-align: center;
+    }
+
+    .win-banner.show {
+      display: block;
+      animation: winPop 0.45s ease;
+    }
+
+    @keyframes winPop {
+      0% {
+        transform: scale(0.94);
+        opacity: 0;
+      }
+      70% {
+        transform: scale(1.02);
+      }
+      100% {
+        transform: scale(1);
+        opacity: 1;
+      }
+    }
+
+    .win-banner strong {
+      display: block;
+      font-size: 1.15rem;
+      color: #126448;
+    }
+
+    .win-banner span {
+      display: block;
+      margin-top: 6px;
+      color: #32765f;
+      font-size: 0.9rem;
+    }
+
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+
+    @media (max-width: 390px) {
+      .app-shell {
+        padding-inline: 9px;
+      }
+
+      .hero,
+      .content {
+        padding-left: 16px;
+        padding-right: 16px;
+      }
+
+      .digit-slot {
+        width: 48px;
+        height: 52px;
+      }
+
+      .keypad {
+        gap: 7px;
+      }
+
+      .key-button {
+        min-height: 49px;
+      }
+
+      .hero-top {
+        display: block;
+      }
+
+      .rules-toggle {
+        margin-top: 14px;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *,
+      *::before,
+      *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        scroll-behavior: auto !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="app-shell">
+    <article class="game-card">
+      <header class="hero">
+        <div class="hero-top">
+          <div>
+            <p class="eyebrow">Number Baseball</p>
+            <h1>숫자 야구</h1>
+            <p class="subtitle">숨겨진 숫자를 맞혀 보세요. 몇 번 만에 성공할 수 있을까요?</p>
+          </div>
+          <button
+            id="rulesToggle"
+            class="rules-toggle"
+            type="button"
+            aria-expanded="false"
+            aria-controls="rulesPanel"
+          >규칙 보기</button>
+        </div>
+
+        <section id="rulesPanel" class="rules-panel" aria-hidden="true">
+          <ul>
+            <li>서로 다른 숫자로 이루어진 정답을 맞히는 게임입니다.</li>
+            <li>숫자와 위치가 모두 맞으면 <strong>Strike</strong>입니다.</li>
+            <li>숫자는 맞지만 위치가 다르면 <strong>Ball</strong>입니다.</li>
+            <li>맞는 숫자가 하나도 없으면 <strong>0 Strike, 0 Ball</strong>로 표시됩니다.</li>
+            <li>같은 숫자는 두 번 사용할 수 없고, 첫 번째 숫자는 0이 될 수 없습니다.</li>
+          </ul>
+          <div class="rules-example">예: 정답 427 · 입력 472 → 1 Strike, 2 Ball</div>
+        </section>
+      </header>
+
+      <div class="content">
+        <section class="section" aria-labelledby="digitHeading">
+          <div class="section-heading">
+            <h2 id="digitHeading">자릿수</h2>
+            <span>변경 시 새 게임</span>
+          </div>
+          <div class="segmented" role="group" aria-label="자릿수 선택">
+            <button class="segment-button digit-option active" type="button" data-digits="3" aria-pressed="true">3자리</button>
+            <button class="segment-button digit-option" type="button" data-digits="4" aria-pressed="false">4자리</button>
+          </div>
+        </section>
+
+        <section class="section" aria-labelledby="modeHeading">
+          <div class="section-heading">
+            <h2 id="modeHeading">게임 모드</h2>
+            <span>기본 Normal</span>
+          </div>
+          <div class="segmented" role="group" aria-label="게임 모드 선택">
+            <button class="segment-button mode-option active" type="button" data-mode="normal" aria-pressed="true">Normal Mode</button>
+            <button class="segment-button mode-option" type="button" data-mode="hard" aria-pressed="false">Hard Mode</button>
+          </div>
+        </section>
+
+        <section class="section" aria-label="게임 현황">
+          <div class="score-strip">
+            <div class="score-box">
+              <span class="score-label">시도</span>
+              <strong id="attemptCount" class="score-value">0회</strong>
+            </div>
+            <div class="score-box">
+              <span class="score-label">자릿수</span>
+              <strong id="digitStatus" class="score-value">3자리</strong>
+            </div>
+            <div class="score-box">
+              <span class="score-label">모드</span>
+              <strong id="modeStatus" class="score-value">Normal</strong>
+            </div>
+          </div>
+        </section>
+
+        <section class="section" aria-labelledby="inputHeading">
+          <div class="section-heading">
+            <h2 id="inputHeading">숫자 입력</h2>
+            <span>키보드 입력 가능</span>
+          </div>
+          <div id="inputDisplay" class="input-display" role="status" aria-live="polite"></div>
+          <p id="inputDescription" class="sr-only">숫자 버튼이나 키보드로 서로 다른 숫자를 입력하세요.</p>
+
+          <div id="keypad" class="keypad" aria-label="숫자 키패드"></div>
+
+          <div class="action-row">
+            <button id="deleteButton" class="action-button delete-button" type="button" aria-label="마지막 숫자 지우기">지우기</button>
+            <button id="submitButton" class="action-button submit-button" type="button" disabled aria-label="입력한 숫자 제출">입력</button>
+          </div>
+
+          <div id="statusMessage" class="status-message info" role="status" aria-live="polite">
+            서로 다른 숫자 3개를 입력하세요.
+          </div>
+
+          <div id="winBanner" class="win-banner" role="status" aria-live="assertive">
+            <strong id="winTitle">정답입니다!</strong>
+            <span id="winText"></span>
+          </div>
+        </section>
+
+        <section class="section" aria-labelledby="historyHeading">
+          <div class="section-heading">
+            <h2 id="historyHeading">결과 기록</h2>
+            <span>최신 결과가 위쪽</span>
+          </div>
+          <div class="history-box">
+            <div id="historyList" class="history-list" aria-live="polite">
+              <div class="history-empty">아직 입력 기록이 없습니다.</div>
+            </div>
+          </div>
+        </section>
+
+        <button id="newGameButton" class="new-game-button" type="button">다시 게임하기</button>
+      </div>
+    </article>
+  </main>
+
+  <script>
+    "use strict";
+
+    const gameState = {
+      digitCount: 3,
+      mode: "normal",
+      answer: null,
+      candidates: [],
+      allCandidates: [],
+      attempts: [],
+      currentInput: "",
+      isGameOver: false
+    };
+
+    const elements = {
+      rulesToggle: document.getElementById("rulesToggle"),
+      rulesPanel: document.getElementById("rulesPanel"),
+      digitOptions: [...document.querySelectorAll(".digit-option")],
+      modeOptions: [...document.querySelectorAll(".mode-option")],
+      attemptCount: document.getElementById("attemptCount"),
+      digitStatus: document.getElementById("digitStatus"),
+      modeStatus: document.getElementById("modeStatus"),
+      inputDisplay: document.getElementById("inputDisplay"),
+      keypad: document.getElementById("keypad"),
+      deleteButton: document.getElementById("deleteButton"),
+      submitButton: document.getElementById("submitButton"),
+      statusMessage: document.getElementById("statusMessage"),
+      winBanner: document.getElementById("winBanner"),
+      winTitle: document.getElementById("winTitle"),
+      winText: document.getElementById("winText"),
+      historyList: document.getElementById("historyList"),
+      newGameButton: document.getElementById("newGameButton")
+    };
+
+    function generateAllCandidates(digitCount) {
+      const results = [];
+
+      function build(current) {
+        if (current.length === digitCount) {
+          results.push(current);
+          return;
+        }
+
+        for (let digit = 0; digit <= 9; digit++) {
+          const value = String(digit);
+
+          if (current.length === 0 && value === "0") {
+            continue;
+          }
+
+          if (current.includes(value)) {
+            continue;
+          }
+
+          build(current + value);
+        }
+      }
+
+      build("");
+      return results;
+    }
+
+    function generateRandomAnswer(digitCount) {
+      const pool = gameState.allCandidates.length > 0
+        ? gameState.allCandidates
+        : generateAllCandidates(digitCount);
+
+      return pool[Math.floor(Math.random() * pool.length)];
+    }
+
+    function calculateResult(secret, guess) {
+      let strikes = 0;
+      let balls = 0;
+
+      for (let index = 0; index < secret.length; index++) {
+        if (secret[index] === guess[index]) {
+          strikes++;
+        } else if (secret.includes(guess[index])) {
+          balls++;
+        }
+      }
+
+      return { strikes, balls };
+    }
+
+    function getFeedbackKey(result) {
+      return `${result.strikes}-${result.balls}`;
+    }
+
+    function isValidNumber(value, digitCount = gameState.digitCount) {
+      if (!new RegExp(`^\\d{${digitCount}}$`).test(value)) {
+        return false;
+      }
+
+      if (value[0] === "0") {
+        return false;
+      }
+
+      return new Set(value).size === digitCount;
+    }
+
+    function chooseAdversarialGroup(candidates, guess, digitCount) {
+      const groups = new Map();
+
+      for (const candidate of candidates) {
+        const result = calculateResult(candidate, guess);
+        const key = getFeedbackKey(result);
+
+        if (!groups.has(key)) {
+          groups.set(key, { result, candidates: [] });
+        }
+
+        groups.get(key).candidates.push(candidate);
+      }
+
+      const rankedGroups = [...groups.values()].sort((a, b) => {
+        if (a.candidates.length !== b.candidates.length) {
+          return b.candidates.length - a.candidates.length;
+        }
+
+        const aIsWin = a.result.strikes === digitCount;
+        const bIsWin = b.result.strikes === digitCount;
+
+        if (aIsWin !== bIsWin) {
+          return aIsWin ? 1 : -1;
+        }
+
+        if (a.result.strikes !== b.result.strikes) {
+          return a.result.strikes - b.result.strikes;
+        }
+
+        const aTotalHits = a.result.strikes + a.result.balls;
+        const bTotalHits = b.result.strikes + b.result.balls;
+
+        if (aTotalHits !== bTotalHits) {
+          return aTotalHits - bTotalHits;
+        }
+
+        if (a.result.balls !== b.result.balls) {
+          return a.result.balls - b.result.balls;
+        }
+
+        return getFeedbackKey(a.result).localeCompare(getFeedbackKey(b.result));
+      });
+
+      if (rankedGroups.length === 0) {
+        throw new Error("Hard Mode에서 선택 가능한 결과 그룹이 없습니다.");
+      }
+
+      return {
+        result: rankedGroups[0].result,
+        candidates: rankedGroups[0].candidates,
+        debug: {
+          previousCandidateCount: candidates.length,
+          remainingCandidateCount: rankedGroups[0].candidates.length
+        }
+      };
+    }
+
+    function validateCandidateConsistency(candidates, attempts) {
+      if (!Array.isArray(candidates) || candidates.length === 0) {
+        return { valid: false, reason: "후보 집합이 비어 있습니다." };
+      }
+
+      if (new Set(candidates).size !== candidates.length) {
+        return { valid: false, reason: "중복 후보가 존재합니다." };
+      }
+
+      for (const candidate of candidates) {
+        if (!isValidNumber(candidate, gameState.digitCount)) {
+          return { valid: false, reason: `유효하지 않은 후보가 있습니다: ${candidate}` };
+        }
+
+        for (const attempt of attempts) {
+          const result = calculateResult(candidate, attempt.guess);
+
+          if (result.strikes !== attempt.strikes || result.balls !== attempt.balls) {
+            return {
+              valid: false,
+              reason: `${candidate}가 ${attempt.guess}의 이전 판정과 모순됩니다.`
+            };
+          }
+        }
+      }
+
+      return { valid: true };
+    }
+
+    function processNormalGuess(guess) {
+      return calculateResult(gameState.answer, guess);
+    }
+
+    function processHardGuess(guess) {
+      const selectedGroup = chooseAdversarialGroup(
+        gameState.candidates,
+        guess,
+        gameState.digitCount
+      );
+
+      gameState.candidates = selectedGroup.candidates;
+      return selectedGroup.result;
+    }
+
+    function submitGuess() {
+      if (gameState.isGameOver) {
+        showMessage("게임이 끝났습니다. 다시 게임하기를 눌러 주세요.", "warning");
+        return;
+      }
+
+      const guess = gameState.currentInput;
+
+      if (!isValidNumber(guess)) {
+        showMessage(
+          `첫 자리는 0이 아니어야 하며, 서로 다른 숫자 ${gameState.digitCount}개를 입력해야 합니다.`,
+          "error"
+        );
+        return;
+      }
+
+      let result;
+
+      try {
+        result = gameState.mode === "hard"
+          ? processHardGuess(guess)
+          : processNormalGuess(guess);
+      } catch (error) {
+        console.error(error);
+        showMessage("판정 과정에서 오류가 발생했습니다.", "error");
+        return;
+      }
+
+      const attempt = {
+        number: gameState.attempts.length + 1,
+        guess,
+        strikes: result.strikes,
+        balls: result.balls
+      };
+
+      gameState.attempts.push(attempt);
+
+      const consistencyCandidates = gameState.mode === "hard"
+        ? gameState.candidates
+        : [gameState.answer];
+      const validation = validateCandidateConsistency(
+        consistencyCandidates,
+        gameState.attempts
+      );
+
+      if (!validation.valid) {
+        console.error("후보 일관성 오류:", validation.reason);
+        showMessage("후보 판정의 일관성 검사에 실패했습니다.", "error");
+        return;
+      }
+
+      renderHistory(attempt);
+      gameState.currentInput = "";
+      renderInput();
+      renderKeypad();
+      updateScoreStrip();
+
+      const isWin = result.strikes === gameState.digitCount;
+
+      if (isWin) {
+        finishGame(guess);
+        return;
+      }
+
+      if (result.strikes === 0 && result.balls === 0) {
+        showMessage(`${guess} → 0 Strike, 0 Ball`, "info");
+      } else {
+        showMessage(
+          `${guess} → ${result.strikes} Strike, ${result.balls} Ball`,
+          "info"
+        );
+      }
+    }
+
+    function finishGame(finalAnswer) {
+      gameState.isGameOver = true;
+      gameState.answer = finalAnswer;
+      elements.winTitle.textContent = "정답입니다! 🎉";
+      elements.winText.textContent = `${gameState.attempts.length}번 만에 ${finalAnswer}을(를) 맞혔습니다.`;
+      elements.winBanner.classList.add("show");
+      elements.newGameButton.classList.add("highlight");
+      showMessage(`최종 정답은 ${finalAnswer}입니다.`, "success");
+      renderKeypad();
+      renderInput();
+    }
+
+    function addDigit(digit) {
+      if (gameState.isGameOver) {
+        return;
+      }
+
+      if (gameState.currentInput.length >= gameState.digitCount) {
+        showMessage(`숫자는 ${gameState.digitCount}자리까지만 입력할 수 있습니다.`, "warning");
+        return;
+      }
+
+      if (gameState.currentInput.includes(digit)) {
+        showMessage("같은 숫자는 두 번 사용할 수 없습니다.", "warning");
+        return;
+      }
+
+      if (gameState.currentInput.length === 0 && digit === "0") {
+        showMessage("첫 번째 숫자로 0을 사용할 수 없습니다.", "warning");
+        return;
+      }
+
+      gameState.currentInput += digit;
+      renderInput();
+      renderKeypad();
+
+      if (gameState.currentInput.length === gameState.digitCount) {
+        showMessage("입력 버튼을 눌러 결과를 확인하세요.", "info");
+      }
+    }
+
+    function deleteLastDigit() {
+      if (gameState.isGameOver || gameState.currentInput.length === 0) {
+        return;
+      }
+
+      gameState.currentInput = gameState.currentInput.slice(0, -1);
+      renderInput();
+      renderKeypad();
+      showMessage(`서로 다른 숫자 ${gameState.digitCount}개를 입력하세요.`, "info");
+    }
+
+    function showMessage(message, type = "info") {
+      elements.statusMessage.textContent = message;
+      elements.statusMessage.className = `status-message ${type}`;
+    }
+
+    function renderInput() {
+      elements.inputDisplay.innerHTML = "";
+
+      for (let index = 0; index < gameState.digitCount; index++) {
+        const slot = document.createElement("div");
+        const value = gameState.currentInput[index];
+        slot.className = `digit-slot${value ? "" : " empty"}`;
+        slot.textContent = value || "·";
+        slot.setAttribute("aria-label", value ? `${index + 1}번째 숫자 ${value}` : `${index + 1}번째 숫자 비어 있음`);
+        elements.inputDisplay.appendChild(slot);
+      }
+
+      const ready = gameState.currentInput.length === gameState.digitCount && !gameState.isGameOver;
+      elements.inputDisplay.classList.toggle("ready", ready);
+      elements.submitButton.disabled = !ready;
+      elements.deleteButton.disabled = gameState.currentInput.length === 0 || gameState.isGameOver;
+    }
+
+    function renderKeypad() {
+      elements.keypad.innerHTML = "";
+
+      for (let digit = 0; digit <= 9; digit++) {
+        const value = String(digit);
+        const button = document.createElement("button");
+        const isSelected = gameState.currentInput.includes(value);
+        const firstZeroBlocked = gameState.currentInput.length === 0 && value === "0";
+        const full = gameState.currentInput.length >= gameState.digitCount;
+        const disabled = gameState.isGameOver || isSelected || firstZeroBlocked || full;
+
+        button.type = "button";
+        button.className = `key-button${isSelected ? " selected" : ""}`;
+        button.textContent = value;
+        button.disabled = disabled;
+        button.setAttribute("aria-label", `숫자 ${value} 입력`);
+        button.addEventListener("click", () => addDigit(value));
+        elements.keypad.appendChild(button);
+      }
+    }
+
+    function renderHistory(newAttempt = null) {
+      if (gameState.attempts.length === 0) {
+        elements.historyList.innerHTML = '<div class="history-empty">아직 입력 기록이 없습니다.</div>';
+        return;
+      }
+
+      if (!newAttempt) {
+        elements.historyList.innerHTML = "";
+        [...gameState.attempts].reverse().forEach(attempt => {
+          elements.historyList.appendChild(createHistoryItem(attempt));
+        });
+        return;
+      }
+
+      const empty = elements.historyList.querySelector(".history-empty");
+      if (empty) {
+        empty.remove();
+      }
+
+      elements.historyList.prepend(createHistoryItem(newAttempt));
+      elements.historyList.scrollTop = 0;
+    }
+
+    function createHistoryItem(attempt) {
+      const item = document.createElement("article");
+      item.className = "history-item";
+
+      const attemptNumber = document.createElement("div");
+      attemptNumber.className = "attempt-number";
+      attemptNumber.textContent = `${attempt.number}회`;
+
+      const guessNumber = document.createElement("div");
+      guessNumber.className = "guess-number";
+      guessNumber.textContent = attempt.guess;
+
+      const badges = document.createElement("div");
+      badges.className = "result-badges";
+
+      if (attempt.strikes === 0 && attempt.balls === 0) {
+        badges.appendChild(createBadge("0S", "strike"));
+        badges.appendChild(createBadge("0B", "ball"));
+      } else {
+        badges.appendChild(createBadge(`${attempt.strikes}S`, "strike"));
+        badges.appendChild(createBadge(`${attempt.balls}B`, "ball"));
+      }
+
+      item.append(attemptNumber, guessNumber, badges);
+      return item;
+    }
+
+    function createBadge(text, type) {
+      const badge = document.createElement("span");
+      badge.className = `badge ${type}`;
+      badge.textContent = text;
+      return badge;
+    }
+
+    function updateOptionButtons() {
+      for (const button of elements.digitOptions) {
+        const active = Number(button.dataset.digits) === gameState.digitCount;
+        button.classList.toggle("active", active);
+        button.setAttribute("aria-pressed", String(active));
+      }
+
+      for (const button of elements.modeOptions) {
+        const active = button.dataset.mode === gameState.mode;
+        button.classList.toggle("active", active);
+        button.setAttribute("aria-pressed", String(active));
+      }
+    }
+
+    function updateScoreStrip() {
+      elements.attemptCount.textContent = `${gameState.attempts.length}회`;
+      elements.digitStatus.textContent = `${gameState.digitCount}자리`;
+      elements.modeStatus.textContent = gameState.mode === "hard" ? "Hard" : "Normal";
+    }
+
+    function resetGame() {
+      gameState.allCandidates = generateAllCandidates(gameState.digitCount);
+      gameState.attempts = [];
+      gameState.currentInput = "";
+      gameState.isGameOver = false;
+
+      if (gameState.mode === "normal") {
+        gameState.answer = generateRandomAnswer(gameState.digitCount);
+        gameState.candidates = [];
+      } else {
+        gameState.answer = null;
+        gameState.candidates = [...gameState.allCandidates];
+      }
+
+      elements.winBanner.classList.remove("show");
+      elements.newGameButton.classList.remove("highlight");
+      updateOptionButtons();
+      updateScoreStrip();
+      renderInput();
+      renderKeypad();
+      renderHistory();
+      showMessage(`서로 다른 숫자 ${gameState.digitCount}개를 입력하세요.`, "info");
+    }
+
+    function toggleRules() {
+      const willOpen = !elements.rulesPanel.classList.contains("open");
+      elements.rulesPanel.classList.toggle("open", willOpen);
+      elements.rulesPanel.setAttribute("aria-hidden", String(!willOpen));
+      elements.rulesToggle.setAttribute("aria-expanded", String(willOpen));
+      elements.rulesToggle.textContent = willOpen ? "규칙 닫기" : "규칙 보기";
+    }
+
+    function handleKeyboard(event) {
+      const activeTag = document.activeElement?.tagName;
+
+      if (["INPUT", "TEXTAREA", "SELECT"].includes(activeTag)) {
+        return;
+      }
+
+      if (/^\d$/.test(event.key)) {
+        event.preventDefault();
+        addDigit(event.key);
+      } else if (event.key === "Backspace") {
+        event.preventDefault();
+        deleteLastDigit();
+      } else if (event.key === "Enter") {
+        event.preventDefault();
+        submitGuess();
+      }
+    }
+
+    function runSelfTests() {
+      const failures = [];
+
+      function assert(condition, message) {
+        if (!condition) {
+          failures.push(message);
+          console.error(`❌ ${message}`);
+        }
+      }
+
+      const testCases = [
+        ["427", "427", 3, 0],
+        ["427", "472", 1, 2],
+        ["427", "704", 0, 2],
+        ["427", "135", 0, 0]
+      ];
+
+      for (const [secret, guess, strikes, balls] of testCases) {
+        const result = calculateResult(secret, guess);
+        assert(
+          result.strikes === strikes && result.balls === balls,
+          `${secret}/${guess} 판정 실패: ${result.strikes}S ${result.balls}B`
+        );
+      }
+
+      const candidates3 = generateAllCandidates(3);
+      const candidates4 = generateAllCandidates(4);
+      assert(candidates3.length === 648, `3자리 후보 개수 오류: ${candidates3.length}`);
+      assert(candidates4.length === 4536, `4자리 후보 개수 오류: ${candidates4.length}`);
+
+      for (const [digitCount, candidates] of [[3, candidates3], [4, candidates4]]) {
+        assert(
+          candidates.every(candidate => candidate.length === digitCount),
+          `${digitCount}자리 후보 길이 오류`
+        );
+        assert(
+          candidates.every(candidate => candidate[0] !== "0"),
+          `${digitCount}자리 후보 첫 자리 0 오류`
+        );
+        assert(
+          candidates.every(candidate => new Set(candidate).size === digitCount),
+          `${digitCount}자리 후보 중복 숫자 오류`
+        );
+      }
+
+      let hardCandidates = [...candidates3];
+      const hardAttempts = [];
+      const guesses = ["123", "456", "789", "204"];
+
+      for (const guess of guesses) {
+        const before = hardCandidates.length;
+        const first = chooseAdversarialGroup(hardCandidates, guess, 3);
+        const second = chooseAdversarialGroup(hardCandidates, guess, 3);
+
+        assert(
+          getFeedbackKey(first.result) === getFeedbackKey(second.result),
+          `Hard Mode 결정성 오류: ${guess}`
+        );
+        assert(
+          first.candidates.length <= before,
+          `Hard Mode 후보 증가 오류: ${guess}`
+        );
+        assert(
+          first.candidates.length > 0,
+          `Hard Mode 후보 0개 오류: ${guess}`
+        );
+
+        hardCandidates = first.candidates;
+        hardAttempts.push({
+          guess,
+          strikes: first.result.strikes,
+          balls: first.result.balls
+        });
+
+        const validation = validateCandidateConsistency(hardCandidates, hardAttempts);
+        assert(validation.valid, `Hard Mode 일관성 오류: ${validation.reason}`);
+      }
+
+      if (failures.length === 0) {
+        console.log("✅ 숫자 야구 자체 테스트를 모두 통과했습니다.");
+      } else {
+        console.error(`숫자 야구 자체 테스트 실패 ${failures.length}건`, failures);
+      }
+    }
+
+    elements.rulesToggle.addEventListener("click", toggleRules);
+    elements.deleteButton.addEventListener("click", deleteLastDigit);
+    elements.submitButton.addEventListener("click", submitGuess);
+    elements.newGameButton.addEventListener("click", resetGame);
+    document.addEventListener("keydown", handleKeyboard);
+
+    for (const button of elements.digitOptions) {
+      button.addEventListener("click", () => {
+        const digitCount = Number(button.dataset.digits);
+
+        if (gameState.digitCount !== digitCount) {
+          gameState.digitCount = digitCount;
+          resetGame();
+        }
+      });
+    }
+
+    for (const button of elements.modeOptions) {
+      button.addEventListener("click", () => {
+        const mode = button.dataset.mode;
+
+        if (gameState.mode !== mode) {
+          gameState.mode = mode;
+          resetGame();
+        }
+      });
+    }
+
+    runSelfTests();
+    resetGame();
+  </script>
+</body>
+</html>
