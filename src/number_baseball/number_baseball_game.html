@@ -1052,7 +1052,9 @@
       allCandidates: [],
       attempts: [],
       currentInput: "",
-      isGameOver: false
+      isGameOver: false,
+      gameSeed: 0,
+      random: Math.random
     };
 
     const noteState = {
@@ -1162,7 +1164,142 @@
       return new Set(value).size === digitCount;
     }
 
-    function chooseAdversarialGroup(candidates, guess, digitCount) {
+    function createSeededRandom(seed) {
+      let state = seed >>> 0;
+
+      return function seededRandom() {
+        state += 0x6D2B79F5;
+        let value = state;
+        value = Math.imul(value ^ (value >>> 15), value | 1);
+        value ^= value + Math.imul(value ^ (value >>> 7), value | 61);
+        return ((value ^ (value >>> 14)) >>> 0) / 4294967296;
+      };
+    }
+
+    function createGameSeed() {
+      try {
+        if (window.crypto?.getRandomValues) {
+          return window.crypto.getRandomValues(new Uint32Array(1))[0];
+        }
+      } catch (error) {
+        console.warn("보안 난수 생성기를 사용할 수 없어 대체 난수를 사용합니다.", error);
+      }
+
+      return (Date.now() ^ Math.floor(Math.random() * 0xFFFFFFFF)) >>> 0;
+    }
+
+    function evenlySample(array, limit) {
+      if (array.length <= limit) {
+        return [...array];
+      }
+
+      const sampled = [];
+
+      for (let index = 0; index < limit; index++) {
+        const sourceIndex = Math.floor(index * (array.length - 1) / (limit - 1));
+        sampled.push(array[sourceIndex]);
+      }
+
+      return sampled;
+    }
+
+    function buildFutureGuessPool(groupCandidates, digitCount, allCandidates) {
+      // 3자리는 전체 648개 입력을 검사하여 정확한 한 단계 선행 탐색을 수행합니다.
+      if (digitCount === 3) {
+        return allCandidates;
+      }
+
+      // 4자리는 모바일 성능을 위해 후보와 전체 입력을 균등 표본 추출합니다.
+      const pool = new Set([
+        ...evenlySample(groupCandidates, 80),
+        ...evenlySample(allCandidates, 80)
+      ]);
+
+      return [...pool];
+    }
+
+    function calculateFutureHardness(groupCandidates, digitCount, allCandidates) {
+      if (groupCandidates.length <= 1) {
+        return groupCandidates.length;
+      }
+
+      const guessPool = buildFutureGuessPool(
+        groupCandidates,
+        digitCount,
+        allCandidates
+      );
+
+      let bestUserOutcome = Infinity;
+
+      for (const nextGuess of guessPool) {
+        const resultGroupSizes = new Map();
+
+        for (const candidate of groupCandidates) {
+          const key = getFeedbackKey(calculateResult(candidate, nextGuess));
+          resultGroupSizes.set(key, (resultGroupSizes.get(key) || 0) + 1);
+        }
+
+        const worstCaseRemaining = Math.max(...resultGroupSizes.values());
+        bestUserOutcome = Math.min(bestUserOutcome, worstCaseRemaining);
+
+        // 이보다 작아질 수 없으므로 조기 종료합니다.
+        if (bestUserOutcome <= 1) {
+          break;
+        }
+      }
+
+      return bestUserOutcome;
+    }
+
+    function getHardHistorySignature(guess) {
+      const guessSequence = [
+        ...gameState.attempts.map(attempt => attempt.guess),
+        guess
+      ].join(">");
+
+      return `number-baseball-hard:${gameState.digitCount}:${guessSequence}`;
+    }
+
+    function getPreviousHardResult(guess) {
+      try {
+        return window.localStorage.getItem(getHardHistorySignature(guess));
+      } catch (error) {
+        return null;
+      }
+    }
+
+    function saveHardResult(guess, result) {
+      try {
+        window.localStorage.setItem(
+          getHardHistorySignature(guess),
+          getFeedbackKey(result)
+        );
+      } catch (error) {
+        // 저장이 불가능한 환경에서도 게임은 정상 진행합니다.
+      }
+    }
+
+    function weightedRandomChoice(groups, randomFunction = Math.random) {
+      const totalWeight = groups.reduce((sum, group) => sum + group.weight, 0);
+
+      if (!(totalWeight > 0)) {
+        return groups[Math.floor(randomFunction() * groups.length)];
+      }
+
+      let randomValue = randomFunction() * totalWeight;
+
+      for (const group of groups) {
+        randomValue -= group.weight;
+
+        if (randomValue <= 0) {
+          return group;
+        }
+      }
+
+      return groups[groups.length - 1];
+    }
+
+    function chooseAdversarialGroup(candidates, guess, digitCount, options = {}) {
       const groups = new Map();
 
       for (const candidate of candidates) {
@@ -1170,52 +1307,88 @@
         const key = getFeedbackKey(result);
 
         if (!groups.has(key)) {
-          groups.set(key, { result, candidates: [] });
+          groups.set(key, { key, result, candidates: [] });
         }
 
         groups.get(key).candidates.push(candidate);
       }
 
-      const rankedGroups = [...groups.values()].sort((a, b) => {
-        if (a.candidates.length !== b.candidates.length) {
-          return b.candidates.length - a.candidates.length;
-        }
+      let groupList = [...groups.values()];
 
-        const aIsWin = a.result.strikes === digitCount;
-        const bIsWin = b.result.strikes === digitCount;
-
-        if (aIsWin !== bIsWin) {
-          return aIsWin ? 1 : -1;
-        }
-
-        if (a.result.strikes !== b.result.strikes) {
-          return a.result.strikes - b.result.strikes;
-        }
-
-        const aTotalHits = a.result.strikes + a.result.balls;
-        const bTotalHits = b.result.strikes + b.result.balls;
-
-        if (aTotalHits !== bTotalHits) {
-          return aTotalHits - bTotalHits;
-        }
-
-        if (a.result.balls !== b.result.balls) {
-          return a.result.balls - b.result.balls;
-        }
-
-        return getFeedbackKey(a.result).localeCompare(getFeedbackKey(b.result));
-      });
-
-      if (rankedGroups.length === 0) {
+      if (groupList.length === 0) {
         throw new Error("Hard Mode에서 선택 가능한 결과 그룹이 없습니다.");
       }
 
+      // 전체 Strike가 아닌 결과가 하나라도 있으면 즉시 승리 판정은 선택하지 않습니다.
+      const nonWinningGroups = groupList.filter(
+        group => group.result.strikes !== digitCount
+      );
+
+      if (nonWinningGroups.length > 0) {
+        groupList = nonWinningGroups;
+      }
+
+      const maxGroupSize = Math.max(
+        ...groupList.map(group => group.candidates.length)
+      );
+      const eligibilityRatio = digitCount === 3 ? 0.90 : 0.93;
+      const eligibleGroups = groupList.filter(
+        group => group.candidates.length >= maxGroupSize * eligibilityRatio
+      );
+
+      const allCandidates = options.allCandidates || gameState.allCandidates;
+      const previousResultKey = options.useHistory === false
+        ? null
+        : (options.previousResultKey ?? getPreviousHardResult(guess));
+
+      // 현재 후보 수뿐 아니라, 사용자가 다음 수를 최적으로 두었을 때에도
+      // 얼마나 많은 후보를 남길 수 있는지 한 단계 앞을 계산합니다.
+      const scoredGroups = eligibleGroups.map(group => ({
+        ...group,
+        futureHardness: calculateFutureHardness(
+          group.candidates,
+          digitCount,
+          allCandidates
+        )
+      }));
+
+      const maxFutureHardness = Math.max(
+        ...scoredGroups.map(group => group.futureHardness)
+      );
+
+      const weightedGroups = scoredGroups.map(group => {
+        const sizeRatio = group.candidates.length / maxGroupSize;
+        const futureRatio = maxFutureHardness > 0
+          ? group.futureHardness / maxFutureHardness
+          : 1;
+
+        let weight = Math.pow(sizeRatio, 4) * Math.pow(futureRatio, 2);
+
+        // 직전의 같은 입력 순서에서 나온 판정은 다시 선택될 확률을 낮춥니다.
+        // 단, 유일한 적격 그룹이면 해당 그룹을 그대로 사용합니다.
+        if (eligibleGroups.length > 1 && group.key === previousResultKey) {
+          weight *= 0.25;
+        }
+
+        return { ...group, weight };
+      });
+
+      const selectedGroup = weightedRandomChoice(
+        weightedGroups,
+        options.random || gameState.random || Math.random
+      );
+
       return {
-        result: rankedGroups[0].result,
-        candidates: rankedGroups[0].candidates,
+        result: selectedGroup.result,
+        candidates: selectedGroup.candidates,
         debug: {
           previousCandidateCount: candidates.length,
-          remainingCandidateCount: rankedGroups[0].candidates.length
+          remainingCandidateCount: selectedGroup.candidates.length,
+          maxGroupSize,
+          eligibilityRatio,
+          eligibleResultKeys: eligibleGroups.map(group => group.key),
+          futureHardness: selectedGroup.futureHardness,
+          selectedWeight: selectedGroup.weight
         }
       };
     }
@@ -1261,6 +1434,7 @@
       );
 
       gameState.candidates = selectedGroup.candidates;
+      saveHardResult(guess, selectedGroup.result);
       return selectedGroup.result;
     }
 
@@ -1765,6 +1939,8 @@
       gameState.attempts = [];
       gameState.currentInput = "";
       gameState.isGameOver = false;
+      gameState.gameSeed = createGameSeed();
+      gameState.random = createSeededRandom(gameState.gameSeed);
 
       if (gameState.mode === "normal") {
         gameState.answer = generateRandomAnswer(gameState.digitCount);
@@ -1862,35 +2038,61 @@
       let hardCandidates = [...candidates3];
       const hardAttempts = [];
       const guesses = ["123", "456", "789", "204"];
+      const testRandom = createSeededRandom(123456789);
 
       for (const guess of guesses) {
         const before = hardCandidates.length;
-        const first = chooseAdversarialGroup(hardCandidates, guess, 3);
-        const second = chooseAdversarialGroup(hardCandidates, guess, 3);
+        const selected = chooseAdversarialGroup(
+          hardCandidates,
+          guess,
+          3,
+          {
+            random: testRandom,
+            useHistory: false,
+            allCandidates: candidates3
+          }
+        );
 
         assert(
-          getFeedbackKey(first.result) === getFeedbackKey(second.result),
-          `Hard Mode 결정성 오류: ${guess}`
-        );
-        assert(
-          first.candidates.length <= before,
+          selected.candidates.length <= before,
           `Hard Mode 후보 증가 오류: ${guess}`
         );
         assert(
-          first.candidates.length > 0,
+          selected.candidates.length > 0,
           `Hard Mode 후보 0개 오류: ${guess}`
         );
+        assert(
+          selected.candidates.length >=
+            selected.debug.maxGroupSize * selected.debug.eligibilityRatio,
+          `Hard Mode 적격 후보 비율 오류: ${guess}`
+        );
 
-        hardCandidates = first.candidates;
+        hardCandidates = selected.candidates;
         hardAttempts.push({
           guess,
-          strikes: first.result.strikes,
-          balls: first.result.balls
+          strikes: selected.result.strikes,
+          balls: selected.result.balls
         });
 
         const validation = validateCandidateConsistency(hardCandidates, hardAttempts);
         assert(validation.valid, `Hard Mode 일관성 오류: ${validation.reason}`);
       }
+
+      const first102 = chooseAdversarialGroup(
+        candidates3,
+        "102",
+        3,
+        {
+          random: () => 0,
+          useHistory: false,
+          allCandidates: candidates3
+        }
+      );
+      assert(
+        first102.debug.eligibleResultKeys.includes("0-0") &&
+          first102.debug.eligibleResultKeys.includes("0-1"),
+        "102 입력의 상위 후보군에 0S 0B와 0S 1B가 모두 포함되지 않았습니다."
+      );
 
       if (failures.length === 0) {
         console.log("✅ 숫자 야구 자체 테스트를 모두 통과했습니다.");
