@@ -1,0 +1,1 @@
+export class SeededRandom{constructor(seed=1){this.state=seed>>>0||1}next(){let x=this.state;x^=x<<13;x^=x>>>17;x^=x<<5;this.state=x>>>0;return this.state/4294967296}pickWeighted(items){let t=items.reduce((s,x)=>s+x.weight,0),r=this.next()*t;for(const x of items){r-=x.weight;if(r<=0)return x.value}return items.at(-1).value}}

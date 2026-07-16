@@ -1,0 +1,1 @@
+export class SimulationAPI{constructor(engine){this.engine=engine}withClone(run){const real=this.engine.ontology;this.engine.ontology=real.clone({includeEvents:false,shareTypes:['Maze','TopologyModel','JunctionNetwork','CorridorNetwork','BottleneckSet','Zone']});try{return run(this.engine)}finally{this.engine.ontology=real}}}

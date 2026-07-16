@@ -1,0 +1,11 @@
+.ontology-graph{width:100%;height:270px;display:block}
+.mc-trail{display:flex;gap:4px;overflow-x:auto;padding:7px 0 3px}
+.mc-step{min-width:48px;border:1px solid #263449;border-radius:4px;padding:5px;text-align:center;font-size:8px;color:#8997ac}
+.mc-step b{display:block;color:var(--cyan);font-size:10px;margin-top:3px}
+.mc-step.lead{border-color:#f3ce36}
+.plan-meta{color:#7f8ca1;font-size:8px;margin-top:4px}
+.dynamic .card{padding:8px;margin-bottom:6px}
+.debug #debugBody{height:calc(100% - 40px);overflow:auto}
+.debug .log{height:auto}
+.benchmark .plan-meta{overflow-wrap:anywhere;line-height:1.55}
+.controls select{background:#111924;color:var(--text);border:1px solid #334054;border-radius:5px;padding:8px 10px;font:11px var(--mono)}

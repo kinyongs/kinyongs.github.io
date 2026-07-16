@@ -43,6 +43,10 @@ const groups = [
     title: '게임',
     tools: ['pinball', 'galton-board', 'number-baseball'],
   },
+  {
+    title: '실험실',
+    tools: ['ontology-lab'],
+  },
 ];
 
 const tools = {
@@ -165,6 +169,12 @@ const tools = {
     icon: 'N',
     desc: '숫자를 추리하는 숫자 야구 게임을 웹앱 안에서 바로 실행합니다.',
     render: renderNumberBaseball,
+  },
+  'ontology-lab': {
+    title: 'Ontology Engine Laboratory',
+    icon: 'O',
+    desc: 'Pac-Man 도메인으로 온톨로지 엔진의 의미, 동적, 실행 계층을 실험합니다.',
+    render: renderOntologyLab,
   },
 };
 
@@ -494,11 +504,12 @@ async function renderTool(id) {
   }
 }
 
-function renderStandaloneGame(toolId, gameUrl) {
+function renderStandaloneGame(toolId, gameUrl, actions = []) {
   const tool = tools[toolId];
   renderShell(`${pageHeader(tool)}
     <div class="toolbar game-toolbar">
       <a class="button" href="${gameUrl}" target="_blank" rel="noopener">새 탭에서 열기</a>
+      ${actions.map((action) => `<a class="button secondary" href="${action.href}" ${action.download ? 'download' : ''} target="${action.target || '_self'}" rel="noopener">${action.label}</a>`).join('')}
     </div>
     <div class="game-frame-panel">
       <iframe class="game-frame" src="${gameUrl}" title="${tool.title}" allow="fullscreen; gamepad" allowfullscreen></iframe>
@@ -515,6 +526,17 @@ function renderGaltonBoard() {
 
 function renderNumberBaseball() {
   renderStandaloneGame('number-baseball', 'src/number_baseball/number_baseball_game.html');
+}
+
+function renderOntologyLab() {
+  const base = 'src/pac-man_ontology-engine-laboratory';
+  renderStandaloneGame('ontology-lab', `${base}/pac-man_ontology.html`, [
+    {
+      label: 'SDD 문서 다운로드',
+      href: `${base}/pac-man_Ontology_Engine_Laboratory_SDD_v1.0.docx`,
+      download: true,
+    },
+  ]);
 }
 
 async function renderDcaGeneral() {

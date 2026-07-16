@@ -1,0 +1,15 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Ontology Engine Laboratory</title><link rel="stylesheet" href="styles.css"><link rel="stylesheet" href="extra.css"></head>
+<body>
+  <header><div><span class="eyebrow">ONTOLOGY ENGINE</span><h1>Laboratory <small>/ Pac-Man Domain</small></h1></div><div class="controls"><label>Seed <input id="seed" type="number" value="20260716"></label><label>Ghosts <input id="ghostCount" type="number" min="1" max="8" value="5"></label><label>MC runs <input id="rollouts" type="number" min="16" max="512" step="16" value="96"></label><label>Plan ticks <input id="planDepth" type="number" min="4" max="60" value="22"></label><label>Auto speed <select id="autoSpeed"><option value="600">0.5×</option><option value="300" selected>1×</option><option value="150">2×</option><option value="75">4×</option><option value="20">MAX</option></select></label><button id="reset">APPLY / RESET</button><button id="pause">PAUSE</button><button id="step" class="primary">STEP TICK</button><button id="auto">AUTO</button><button id="benchmark">OPTIMIZE WEIGHTS</button></div></header>
+  <main>
+    <section class="panel maze-panel"><div class="panel-head"><h2><i>01</i> Maze Visualization</h2><span id="status" class="chip">READY</span></div><canvas id="maze" width="720" height="600"></canvas><div id="legend" class="legend"></div></section>
+    <section class="panel semantic"><div class="panel-head"><h2><i>02</i> Semantic Layer</h2><span>ONTOLOGY GRAPH</span></div><nav class="tabs" data-target="semanticBody"><button data-tab="graph" class="active">Graph</button><button data-tab="objects">Objects</button><button data-tab="relationships">Relations</button><button data-tab="events">Events</button></nav><div id="semanticBody" class="scroll"></div></section>
+    <section class="panel dynamic"><div class="panel-head"><h2><i>03</i> Dynamic Layer</h2><span>PLAN</span></div><div id="dynamicBody" class="scroll"></div></section>
+    <section class="panel kinetic"><div class="panel-head"><h2><i>04</i> Kinetic Layer</h2><span>MUTATION GATE</span></div><div id="kineticBody" class="scroll"></div></section>
+    <section class="panel debug"><div class="panel-head"><h2><i>05</i> Debug Console</h2><span>LIVE TELEMETRY</span></div><div id="debugBody"></div></section>
+  </main>
+  <footer><span>ENGINE → DOMAIN PLUGIN → VISUALIZATION</span><span>No LLM · No direct mutation · Seeded replay</span></footer>
+  <script src="app.js"></script>
+</body></html>
